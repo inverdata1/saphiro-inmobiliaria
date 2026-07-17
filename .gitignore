@@ -39,3 +39,8 @@ pnpm-debug.log*
 # dumps / backups locales
 *.dump
 Saphiro_Inmobiliaria_DB.sql
+
+# deploy
+scripts/.deploy_secret
+scripts/deploy.log
+scripts/auto-pull.log

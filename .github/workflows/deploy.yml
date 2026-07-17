@@ -1,0 +1,23 @@
+name: Deploy VPS
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger deploy webhook
+        env:
+          DEPLOY_SECRET: ${{ secrets.DEPLOY_WEBHOOK_SECRET }}
+        run: |
+          if [ -z "$DEPLOY_SECRET" ]; then
+            echo "DEPLOY_WEBHOOK_SECRET not set; server cron will pick up the push within ~1 min"
+            exit 0
+          fi
+          body='{"ref":"refs/heads/main"}'
+          sig="sha256=$(printf '%s' "$body" | openssl dgst -sha256 -hmac "$DEPLOY_SECRET" | awk '{print $2}')"
+          curl -fsS -X POST "https://saphiro-inmob-prueba.duckdns.org/hooks/deploy" \
+            -H "Content-Type: application/json" \
+            -H "X-Hub-Signature-256: $sig" \
+            -d "$body"
