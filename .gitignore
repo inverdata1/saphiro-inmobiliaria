@@ -1,0 +1,41 @@
+# deps / build
+node_modules/
+dist/
+dist-ssr/
+cache/
+*.local
+
+# env / secrets
+.env
+.env.*
+!.env.example
+api/.env
+api/.env.*
+!api/.env.example
+
+# uploads (binarios locales)
+api/uploads/*
+!api/uploads/.gitkeep
+
+# logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# dumps / backups locales
+*.dump
+Saphiro_Inmobiliaria_DB.sql
