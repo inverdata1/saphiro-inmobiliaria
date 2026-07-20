@@ -19,6 +19,16 @@ async function borrarTokensRegistro(prefijo, usuarioId) {
   }
 }
 
+const searchUserByEmail = async (email) => {
+  const existing = await pool.query(
+    "SELECT id FROM usuarios WHERE email = $1 AND deleted_at IS NULL LIMIT 1;",
+    [email]
+  );
+
+  if (existing.rows.length) throw new AppError("Usuario ya existe", 409);
+  return existing.rows[0];
+}
+
 //Registro para usuarios normales
 exports.register = async ({ nombre, email, password }, ctx) => {
 
@@ -28,14 +38,7 @@ exports.register = async ({ nombre, email, password }, ctx) => {
   if (!password) throw new AppError("password es requerido", 400);
 
   //Verifica si existe un usuario con el mismo correo electronico
-  const { rows: existing } = await pool.query(
-    "SELECT id FROM usuarios WHERE email = $1 LIMIT 1;",
-    [email]
-  );
-
-  if (existing.length) {
-    throw new AppError("Email ya registrado", 409);
-  }
+  await searchUserByEmail(email);
 
   //Hashea la contraseña
   const password_hash = await bcrypt.hash(String(password), 10);
@@ -83,12 +86,7 @@ exports.registerCorredor = async ({ email, porcentaje }, ctx) => {
   if(!email || !porcentaje) throw new AppError("El email y el porcentaje del corredor son requeridos", 400);
 
   //Verifica si existe un usuario con el mismo correo electronico
-  const existingUserQ= await pool.query(`
-    SELECT id FROM usuarios WHERE email= $1 LIMIT 1;`
-  , [email])
-
-  //Si existe un usuario con el mismo correo electronico, lanza un error
-  if(existingUserQ.rows.length) throw new AppError("Usuario ya existe", 409);
+  await searchUserByEmail(email);
 
   //Inserta el usuario
   const InsertUserQ = await pool.query(`
@@ -237,7 +235,7 @@ exports.me = async (userId) => {
     id: user.id,
     nombre: user.nombre,
     email: user.email,
-    rol: user.rol === "admin" ? "admin" : "user",
+    rol: user.rol,
     fecha_registro: user.fecha_registro,
   };
 };
@@ -335,11 +333,7 @@ exports.completarRegistro = async ({ token, nombre, telefono, licencia_nro, pass
 exports.invitarAdmin = async ({ email }, ctx) => {
   if (!email) throw new AppError("El email es requerido", 400);
 
-  const existing = await pool.query(
-    "SELECT id FROM usuarios WHERE email = $1 LIMIT 1;",
-    [email]
-  );
-  if (existing.rows.length) throw new AppError("Usuario ya existe", 409);
+  const existing = await searchUserByEmail(email);
 
   const { rows } = await pool.query(`
     INSERT INTO usuarios (email, rol, fecha_registro) VALUES ($1, 'admin', CURRENT_TIMESTAMP) RETURNING id;

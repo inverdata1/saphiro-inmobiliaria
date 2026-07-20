@@ -177,6 +177,7 @@ exports.createInmueble = async (data, files = [], ctx) => {
     latitud,
     longitud,
     caracteristicas,
+    punto_referencia
   } = data;
 
   if (!titulo) throw new AppError("titulo es requerido", 400);
@@ -191,9 +192,9 @@ exports.createInmueble = async (data, files = [], ctx) => {
     const { rows } = await client.query(
       `INSERT INTO inmuebles (
         titulo, descripcion, tipo_inmueble_id, estado_inmueble, precio, moneda,
-        ciudad_id, direccion_exacta, area_m2, corredor_id
+        ciudad_id, direccion_exacta, area_m2, corredor_id, punto_referencia
       )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
       RETURNING *;`,
       [
         titulo,
@@ -206,6 +207,7 @@ exports.createInmueble = async (data, files = [], ctx) => {
         direccion_exacta || null,
         area_m2 ?? null,
         corredor_id ? Number(corredor_id) : null,
+        punto_referencia || null
       ]
     );
     const inmueble = rows[0];

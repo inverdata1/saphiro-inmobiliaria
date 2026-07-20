@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { apiGet } from "../api";
 
-export default function UsuarioPicker({ value, onChange, selectedItem }) {
+export default function UsuarioPicker({ value, onChange, selectedItem, includeAdmins = false }) {
   const [showModal, setShowModal] = useState(false);
   const [search, setSearch] = useState("");
   const [usuarios, setUsuarios] = useState([]);
@@ -9,11 +9,13 @@ export default function UsuarioPicker({ value, onChange, selectedItem }) {
   const debounceRef = useRef(null);
   const loadedRef = useRef(false);
 
+  const endpoint = includeAdmins ? "/usuarios" : "/usuarios/clientes";
+
   async function fetchUsuarios(q) {
     try {
       const params = {};
       if (q) params.q = q;
-      const r = await apiGet("/usuarios/clientes", params);
+      const r = await apiGet(endpoint, params);
       setUsuarios(r.data || []);
       loadedRef.current = true;
     } catch (e) {
@@ -59,7 +61,7 @@ export default function UsuarioPicker({ value, onChange, selectedItem }) {
         >
           {effectiveSelected
             ? `#${effectiveSelected.id} — ${effectiveSelected.nombre} — ${effectiveSelected.email}`
-            : value ? `#${value}` : "Seleccionar cliente"}
+            : value ? `#${value}` : includeAdmins ? "Seleccionar usuario" : "Seleccionar cliente"}
         </button>
         {effectiveSelected ? (
           <button
@@ -80,7 +82,7 @@ export default function UsuarioPicker({ value, onChange, selectedItem }) {
           <div className="w-full sm:max-w-xl max-h-[85vh] flex flex-col rounded-t-2xl sm:rounded-2xl bg-white shadow-lg dark:bg-slate-800 dark:border dark:border-slate-700" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start justify-between p-4 sm:p-6 pb-0">
               <div>
-                <div className="text-lg font-extrabold dark:text-slate-100">Seleccionar cliente</div>
+                <div className="text-lg font-extrabold dark:text-slate-100">{includeAdmins ? "Seleccionar usuario" : "Seleccionar cliente"}</div>
                 <div className="text-sm text-slate-500 dark:text-slate-400">{usuarios.length} resultado(s)</div>
               </div>
               <button
@@ -110,7 +112,7 @@ export default function UsuarioPicker({ value, onChange, selectedItem }) {
                   ))}
                 </div>
               ) : usuarios.length === 0 ? (
-                <div className="text-sm text-slate-500 dark:text-slate-400 text-center py-10">No se encontraron clientes</div>
+                <div className="text-sm text-slate-500 dark:text-slate-400 text-center py-10">{includeAdmins ? "No se encontraron usuarios" : "No se encontraron clientes"}</div>
               ) : (
                 <div className="space-y-2">
                   {usuarios.map((u) => (

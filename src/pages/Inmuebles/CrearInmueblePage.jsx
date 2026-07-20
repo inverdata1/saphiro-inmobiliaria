@@ -197,6 +197,7 @@ export default function CrearInmueblePage() {
         area_m2: form.area_m2 ? Number(form.area_m2) : null,
         ciudad_id: form.ciudad_id ? Number(form.ciudad_id) : null,
         direccion_exacta: form.direccion_exacta || null,
+        punto_referencia: form.punto_referencia || null,
         usuario_id: user?.id ? Number(user.id) : null,
         latitud: form.latitud ? Number(form.latitud) : null,
         longitud: form.longitud ? Number(form.longitud) : null,

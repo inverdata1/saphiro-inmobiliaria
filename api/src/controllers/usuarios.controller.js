@@ -25,3 +25,8 @@ exports.patchUsuario = async (req, res) => {
   const data = await usuariosService.patchUsuario(Number(req.params.id), req.body, buildCtx(req));
   res.json({ ok: true, data });
 };
+
+exports.deleteUsuario = async (req, res) => {
+  const data = await usuariosService.deleteUsuario(Number(req.params.id), buildCtx(req));
+  res.json({ ok: true, data });
+};

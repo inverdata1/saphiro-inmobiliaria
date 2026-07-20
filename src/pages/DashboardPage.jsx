@@ -31,6 +31,7 @@ const MOCK_LATEST = [
 ];
 
 export default function DashboardPage() {
+  useEffect(() => { window.scrollTo(0, 0); }, []);
   const { user } = useAuth();
   const [latestInmuebles, setLatestInmuebles] = useState([]);
   const [err, setErr] = useState("");

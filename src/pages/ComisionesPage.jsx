@@ -71,7 +71,6 @@ export default function ComisionesPage() {
       <div className="flex flex-wrap gap-3 items-end justify-between">
         <div>
           <div className="text-2xl font-extrabold dark:text-slate-100">Comisiones</div>
-          <div className="text-sm text-slate-500 dark:text-slate-400">Listado (filtros + acciones)</div>
         </div>
 
         <div className="flex gap-2 items-end flex-wrap">
@@ -142,7 +141,7 @@ export default function ComisionesPage() {
             },
             {
               key: "empresa_ganancia",
-              header: "Empresa",
+              header: "Ganancia",
               render: (r) => money(r.empresa_ganancia, r.moneda),
             },
             

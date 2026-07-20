@@ -205,6 +205,7 @@ export default function BitacoraPage() {
                 <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Usuario ID</div>
                 <div className="max-w-[360px]">
                   <UsuarioPicker
+                    includeAdmins
                     value={usuarioId}
                     selectedItem={usuarioSel}
                     onChange={(id, item) => {

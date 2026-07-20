@@ -700,8 +700,8 @@ export default function InmuebleDetailPage() {
               <div className="mt-3 sm:mt-4 grid grid-cols-1 sm:grid-cols-2 gap-x-6 sm:gap-x-8 gap-y-1 sm:gap-y-3">
                 {" "}
                 {[
-                  ["Tipo", inmueble.tipo_inmueble || "—"],
-                  ["Operación", estadoLabel],
+                  ["Categoría", inmueble.tipo_inmueble || "—"],
+                  ["Tipo", estadoLabel],
                   ["Estatus", inmueble.estatus || "Disponible"],
                   ["Precio", fmtPrice(inmueble.precio, inmueble.moneda)],
                   ["Área", inmueble.area_m2 ? `${inmueble.area_m2} m²` : "—"],
@@ -830,10 +830,10 @@ export default function InmuebleDetailPage() {
                   />
                 )}{" "}
               </div>{" "}
-              {inmueble.direccion_exacta && (
+              {(inmueble.direccion_exacta || inmueble.punto_referencia) && (
                 <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                   {" "}
-                  📍 {inmueble.direccion_exacta}{" "}
+                  📍 {inmueble.direccion_exacta}{inmueble.punto_referencia ? `. ${inmueble.punto_referencia}` : ""}{" "}
                 </p>
               )}
               {inmueble.google_maps_url && (

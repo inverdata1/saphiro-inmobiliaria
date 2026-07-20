@@ -10,7 +10,7 @@ function fmtPrice(n, moneda) {
   return `$${formatted}`;
 }
 
-export default function InmuebleZonaPicker({ value, onChange, selectedItem }) {
+export default function InmuebleZonaPicker({ value, onChange, selectedItem, showZona = true }) {
   const [estadoId, setEstadoId] = useState("");
   const [ciudadId, setCiudadId] = useState("");
 
@@ -27,7 +27,7 @@ export default function InmuebleZonaPicker({ value, onChange, selectedItem }) {
   const debounceRef = useRef(null);
   const loadedRef = useRef(false);
 
-  async function fetchInmuebles(ciudad, q, { initial = false } = {}) {
+  async function fetchInmueblesPorZona(ciudad, q, { initial = false } = {}) {
     if (initial && !loadedRef.current) setLoading(true);
     try {
       const params = { ciudad_id: ciudad };
@@ -42,7 +42,25 @@ export default function InmuebleZonaPicker({ value, onChange, selectedItem }) {
     }
   }
 
+  async function fetchInmueblesPorNombre(q, { initial = false } = {}) {
+    if (initial && !loadedRef.current) setLoading(true);
+    try {
+      const params = { estatus: "disponible", limit: 50 };
+      if (q) params.q = q;
+      const r = await apiGet("/inmuebles", params);
+      setInmuebles(r.data || []);
+      loadedRef.current = true;
+    } catch (e) {
+      setErr(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const fetchInmuebles = showZona ? fetchInmueblesPorZona : fetchInmueblesPorNombre;
+
   useEffect(() => {
+    if (!showZona) return;
     (async () => {
       try {
         const r = await apiGet("/geo/estados");
@@ -51,10 +69,10 @@ export default function InmuebleZonaPicker({ value, onChange, selectedItem }) {
         setErr(e.message);
       }
     })();
-  }, []);
+  }, [showZona]);
 
   useEffect(() => {
-    if (!estadoId) return;
+    if (!showZona || !estadoId) return;
     setCiudadId(""); onChange?.(null);
     setCiudades([]); setInmuebles([]);
 
@@ -66,27 +84,43 @@ export default function InmuebleZonaPicker({ value, onChange, selectedItem }) {
         setErr(e.message);
       }
     })();
-  }, [estadoId]);
+  }, [estadoId, showZona]);
 
   useEffect(() => {
+    if (!showZona) return;
     if (!ciudadId) return;
     onChange?.(null);
-    fetchInmuebles(ciudadId, "", { initial: true });
-  }, [ciudadId]);
+    fetchInmueblesPorZona(ciudadId, "", { initial: true });
+  }, [ciudadId, showZona]);
 
   useEffect(() => {
-    if (!showModal || !ciudadId) return;
+    if (showZona) return;
+    if (!showModal) return;
 
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     debounceRef.current = setTimeout(() => {
-      fetchInmuebles(ciudadId, search);
+      fetchInmueblesPorNombre(search, { initial: true });
     }, 300);
 
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [search, showModal]);
+  }, [search, showModal, showZona]);
+
+  useEffect(() => {
+    if (!showZona || !showModal || !ciudadId) return;
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    debounceRef.current = setTimeout(() => {
+      fetchInmueblesPorZona(ciudadId, search);
+    }, 300);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [search, showModal, showZona, ciudadId]);
 
   function handleSelect(inmueble) {
     onChange?.(inmueble.id, inmueble);
@@ -110,25 +144,29 @@ export default function InmuebleZonaPicker({ value, onChange, selectedItem }) {
 
   const effectiveSelected = selectedItem;
 
+  const canOpenModal = showZona ? !!ciudadId : true;
+
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-      <div className="flex gap-2">
-        <select className="border rounded-xl px-3 py-2 bg-white dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 text-sm flex-1 sm:flex-none" value={estadoId} onChange={(e) => setEstadoId(e.target.value)}>
-          <option value="">Estado</option>
-          {estados.map((x) => <option key={x.id} value={x.id}>{x.nombre}</option>)}
-        </select>
+      {showZona && (
+        <div className="flex gap-2">
+          <select className="border rounded-xl px-3 py-2 bg-white dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 text-sm flex-1 sm:flex-none" value={estadoId} onChange={(e) => setEstadoId(e.target.value)}>
+            <option value="">Estado</option>
+            {estados.map((x) => <option key={x.id} value={x.id}>{x.nombre}</option>)}
+          </select>
 
-        <select className={`border rounded-xl px-3 py-2 bg-white dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 text-sm transition-opacity flex-1 sm:flex-none ${!estadoId ? "opacity-40" : ""}`} value={ciudadId} onChange={(e) => setCiudadId(e.target.value)} disabled={!estadoId}>
-          <option value="">Ciudad</option>
-          {ciudades.map((x) => <option key={x.id} value={x.id}>{x.nombre}</option>)}
-        </select>
-      </div>
+          <select className={`border rounded-xl px-3 py-2 bg-white dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 text-sm transition-opacity flex-1 sm:flex-none ${!estadoId ? "opacity-40" : ""}`} value={ciudadId} onChange={(e) => setCiudadId(e.target.value)} disabled={!estadoId}>
+            <option value="">Ciudad</option>
+            {ciudades.map((x) => <option key={x.id} value={x.id}>{x.nombre}</option>)}
+          </select>
+        </div>
+      )}
 
-      <div className={`flex items-center gap-1 flex-1 transition-opacity ${!ciudadId ? "opacity-40" : ""}`}>
+      <div className={`flex items-center gap-1 flex-1 transition-opacity ${!canOpenModal ? "opacity-40" : ""}`}>
         <button
           type="button"
           onClick={() => setShowModal(true)}
-          disabled={!ciudadId}
+          disabled={!canOpenModal}
           className="flex-1 text-left border rounded-xl px-3 py-2 bg-white dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 text-sm truncate"
         >
           {effectiveSelected

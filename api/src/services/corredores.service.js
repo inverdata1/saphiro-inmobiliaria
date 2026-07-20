@@ -17,7 +17,7 @@ exports.listCorredores = async () => {
     FROM corredores c
     JOIN usuarios u
     ON u.id = c.usuario_id
-    WHERE u.deleted_at IS NULL
+    WHERE u.deleted_at IS NULL AND u.nombre IS NOT NULL
     ORDER BY c.id ASC;
     `
   );

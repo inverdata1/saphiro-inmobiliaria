@@ -5,7 +5,7 @@ const admin = require("../middleware/admin");
 const c = require("../controllers/auth.controller");
 
 
-router.post("/register/corredor", asyncHandler(c.registerCorredor));
+router.post("/register/corredor", auth, admin, asyncHandler(c.registerCorredor));
 router.post("/register/corredor/reinvitar", auth, admin, asyncHandler(c.reinvitarCorredor));
 router.post("/register/admin/invitar", auth, admin, asyncHandler(c.invitarAdmin));
 router.post("/register/admin/reinvitar", auth, admin, asyncHandler(c.reinvitarAdmin));

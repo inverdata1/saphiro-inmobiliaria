@@ -16,10 +16,17 @@ export default function InmueblesPage() {
   const [search, setSearch] = useState("");
   const [estatus, setEstatus] = useState("");
   const [estadoInmueble, setEstadoInmueble] = useState("");
+  const [estadoId, setEstadoId] = useState("");
+  const [ciudadId, setCiudadId] = useState("");
+  const [tipoInmuebleId, setTipoInmuebleId] = useState("");
   const [min, setMin] = useState("");
   const [max, setMax] = useState("");
   const [sort, setSort] = useState("newest");
   const [view, setView] = useState("list");
+
+  const [estados, setEstados] = useState([]);
+  const [ciudades, setCiudades] = useState([]);
+  const [tiposInmueble, setTiposInmueble] = useState([]);
 
   async function load() {
     setLoading(true);
@@ -30,6 +37,9 @@ export default function InmueblesPage() {
         q: search || undefined,
         estatus: estatus || undefined,
         estado_inmueble: estadoInmueble || undefined,
+        ciudad_id: ciudadId || undefined,
+        estado_id: estadoId || undefined,
+        tipo_inmueble_id: tipoInmuebleId || undefined,
         min: min || undefined,
         max: max || undefined,
         sort: sort || undefined,
@@ -48,6 +58,26 @@ export default function InmueblesPage() {
 
   useEffect(() => { load(); }, []);
 
+  useEffect(() => {
+    apiGet("/tipos")
+      .then((r) => setTiposInmueble(r?.data ?? r ?? []))
+      .catch(() => setTiposInmueble([]));
+  }, []);
+
+  useEffect(() => {
+    apiGet("/geo/estados")
+      .then((r) => setEstados(r?.data ?? r ?? []))
+      .catch(() => setEstados([]));
+  }, []);
+
+  useEffect(() => {
+    if (!estadoId) { setCiudades([]); setCiudadId(""); return; }
+    setCiudadId("");
+    apiGet("/geo/ciudades", { estado_id: estadoId })
+      .then((r) => setCiudades(r?.data ?? r ?? []))
+      .catch(() => setCiudades([]));
+  }, [estadoId]);
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -59,7 +89,7 @@ export default function InmueblesPage() {
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          {(user?.rol !== "cliente" && user) && (
+          {(user?.rol === "corredor" && user) && (
             <button
               onClick={() => navigate("/inmuebles/crear")}
               className="btn-secondary disabled:opacity-60"
@@ -81,6 +111,9 @@ export default function InmueblesPage() {
               setSearch("");
               setEstatus("");
               setEstadoInmueble("");
+              setEstadoId("");
+              setCiudadId("");
+              setTipoInmuebleId("");
               setMin("");
               setMax("");
               setSort("newest");
@@ -92,8 +125,6 @@ export default function InmueblesPage() {
           </button>
         </div>
       </div>
-
-      <ErrorBanner message={err} onClose={() => setErr("")} />
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
         <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
@@ -114,16 +145,45 @@ export default function InmueblesPage() {
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Tipo</label>
+              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Estado</label>
               <select
                 className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                value={estadoInmueble}
-                onChange={(e) => setEstadoInmueble(e.target.value)}
+                value={estadoId}
+                onChange={(e) => setEstadoId(e.target.value)}
+              >
+                <option value="">Todos</option>
+                {estados.map((e) => (
+                  <option key={e.id} value={e.id}>{e.nombre}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Ciudad</label>
+              <select
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 disabled:opacity-50"
+                value={ciudadId}
+                onChange={(e) => setCiudadId(e.target.value)}
+                disabled={!estadoId}
+              >
+                <option value="">{estadoId ? "Todas" : "Selecciona un estado"}</option>
+                {ciudades.map((c) => (
+                  <option key={c.id} value={c.id}>{c.nombre}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Categoría</label>
+              <select
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                value={tipoInmuebleId}
+                onChange={(e) => setTipoInmuebleId(e.target.value)}
               >
                 <option value="">Todas</option>
-                <option value="venta">Venta</option>
-                <option value="alquiler_fijo">Alquiler fijo</option>
-                <option value="vacacional">Vacacional</option>
+                {tiposInmueble.map((t) => (
+                  <option key={t.id} value={t.id}>{t.nombre}</option>
+                ))}
               </select>
             </div>
 
@@ -139,6 +199,20 @@ export default function InmueblesPage() {
                 <option value="reservado">Reservado</option>
                 <option value="vendido">Vendido</option>
                 <option value="alquilado">Alquilado</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Tipo</label>
+              <select
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                value={estadoInmueble}
+                onChange={(e) => setEstadoInmueble(e.target.value)}
+              >
+                <option value="">Todas</option>
+                <option value="venta">Venta</option>
+                <option value="alquiler_fijo">Alquiler fijo</option>
+                <option value="vacacional">Vacacional</option>
               </select>
             </div>
 

@@ -22,8 +22,7 @@ exports.completarRegistroAdmin = async (req, res) => {
 };
 
 exports.registerCorredor = async (req, res) => {
-  const { email, porcentaje } = req.body;
-  await authService.registerCorredor({ email, porcentaje }, buildCtx(req));
+  await authService.registerCorredor(req.body, buildCtx(req));
   res.status(201).json({ ok: true, message: "Corredor registrado" });
 }
 

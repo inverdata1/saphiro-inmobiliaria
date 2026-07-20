@@ -28,6 +28,9 @@ export default function TransaccionesPage() {
   const [corredorId, setCorredorId] = useState("");
   const [corredorSel, setCorredorSel] = useState(null);
 
+  // buscar inmueble
+  const [busquedaModo, setBusquedaModo] = useState("zona");
+
   // crear
   const [inmuebleId, setInmuebleId] = useState(null);
   const [inmuebleSel, setInmuebleSel] = useState(null);
@@ -144,13 +147,29 @@ export default function TransaccionesPage() {
 
       {/* Crear */}
       <div className="mt-5 bg-white border rounded-2xl p-4 shadow-sm dark:bg-slate-800 dark:border-slate-700">
-        <div className="font-bold mb-3 dark:text-slate-100">Crear transacción</div>
+        <div className="flex items-center justify-between mb-3">
+          <div className="font-bold dark:text-slate-100">Crear transacción</div>
+          <select
+            className="border rounded-xl px-3 py-1.5 text-sm bg-white dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600"
+            value={busquedaModo}
+            onChange={(e) => {
+              setBusquedaModo(e.target.value);
+              setInmuebleId(null);
+              setInmuebleSel(null);
+            }}
+          >
+            <option value="zona">Por zona</option>
+            <option value="nombre">Por nombre</option>
+          </select>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
           <div className="md:col-span-6">
-            <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Inmueble (por zona)</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+              {busquedaModo === "zona" ? "Inmueble (por zona)" : "Inmueble (por nombre)"}
+            </div>
             <InmuebleZonaPicker
-              estatus="disponible"
+              showZona={busquedaModo === "zona"}
               value={inmuebleId}
               selectedItem={inmuebleSel}
               onChange={(id, item) => {

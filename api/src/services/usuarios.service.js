@@ -14,6 +14,8 @@ exports.listClientes = async (query) => {
   }
 
   conditions.push(`rol IN ('corredor', 'cliente')`);
+  conditions.push(`nombre IS NOT NULL`);
+  
   const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
 
   values.push(Math.min(Number(limit) || 100, 500));
@@ -49,6 +51,10 @@ exports.listUsuarios = async (query) => {
   if (isAdmin === "true") {
     conditions.push(`rol = 'admin'`);
   }
+
+  conditions.push(`deleted_at IS NULL`);
+
+  conditions.push(`nombre IS NOT NULL`);
 
   const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
 
@@ -104,6 +110,33 @@ exports.createUsuario = async (data, ctx) => {
       usuario_id: ctx.usuario_id,
       tabla_afectada: "usuarios",
       descripcion: `Creación de usuario ${rows[0].id} (${email})`,
+      ip_address: ctx.ip_address,
+      user_agent: ctx.user_agent,
+    });
+  }
+
+  return rows[0];
+};
+
+exports.deleteUsuario = async (id, ctx) => {
+  if (!Number.isInteger(id) || id <= 0) throw new AppError("id inválido", 400);
+
+  const { rows } = await pool.query(
+    `UPDATE usuarios
+     SET deleted_at = NOW()
+     WHERE id = $1
+       AND deleted_at IS NULL
+     RETURNING id;`,
+    [id]
+  );
+
+  if (!rows.length) throw new AppError("Usuario no encontrado", 404);
+
+  if (ctx) {
+    await auditoriaService.registrarDelete({
+      usuario_id: ctx.usuario_id,
+      tabla_afectada: "usuarios",
+      descripcion: `Eliminado usuario ${id}`,
       ip_address: ctx.ip_address,
       user_agent: ctx.user_agent,
     });

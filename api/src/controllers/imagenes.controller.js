@@ -27,6 +27,11 @@ exports.deleteImage = async (req, res) => {
 exports.getImageFile = async (req, res) => {
   const img = await imagenesService.getImageById(Number(req.params.id));
   const filePath = path.join(imagenesService.getUploadsDir(), path.basename(img.ruta_s3));
+  if (!fs.existsSync(filePath)) {
+    const placeholder = path.join(imagenesService.getUploadsDir(), "placeholder.jpg");
+    if (fs.existsSync(placeholder)) return res.sendFile(placeholder);
+    return res.status(404).json({ ok: false, message: "Imagen no encontrada" });
+  }
   res.sendFile(filePath);
 };
 
@@ -38,9 +43,9 @@ exports.getResizedImage = async (req, res) => {
   const q = Math.min(Math.max(parseInt(req.query.q) || 80, 10), 100);
 
   if (!fs.existsSync(filePath)) {
-    return res.sendFile(path.join(imagenesService.getUploadsDir(), "placeholder.jpg")).catch(() => {
-      res.status(404).json({ ok: false, message: "Imagen no encontrada" });
-    });
+    const placeholder = path.join(imagenesService.getUploadsDir(), "placeholder.jpg");
+    if (fs.existsSync(placeholder)) return res.sendFile(placeholder);
+    return res.status(404).json({ ok: false, message: "Imagen no encontrada" });
   }
 
   try {

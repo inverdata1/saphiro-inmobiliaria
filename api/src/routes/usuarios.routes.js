@@ -10,5 +10,6 @@ router.get("/clientes", auth, asyncHandler(c.listClientes));
 router.get("/:id", auth, asyncHandler(c.getUsuarioById));
 router.post("/", auth, admin, asyncHandler(c.createUsuario));
 router.patch("/:id", auth, admin, asyncHandler(c.patchUsuario));
+router.delete("/:id", auth, admin, asyncHandler(c.deleteUsuario));
 
 module.exports = router;
