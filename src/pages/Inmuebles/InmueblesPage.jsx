@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { apiGet } from "../../api";
 import { useAuth } from "../../context/AuthContext";
 import PropertyCard from "../../components/PropertyCard";
@@ -8,14 +8,15 @@ import ErrorBanner from "../../components/ErrorBanner";
 export default function InmueblesPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   useEffect(() => { window.scrollTo(0, 0); }, []);
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
 
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(() => searchParams.get("q") || "");
   const [estatus, setEstatus] = useState("");
-  const [estadoInmueble, setEstadoInmueble] = useState("");
+  const [estadoInmueble, setEstadoInmueble] = useState(() => searchParams.get("estado_inmueble") || "");
   const [estadoId, setEstadoId] = useState("");
   const [ciudadId, setCiudadId] = useState("");
   const [tipoInmuebleId, setTipoInmuebleId] = useState("");
@@ -56,7 +57,26 @@ export default function InmueblesPage() {
     }
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    const q = searchParams.get("q") || "";
+    const est = searchParams.get("estado_inmueble") || "";
+    setSearch(q);
+    setEstadoInmueble(est);
+    
+    setLoading(true);
+    setErr("");
+    apiGet("/inmuebles", {
+      q: q || undefined,
+      estado_inmueble: est || undefined,
+      limit: 100,
+    })
+      .then((r) => {
+        const data = r?.data ?? r;
+        setRows(Array.isArray(data) ? data : []);
+      })
+      .catch((e) => setErr(e.message))
+      .finally(() => setLoading(false));
+  }, [searchParams]);
 
   useEffect(() => {
     apiGet("/tipos")

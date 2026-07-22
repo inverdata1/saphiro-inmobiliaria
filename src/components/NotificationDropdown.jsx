@@ -98,18 +98,35 @@ function timeAgo(fecha) {
 
 export default function NotificationDropdown() {
   const [open, setOpen] = useState(false);
+  const [visible, setVisible] = useState(false);
   const [notificaciones, setNotificaciones] = useState(MOCK_NOTIFICATIONS);
   const ref = useRef(null);
 
   const noLeidas = notificaciones.filter((n) => !n.leida).length;
 
+  function handleToggle() {
+    if (open) {
+      setVisible(false);
+      setTimeout(() => setOpen(false), 200);
+    } else {
+      setOpen(true);
+      requestAnimationFrame(() => setVisible(true));
+    }
+  }
+
   useEffect(() => {
     if (!open) return;
     function handleClick(e) {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target)) {
+        setVisible(false);
+        setTimeout(() => setOpen(false), 200);
+      }
     }
     function handleKey(e) {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") {
+        setVisible(false);
+        setTimeout(() => setOpen(false), 200);
+      }
     }
     document.addEventListener("mousedown", handleClick);
     document.addEventListener("keydown", handleKey);
@@ -126,7 +143,7 @@ export default function NotificationDropdown() {
   return (
     <div className="relative" ref={ref}>
       <button
-        onClick={() => setOpen((v) => !v)}
+        onClick={handleToggle}
         className="relative inline-flex items-center justify-center rounded-full border border-white/20 p-2 text-white hover:bg-white/10 transition-colors"
         aria-label="Notificaciones"
       >
@@ -141,7 +158,7 @@ export default function NotificationDropdown() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-800 z-50 overflow-hidden">
+        <div className={`absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-800 z-50 overflow-hidden transition-all duration-200 ease-out ${visible ? "translate-y-0 opacity-100" : "-translate-y-2 opacity-0"}`}>
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-700">
             <h3 className="text-sm font-bold text-slate-800 dark:text-white">Notificaciones</h3>
             {noLeidas > 0 && (
@@ -154,7 +171,7 @@ export default function NotificationDropdown() {
             )}
           </div>
 
-          <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700">
+          <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700 scrollbar-custom">
             {notificaciones.length === 0 ? (
               <div className="px-4 py-8 text-center">
                 <svg className="mx-auto h-10 w-10 text-slate-300 dark:text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">

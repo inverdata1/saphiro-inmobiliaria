@@ -277,9 +277,7 @@ export default function InmuebleDetailPage() {
     setReviewRating(5);
     setReviewText("");
   };
-  const handleCloseReviewBackdrop = () => setReviewOpen(false);
-  const handleCloseShareBackdrop = () => setShareOpen(false);
-  const stopPropagation = (e) => e.stopPropagation();
+
   const handleToggleMenu = () => {
     setMenuOpen((p) => (p === miResena?.id ? null : miResena?.id));
   };
@@ -675,54 +673,70 @@ export default function InmuebleDetailPage() {
                 </p>{" "}
               </section>
             ) : null}
-            {/* Details table
-             */}{" "}
-            <section className="rounded-xl sm:rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-              {" "}
-              <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                {" "}
+            {/* Detalles table */}
+            <section className="rounded-xl sm:rounded-2xl border border-slate-100 bg-white p-5 sm:p-6 shadow-[0_8px_30px_rgb(0,0,0,0.012)] dark:border-slate-800/60 dark:bg-[#141417] dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)]">
+              <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-50 flex items-center gap-2">
                 <svg
                   className="h-5 w-5 text-blue-500"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
-                  strokeWidth="2"
+                  strokeWidth="2.5"
                 >
-                  {" "}
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                  />{" "}
-                </svg>{" "}
-                Detalles del inmueble{" "}
-              </h2>{" "}
-              <div className="mt-3 sm:mt-4 grid grid-cols-1 sm:grid-cols-2 gap-x-6 sm:gap-x-8 gap-y-1 sm:gap-y-3">
-                {" "}
-                {[
-                  ["Categoría", inmueble.tipo_inmueble || "—"],
-                  ["Tipo", estadoLabel],
-                  ["Estatus", inmueble.estatus || "Disponible"],
-                  ["Precio", fmtPrice(inmueble.precio, inmueble.moneda)],
-                  ["Área", inmueble.area_m2 ? `${inmueble.area_m2} m²` : "—"],
-                  ["Ciudad", inmueble.ciudad || "—"],
-                  ["Estado", inmueble.estado || "—"],
-                ].map(([label, value]) => (
-                  <div
-                    key={label}
-                    className="flex items-center justify-between border-b border-slate-100 py-2.5 dark:border-slate-700/50"
-                  >
-                    {" "}
-                    <span className="text-sm text-slate-500 dark:text-slate-400">
-                      {label}
-                    </span>{" "}
-                    <span className="text-sm font-semibold text-slate-900 dark:text-white">
-                      {" "}
-                      {value}{" "}
-                    </span>{" "}
+                  />
+                </svg>
+                Detalles del inmueble
+              </h2>
+              <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-6">
+                {/* Cluster 1: Clasificación */}
+                <div className="space-y-4">
+                  <h3 className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-550 font-extrabold">Clasificación</h3>
+                  <div className="space-y-3">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-xs text-slate-450 dark:text-slate-500 font-semibold">Categoría</span>
+                      <span className="text-sm font-bold text-slate-850 dark:text-slate-200">{inmueble.tipo_inmueble || "-"}</span>
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-xs text-slate-450 dark:text-slate-500 font-semibold">Tipo de Negocio</span>
+                      <span className="text-sm font-bold text-slate-850 dark:text-slate-200">{estadoLabel}</span>
+                    </div>
                   </div>
-                ))}{" "}
-              </div>{" "}
+                </div>
+
+                {/* Cluster 2: Ubicación */}
+                <div className="space-y-4">
+                  <h3 className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-550 font-extrabold">Ubicación</h3>
+                  <div className="space-y-3">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-xs text-slate-450 dark:text-slate-500 font-semibold">Ciudad</span>
+                      <span className="text-sm font-bold text-slate-850 dark:text-slate-200">{inmueble.ciudad || "-"}</span>
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-xs text-slate-450 dark:text-slate-500 font-semibold">Estado / Provincia</span>
+                      <span className="text-sm font-bold text-slate-850 dark:text-slate-200">{inmueble.estado || "-"}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Cluster 3: Especificaciones Clave */}
+                <div className="space-y-4">
+                  <h3 className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-550 font-extrabold">Dimensión & Estatus</h3>
+                  <div className="space-y-3">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-xs text-slate-450 dark:text-slate-500 font-semibold">Área Construida</span>
+                      <span className="text-sm font-bold text-slate-850 dark:text-slate-200">{inmueble.area_m2 ? `${inmueble.area_m2} m²` : "-"}</span>
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-xs text-slate-450 dark:text-slate-500 font-semibold">Estatus del Inmueble</span>
+                      <span className="text-sm font-bold text-slate-850 dark:text-slate-200 capitalize">{inmueble.estatus || "Disponible"}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </section>
             {/* Amenities / Features
              */}{" "}
@@ -784,7 +798,7 @@ export default function InmuebleDetailPage() {
               )}{" "}
             </section>{" "}
           </div>
-          {/* Right column — Map + Extras
+          {/* Right column - Map + Extras
            */}{" "}
           <div className="space-y-6">
             {/* Map
@@ -1039,11 +1053,9 @@ export default function InmuebleDetailPage() {
       {reviewOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-          onMouseDown={handleCloseReviewBackdrop}
         >
           <div
-            className="w-full max-w-md mx-4 rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-800 max-h-[85vh] overflow-y-auto"
-            onMouseDown={stopPropagation}
+            className="w-full max-w-md mx-4 rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-800 max-h-[85vh] overflow-y-auto scrollbar-custom"
           >
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-slate-900 dark:text-white">
@@ -1152,12 +1164,10 @@ export default function InmuebleDetailPage() {
       {shareOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-          onMouseDown={handleCloseShareBackdrop}
         >
           {" "}
           <div
-            className="w-full max-w-md mx-4 rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-800 max-h-[85vh] overflow-y-auto"
-            onMouseDown={stopPropagation}
+            className="w-full max-w-md mx-4 rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-800 max-h-[85vh] overflow-y-auto scrollbar-custom"
           >
             {" "}
             <div className="flex items-center justify-between mb-4">

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { apiGet } from "../api";
+import Modal from "./Modal";
 
 export default function CorredorPicker({ value, onChange, selectedItem }) {
   const [showModal, setShowModal] = useState(false);
@@ -11,7 +12,7 @@ export default function CorredorPicker({ value, onChange, selectedItem }) {
 
   async function fetchCorredores(q) {
     try {
-      const params = {};
+      const params = { };
       if (q) params.q = q;
       const r = await apiGet("/corredores", params);
       setCorredores(r.data || []);
@@ -31,7 +32,6 @@ export default function CorredorPicker({ value, onChange, selectedItem }) {
 
   useEffect(() => {
     if (!showModal) return;
-    if (!search) return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => fetchCorredores(search), 300);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
@@ -59,8 +59,8 @@ export default function CorredorPicker({ value, onChange, selectedItem }) {
         >
           {effectiveSelected ? (
             <div className="truncate">
-              <span className="sm:hidden">#{effectiveSelected.id} — {effectiveSelected.corredor_nombre}</span>
-              <span className="hidden sm:inline">#{effectiveSelected.id} — {effectiveSelected.corredor_nombre} — {effectiveSelected.corredor_email}</span>
+              <span className="sm:hidden">#{effectiveSelected.id} - {effectiveSelected.corredor_nombre}</span>
+              <span className="hidden sm:inline">#{effectiveSelected.id} - {effectiveSelected.corredor_nombre} - {effectiveSelected.corredor_email}</span>
             </div>
           ) : value ? `#${value}` : "Seleccionar corredor"}
         </button>
@@ -78,9 +78,7 @@ export default function CorredorPicker({ value, onChange, selectedItem }) {
         ) : null}
       </div>
 
-      {showModal ? (
-        <div className="fixed inset-0 z-40 flex items-end justify-center sm:grid sm:place-items-center bg-black/40 sm:p-4" onClick={() => { setShowModal(false); setSearch(""); }}>
-          <div className="w-full sm:max-w-xl max-h-[85vh] flex flex-col rounded-t-2xl sm:rounded-2xl bg-white shadow-lg dark:bg-slate-800 dark:border dark:border-slate-700" onClick={(e) => e.stopPropagation()}>
+      <Modal open={showModal} onClose={() => { setShowModal(false); setSearch(""); }} backdropClassName="flex items-end justify-center sm:grid sm:place-items-center" className="w-full sm:max-w-xl max-h-[85vh] flex flex-col rounded-t-2xl sm:rounded-2xl bg-white shadow-lg dark:bg-slate-800 dark:border dark:border-slate-700">
             <div className="flex items-start justify-between p-4 sm:p-6 pb-0">
               <div>
                 <div className="text-lg font-extrabold dark:text-slate-100">Seleccionar corredor</div>
@@ -105,7 +103,7 @@ export default function CorredorPicker({ value, onChange, selectedItem }) {
               />
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6 pt-4">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 pt-4 scrollbar-custom">
               {loading ? (
                 <div className="space-y-3">
                   {Array.from({ length: 5 }).map((_, idx) => (
@@ -132,7 +130,7 @@ export default function CorredorPicker({ value, onChange, selectedItem }) {
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">{c.corredor_nombre || "Sin nombre"}</div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400 truncate">{c.corredor_email || "—"}</div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400 truncate">{c.corredor_email || "-"}</div>
                       </div>
                       <div className="text-right shrink-0">
                         <div className="text-xs text-slate-400 dark:text-slate-500">#{c.id}</div>
@@ -152,9 +150,7 @@ export default function CorredorPicker({ value, onChange, selectedItem }) {
                 </div>
               )}
             </div>
-          </div>
-        </div>
-      ) : null}
+      </Modal>
     </>
   );
 }

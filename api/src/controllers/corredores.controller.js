@@ -1,7 +1,7 @@
 const corredoresService = require("../services/corredores.service");
 
 exports.listCorredores = async (req, res) => {
-  const data = await corredoresService.listCorredores(req.query.q);
+  const data = await corredoresService.listCorredores(req.query);
   res.json({ ok: true, data });
 };
 

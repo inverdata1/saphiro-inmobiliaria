@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { apiGet } from "../api";
+import Modal from "./Modal";
 
 function fmtPrice(n, moneda) {
   const num = Number(n || 0);
@@ -170,7 +171,7 @@ export default function InmuebleZonaPicker({ value, onChange, selectedItem, show
           className="flex-1 text-left border rounded-xl px-3 py-2 bg-white dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 text-sm truncate"
         >
           {effectiveSelected
-            ? `#${effectiveSelected.id} — ${effectiveSelected.titulo} — ${fmtPrice(effectiveSelected.precio, effectiveSelected.moneda)}`
+            ? `#${effectiveSelected.id} - ${effectiveSelected.titulo} - ${fmtPrice(effectiveSelected.precio, effectiveSelected.moneda)}`
             : value ? `#${value}` : "Inmueble"}
         </button>
         {effectiveSelected ? (
@@ -187,9 +188,7 @@ export default function InmuebleZonaPicker({ value, onChange, selectedItem, show
         ) : null}
       </div>
 
-      {showModal ? (
-        <div className="fixed inset-0 z-40 flex items-end justify-center sm:grid sm:place-items-center bg-black/40 sm:p-4" onClick={() => { setShowModal(false); setSearch(""); }}>
-          <div className="w-full sm:max-w-3xl max-h-[85vh] flex flex-col rounded-t-2xl sm:rounded-2xl bg-white shadow-lg dark:bg-slate-800 dark:border dark:border-slate-700" onClick={(e) => e.stopPropagation()}>
+      <Modal open={showModal} onClose={() => { setShowModal(false); setSearch(""); }} backdropClassName="flex items-end justify-center sm:grid sm:place-items-center" className="w-full sm:max-w-3xl max-h-[85vh] flex flex-col rounded-t-2xl sm:rounded-2xl bg-white shadow-lg dark:bg-slate-800 dark:border dark:border-slate-700">
             <div className="flex items-start justify-between p-4 sm:p-6 pb-0">
               <div>
                 <div className="text-lg font-extrabold dark:text-slate-100">Seleccionar inmueble</div>
@@ -214,7 +213,7 @@ export default function InmuebleZonaPicker({ value, onChange, selectedItem, show
               />
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6 pt-4">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 pt-4 scrollbar-custom">
               {loading ? (
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {Array.from({ length: 4 }).map((_, idx) => (
@@ -260,7 +259,7 @@ export default function InmuebleZonaPicker({ value, onChange, selectedItem, show
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
                             <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 line-clamp-2">{i.titulo || "Sin título"}</h3>
-                            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{i.ciudad || "—"}</p>
+                             <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{i.ciudad || "-"}</p>
                           </div>
                           <div className="text-right shrink-0">
                             <div className="text-sm font-bold text-slate-900 dark:text-slate-100">
@@ -270,12 +269,22 @@ export default function InmuebleZonaPicker({ value, onChange, selectedItem, show
                           </div>
                         </div>
 
-                        <div className="mt-auto flex flex-wrap gap-1.5 text-[11px] text-slate-600 dark:text-slate-400">
+                        <div className="mt-auto flex flex-wrap gap-1.5 text-[11px] text-slate-600 dark:text-slate-450">
                           {i.area_m2 ? (
-                            <span className="rounded-full border border-slate-200 px-2 py-0.5 dark:border-slate-600">📐 {i.area_m2} m²</span>
+                            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2.5 py-0.5 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/40">
+                              <svg className="h-3 w-3 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 19L20 3M8 15l2 2M11 12l2 2M14 9l2 2M17 6l2 2" />
+                              </svg>
+                              <span>{i.area_m2} m²</span>
+                            </span>
                           ) : null}
                           {i.corredor_id ? (
-                            <span className="rounded-full border border-slate-200 px-2 py-0.5 dark:border-slate-600">👤 Corredor</span>
+                            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2.5 py-0.5 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/40">
+                              <svg className="h-3 w-3 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
+                              <span>Corredor</span>
+                            </span>
                           ) : null}
                         </div>
                       </div>
@@ -284,9 +293,7 @@ export default function InmuebleZonaPicker({ value, onChange, selectedItem, show
                 </div>
               )}
             </div>
-          </div>
-        </div>
-      ) : null}
+      </Modal>
 
       {err ? <div className="text-xs text-red-600 dark:text-red-400">{err}</div> : null}
     </div>

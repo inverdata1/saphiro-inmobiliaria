@@ -133,7 +133,7 @@ export default function ComisionesPage() {
               render: (r) => formatDateTime(r.fecha_pago),
             },
 
-            { key: "porcentaje_aplicado", header: "% Comisión", render: (r) => `${r.porcentaje_aplicado ?? "—"}%` },
+            { key: "porcentaje_aplicado", header: "% Comisión", render: (r) => `${r.porcentaje_aplicado ?? "-"}%` },
             {
               key: "monto_comision",
               header: "Comisión",

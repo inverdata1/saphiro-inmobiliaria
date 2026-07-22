@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { apiGet } from "../api";
+import Modal from "./Modal";
 
 export default function UsuarioPicker({ value, onChange, selectedItem, includeAdmins = false }) {
   const [showModal, setShowModal] = useState(false);
@@ -13,7 +14,7 @@ export default function UsuarioPicker({ value, onChange, selectedItem, includeAd
 
   async function fetchUsuarios(q) {
     try {
-      const params = {};
+      const params = { limit: 20, offset: 0 };
       if (q) params.q = q;
       const r = await apiGet(endpoint, params);
       setUsuarios(r.data || []);
@@ -33,7 +34,6 @@ export default function UsuarioPicker({ value, onChange, selectedItem, includeAd
 
   useEffect(() => {
     if (!showModal) return;
-    if (!search) return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => fetchUsuarios(search), 300);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
@@ -60,7 +60,7 @@ export default function UsuarioPicker({ value, onChange, selectedItem, includeAd
           className="flex-1 text-left border rounded-xl px-3 py-2 bg-white dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 text-sm truncate"
         >
           {effectiveSelected
-            ? `#${effectiveSelected.id} — ${effectiveSelected.nombre} — ${effectiveSelected.email}`
+            ? `#${effectiveSelected.id} - ${effectiveSelected.nombre} - ${effectiveSelected.email}`
             : value ? `#${value}` : includeAdmins ? "Seleccionar usuario" : "Seleccionar cliente"}
         </button>
         {effectiveSelected ? (
@@ -77,9 +77,7 @@ export default function UsuarioPicker({ value, onChange, selectedItem, includeAd
         ) : null}
       </div>
 
-      {showModal ? (
-        <div className="fixed inset-0 z-40 flex items-end justify-center sm:grid sm:place-items-center bg-black/40 sm:p-4" onClick={() => { setShowModal(false); setSearch(""); }}>
-          <div className="w-full sm:max-w-xl max-h-[85vh] flex flex-col rounded-t-2xl sm:rounded-2xl bg-white shadow-lg dark:bg-slate-800 dark:border dark:border-slate-700" onClick={(e) => e.stopPropagation()}>
+      <Modal open={showModal} onClose={() => { setShowModal(false); setSearch(""); }} backdropClassName="flex items-end justify-center sm:grid sm:place-items-center" className="w-full sm:max-w-xl max-h-[85vh] flex flex-col rounded-t-2xl sm:rounded-2xl bg-white shadow-lg dark:bg-slate-800 dark:border dark:border-slate-700">
             <div className="flex items-start justify-between p-4 sm:p-6 pb-0">
               <div>
                 <div className="text-lg font-extrabold dark:text-slate-100">{includeAdmins ? "Seleccionar usuario" : "Seleccionar cliente"}</div>
@@ -104,7 +102,7 @@ export default function UsuarioPicker({ value, onChange, selectedItem, includeAd
               />
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6 pt-4">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 pt-4 scrollbar-custom">
               {loading ? (
                 <div className="space-y-3">
                   {Array.from({ length: 5 }).map((_, idx) => (
@@ -131,7 +129,7 @@ export default function UsuarioPicker({ value, onChange, selectedItem, includeAd
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">{u.nombre || "Sin nombre"}</div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400 truncate">{u.email || "—"}</div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400 truncate">{u.email || "-"}</div>
                       </div>
                       <div className="text-right shrink-0">
                         <div className="text-xs text-slate-400 dark:text-slate-500">#{u.id}</div>
@@ -151,9 +149,7 @@ export default function UsuarioPicker({ value, onChange, selectedItem, includeAd
                 </div>
               )}
             </div>
-          </div>
-        </div>
-      ) : null}
+      </Modal>
     </>
   );
 }

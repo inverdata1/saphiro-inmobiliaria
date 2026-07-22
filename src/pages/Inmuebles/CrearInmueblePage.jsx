@@ -387,8 +387,8 @@ export default function CrearInmueblePage() {
               <div ref={mapRef} className="h-full w-full" />
             </div>
             <div className="mt-2 flex gap-4 text-xs text-slate-500 dark:text-slate-400">
-              <span>Latitud: {form.latitud || "—"}</span>
-              <span>Longitud: {form.longitud || "—"}</span>
+              <span>Latitud: {form.latitud || "-"}</span>
+              <span>Longitud: {form.longitud || "-"}</span>
             </div>
             {fieldErrors.ubicacion && <p className={errMsgCls}>{fieldErrors.ubicacion}</p>}
           </div>

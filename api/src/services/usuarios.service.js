@@ -38,7 +38,7 @@ exports.listClientes = async (query) => {
 };
 
 exports.listUsuarios = async (query) => {
-  const { q, limit = 100, offset = 0, isAdmin } = query;
+  const { q, limit = 100, offset = 0, isAdmin, allUsuarios } = query;
 
   const conditions = [];
   const values = [];
@@ -52,9 +52,11 @@ exports.listUsuarios = async (query) => {
     conditions.push(`rol = 'admin'`);
   }
 
-  conditions.push(`deleted_at IS NULL`);
+  if (allUsuarios !== "true") {
+    conditions.push(`nombre IS NOT NULL`);
+  }
 
-  conditions.push(`nombre IS NOT NULL`);
+  conditions.push(`deleted_at IS NULL`);
 
   const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
 

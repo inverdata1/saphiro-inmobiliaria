@@ -1,20 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme {
+  --font-sans: "Outfit", "Inter", system-ui, sans-serif;
+}
+
 @layer base {
   html {
     scroll-behavior: smooth;
-    font-size: 17px;
+    font-size: 16px;
   }
 
   body {
-    @apply min-h-screen bg-slate-50 text-slate-900 antialiased dark:bg-slate-900 dark:text-slate-100;
+    /* Premium pastel blue background for light mode and elegant blue-slate (slate-900) for dark mode */
+    @apply min-h-screen bg-blue-50/45 text-slate-900 antialiased dark:bg-slate-900 dark:text-slate-100;
     margin: 0;
+    transition: background-color 450ms cubic-bezier(0.4, 0, 0.2, 1), color 450ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   a {
-    @apply font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300;
+    @apply font-semibold text-blue-600 hover:text-blue-700 transition-colors duration-200 dark:text-blue-400 dark:hover:text-blue-300;
   }
 
   code {
@@ -22,31 +29,59 @@
       "Liberation Mono", "Courier New", monospace;
   }
 
-  @media (prefers-reduced-motion: no-preference) {
-    *,
-    *::before,
-    *::after {
-      transition-property: background-color;
-      transition-duration: 0.4s;
-      transition-timing-function: ease;
-    }
+  /* Global scrollbars for Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+  .dark * {
+    scrollbar-color: #334155 transparent;
+  }
+
+  /* Global scrollbars for Webkit browsers (Chrome, Safari, Edge) */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: #94a3b8;
+  }
+  .dark ::-webkit-scrollbar-thumb {
+    background-color: #334155;
+  }
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background-color: #475569;
   }
 }
 
 @layer utilities {
   .card {
-    @apply bg-white border border-slate-200 rounded-2xl shadow-sm dark:bg-slate-800 dark:border-slate-700;
+    @apply bg-white border border-slate-100 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.015)] dark:bg-[#141417] dark:border-slate-800/60 dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)];
+    /* Split transition: 450ms silky-smooth colors, 200ms snappy tactile hover effects */
+    transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 200ms cubic-bezier(0.16, 1, 0.3, 1), background-color 450ms cubic-bezier(0.4, 0, 0.2, 1), border-color 450ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm
-      font-semibold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm
+      font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.98] shadow-sm hover:shadow-[0_4px_12px_rgba(37,99,235,0.2)] dark:bg-purple-600 dark:hover:bg-purple-700;
+    /* Split transition: 450ms colors, 150ms active click scales */
+    transition: background-color 450ms cubic-bezier(0.4, 0, 0.2, 1), border-color 450ms cubic-bezier(0.4, 0, 0.2, 1), color 450ms cubic-bezier(0.4, 0, 0.2, 1), transform 150ms cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm
-      font-medium text-blue-700 bg-white border border-blue-200 hover:bg-blue-50
-      dark:text-blue-300 dark:bg-slate-800 dark:border-slate-600 dark:hover:bg-slate-700;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm
+      font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 active:scale-[0.98]
+      dark:text-slate-200 dark:bg-[#1c1c21] dark:border-slate-800 dark:hover:bg-[#25252b];
+    /* Split transition: 450ms colors, 150ms active click scales */
+    transition: background-color 450ms cubic-bezier(0.4, 0, 0.2, 1), border-color 450ms cubic-bezier(0.4, 0, 0.2, 1), color 450ms cubic-bezier(0.4, 0, 0.2, 1), transform 150ms cubic-bezier(0.16, 1, 0.3, 1);
   }
 }
-

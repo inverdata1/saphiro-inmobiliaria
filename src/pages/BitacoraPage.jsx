@@ -35,13 +35,13 @@ export default function BitacoraPage() {
   const [dashHasta, setDashHasta] = useState("");
 
   const cards = [
-    { title: "Transacciones", value: kpis?.transacciones_count ?? "—" },
-    { title: "Monto total", value: kpis ? money(kpis.monto_total_sum, moneda) : "—" },
-    { title: "Comisiones", value: kpis ? money(kpis.comision_total_sum, moneda) : "—" },
-    { title: "Ganancia empresa", value: kpis ? money(kpis.ganancia_empresa_sum, moneda) : "—" },
-    { title: "Transacciones Pagadas", value: kpis ? money(kpis.monto_total_pagado, moneda) : "—" },
-    { title: "Transacciones Pendientes", value: kpis ? money(kpis.monto_total_pendiente, moneda) : "—" },
-    { title: "pago promedio", value: kpis ? money(kpis.ticket_promedio, moneda) : "—" },
+    { title: "Transacciones", value: kpis?.transacciones_count ?? "-" },
+    { title: "Monto total", value: kpis ? money(kpis.monto_total_sum, moneda) : "-" },
+    { title: "Comisiones", value: kpis ? money(kpis.comision_total_sum, moneda) : "-" },
+    { title: "Ganancia empresa", value: kpis ? money(kpis.ganancia_empresa_sum, moneda) : "-" },
+    { title: "Transacciones Pagadas", value: kpis ? money(kpis.monto_total_pagado, moneda) : "-" },
+    { title: "Transacciones Pendientes", value: kpis ? money(kpis.monto_total_pendiente, moneda) : "-" },
+    { title: "pago promedio", value: kpis ? money(kpis.ticket_promedio, moneda) : "-" },
   ];
 
   async function load() {

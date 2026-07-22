@@ -4,6 +4,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import GuestRoute from "./components/GuestRoute";
 
 import DashboardPage from "./pages/DashboardPage";
+import InicioPage from "./pages/InicioPage";
 import InmueblesPage from "./pages/Inmuebles/InmueblesPage";
 import InmuebleDetailPage from "./pages/Inmuebles/InmuebleDetailPage";
 import CrearInmueblePage from "./pages/Inmuebles/CrearInmueblePage";
@@ -26,7 +27,8 @@ export default function App() {
       <Navbar />
       <Routes>
         {/* ── Públicas (sin auth) ── */}
-        <Route path="/" element={<DashboardPage />} />
+        <Route path="/" element={<InicioPage />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/inmuebles" element={<InmueblesPage />} />
         <Route path="/inmuebles/:id" element={<InmuebleDetailPage />} />
 
@@ -34,8 +36,8 @@ export default function App() {
         <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
         <Route path="/register" element={<GuestRoute><RegisterPage /></GuestRoute>} />
         <Route path="/forgot-password" element={<GuestRoute><ForgotPasswordPage /></GuestRoute>} />
-        <Route path="/corredores/registro" element={<GuestRoute><RegistroCorredorPage /></GuestRoute>} />
-        <Route path="/administradores/registro" element={<GuestRoute><RegistroAdminPage /></GuestRoute>} />
+        <Route path="/corredores/registro" element={<RegistroCorredorPage />} />
+        <Route path="/administradores/registro" element={<RegistroAdminPage />} />
 
         {/* ── Clientes ── */}
         <Route path="/guardados" element={<ProtectedRoute roles={["cliente", "corredor"]}><GuardadosPage /></ProtectedRoute>} />

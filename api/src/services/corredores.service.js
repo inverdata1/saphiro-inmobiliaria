@@ -1,7 +1,27 @@
 const pool = require("../db/pool");
 const AppError = require("../utils/AppError");
 
-exports.listCorredores = async () => {
+exports.listCorredores = async (query) => {
+  const { q, limit = 100, offset = 0} = query;
+  const values= [];
+
+  const AllCorredores= Boolean(query.allCorredores);
+
+  const conditions = [`u.deleted_at IS NULL`];
+
+  if (q) {
+    values.push(`%${q}%`);
+    conditions.push(`(nombre ILIKE $1 OR email ILIKE $1)`);
+  }
+
+  if(!AllCorredores){
+    conditions.push(`u.nombre IS NOT NULL`)
+  }
+
+  values.push(Math.min(Number(limit) || 100, 500));
+  const limitIdx = values.length;
+  values.push(Math.max(Number(offset) || 0, 0));
+  const offsetIdx = values.length;
 
   const { rows } = await pool.query(
     `
@@ -17,11 +37,12 @@ exports.listCorredores = async () => {
     FROM corredores c
     JOIN usuarios u
     ON u.id = c.usuario_id
-    WHERE u.deleted_at IS NULL AND u.nombre IS NOT NULL
-    ORDER BY c.id ASC;
-    `
+    WHERE ${conditions.join(" AND ")}
+    ORDER BY c.id ASC
+    LIMIT $${limitIdx} OFFSET $${offsetIdx};
+    `,
+    values
   );
-  console.log(rows);
   return rows;
 };
 

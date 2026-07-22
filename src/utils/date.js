@@ -12,7 +12,7 @@ export function monthRange(date = new Date()) {
 }
 
 export function formatDate(d) {
-  if (!d) return "—";
+  if (!d) return "-";
   return new Date(d).toLocaleDateString("es-DO", {
     day: "2-digit",
     month: "2-digit",
@@ -21,7 +21,7 @@ export function formatDate(d) {
 }
 
 export function formatDateTime(d) {
-  if (!d) return "—";
+  if (!d) return "-";
   const date = new Date(d).toLocaleDateString("es-DO", {
     day: "2-digit",
     month: "2-digit",

@@ -179,8 +179,8 @@ export default function TransaccionesPage() {
             />
             {inmuebleSel ? (
               <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                Corredor: <b>{inmuebleSel.corredor_id ?? "—"}</b> · Estatus:{" "}
-                <b>{inmuebleSel.estatus ?? "—"}</b>
+                Corredor: <b>{inmuebleSel.corredor_id ?? "-"}</b> · Estatus:{" "}
+                <b>{inmuebleSel.estatus ?? "-"}</b>
               </div>
             ) : null}
           </div>
@@ -284,10 +284,10 @@ export default function TransaccionesPage() {
             { key: "tipo_operacion", header: "Tipo" },
             { key: "monto_total", header: "Monto", render: (r) => money(r.monto_total, r.moneda) },
             { key: "inmueble_titulo", header: "Inmueble" },
-            { key: "corredor_id", header: "ID Corredor", render: (r) => r.corredor_id || "—" },
-            { key: "corredor_nombre", header: "Corredor", render: (r) => r.corredor_nombre || "—" },
+            { key: "corredor_id", header: "ID Corredor", render: (r) => r.corredor_id || "-" },
+            { key: "corredor_nombre", header: "Corredor", render: (r) => r.corredor_nombre || "-" },
             { key: "cliente_nombre", header: "Cliente" },
-            { key: "cliente_id", header: "ID Cliente", render: (r) => r.cliente_id || "—" },
+            { key: "cliente_id", header: "ID Cliente", render: (r) => r.cliente_id || "-" },
             { key: "monto_comision", header: "Comisión", render: (r) => money(r.monto_comision, r.moneda) },
             { key: "empresa_ganancia", header: "Empresa", render: (r) => money(r.empresa_ganancia, r.moneda) },
             { key: "estatus_pago", header: "Pago" },

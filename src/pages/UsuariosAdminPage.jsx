@@ -3,6 +3,7 @@ import { apiGet, apiPost, apiDelete } from "../api";
 import DataTable from "../components/DataTable";
 import { formatDate } from "../utils/date";
 import ErrorBanner from "../components/ErrorBanner";
+import Modal from "../components/Modal";
 
 export default function UsuariosAdminPage() {
   const [rows, setRows] = useState([]);
@@ -15,17 +16,18 @@ export default function UsuariosAdminPage() {
   const [createEmail, setCreateEmail] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [resettingId, setResettingId] = useState(null);
+  const [page, setPage] = useState(1);
+  const limit = 20;
 
-  const filtered = rows.filter(
-    (r) =>
-      r.nombre?.toLowerCase().includes(search.toLowerCase()) ||
-      r.email?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = rows;
 
-  async function load() {
+  async function load(q, p) {
     setFetching(true);
     try {
-      const res = await apiGet("/usuarios?isAdmin=true");
+      const offset = ((p || page) - 1) * limit;
+      const params = new URLSearchParams({ isAdmin: "true", limit: String(limit), offset: String(offset) });
+      if (q) params.set("q", q);
+      const res = await apiGet(`/usuarios?${params}`);
       setRows(res.data || []);
     } catch (e) {
       setErr(e.message);
@@ -35,7 +37,7 @@ export default function UsuariosAdminPage() {
   }
 
   useEffect(() => {
-    load();
+    load(search, 1);
   }, []);
 
   async function handleCreate() {
@@ -48,7 +50,8 @@ export default function UsuariosAdminPage() {
       });
       setCreateEmail("");
       setShowCreate(false);
-      await load();
+      setPage(1);
+      await load(search, 1);
     } catch (e) {
       setErr(e.message);
     } finally {
@@ -65,7 +68,7 @@ export default function UsuariosAdminPage() {
     setErr("");
     try {
       await apiPost("/auth/register/admin/reinvitar", { id });
-      await load();
+      await load(search, page);
     } catch (e) {
       setErr(e.message);
     } finally {
@@ -96,7 +99,7 @@ export default function UsuariosAdminPage() {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={load}
+            onClick={() => load(search, page)}
             disabled={fetching}
             className="rounded-xl border border-slate-200 p-2 text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 disabled:opacity-50"
             title="Recargar"
@@ -119,6 +122,12 @@ export default function UsuariosAdminPage() {
           placeholder="Buscar por nombre o email…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              setPage(1);
+              load(search, 1);
+            }
+          }}
         />
       </div>
 
@@ -126,7 +135,7 @@ export default function UsuariosAdminPage() {
         <DataTable
           columns={[
             { key: "id", header: "ID" },
-            { key: "nombre", header: "Nombre", render: (r) => r.nombre || "—" },
+            { key: "nombre", header: "Nombre", render: (r) => r.nombre || "-" },
             { key: "email", header: "Email" },
             {
               key: "fecha_registro",
@@ -182,11 +191,28 @@ export default function UsuariosAdminPage() {
           ]}
           rows={filtered}
         />
+        <div className="mt-4 flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
+          <span>Página {page}</span>
+          <div className="flex gap-2">
+            <button
+              disabled={page <= 1 || fetching}
+              onClick={() => { const p = page - 1; setPage(p); load(search, p); }}
+              className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+            >
+              ← Anterior
+            </button>
+            <button
+              disabled={rows.length < limit || fetching}
+              onClick={() => { const p = page + 1; setPage(p); load(search, p); }}
+              className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+            >
+              Siguiente →
+            </button>
+          </div>
+        </div>
       </div>
 
-      {showCreate ? (
-        <div className="fixed inset-0 z-40 grid place-items-center bg-black/40 p-4">
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg dark:bg-slate-800 dark:border dark:border-slate-700">
+      <Modal open={showCreate} onClose={() => { setShowCreate(false); setCreateEmail(""); }} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg dark:bg-slate-800 dark:border dark:border-slate-700">
             <div className="flex items-start justify-between">
               <div>
                 <div className="text-lg font-extrabold dark:text-slate-100">Crear administrador</div>
@@ -231,13 +257,9 @@ export default function UsuariosAdminPage() {
                 </button>
               </div>
             </div>
-          </div>
-        </div>
-      ) : null}
+      </Modal>
 
-      {showView ? (
-        <div className="fixed inset-0 z-40 grid place-items-center bg-black/40 p-4" onClick={() => setShowView(null)}>
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg dark:bg-slate-800 dark:border dark:border-slate-700" onClick={(e) => e.stopPropagation()}>
+      <Modal open={!!showView} onClose={() => setShowView(null)} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg dark:bg-slate-800 dark:border dark:border-slate-700">
             <div className="flex items-start justify-between">
               <div>
                 <div className="text-lg font-extrabold dark:text-slate-100">Datos del usuario</div>
@@ -254,10 +276,10 @@ export default function UsuariosAdminPage() {
             </div>
             <div className="mt-5 space-y-3">
               {[
-                ["ID", showView.id],
-                ["Nombre", showView.nombre],
-                ["Email", showView.email],
-                ["Fecha de registro", formatDate(showView.fecha_registro)],
+                ["ID", showView?.id],
+                ["Nombre", showView?.nombre],
+                ["Email", showView?.email],
+                ["Fecha de registro", formatDate(showView?.fecha_registro)],
               ].map(([label, value]) => (
                 <div key={label} className="flex justify-between border-b border-slate-100 pb-2 dark:border-slate-700">
                   <span className="text-sm text-slate-500 dark:text-slate-400">{label}</span>
@@ -274,16 +296,12 @@ export default function UsuariosAdminPage() {
                 Cerrar
               </button>
             </div>
-          </div>
-        </div>
-      ) : null}
+      </Modal>
 
-      {deleteTarget ? (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" onClick={() => setDeleteTarget(null)}>
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg dark:bg-slate-800 dark:border dark:border-slate-700" onClick={(e) => e.stopPropagation()}>
+      <Modal open={!!deleteTarget} onClose={() => setDeleteTarget(null)} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg dark:bg-slate-800 dark:border dark:border-slate-700">
             <div className="text-lg font-extrabold dark:text-slate-100">¿Eliminar usuario?</div>
             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-              Esta acción no se puede deshacer. Se eliminará a <strong>{deleteTarget.nombre}</strong> ({deleteTarget.email}) del sistema.
+              Esta acción no se puede deshacer. Se eliminará a <strong>{deleteTarget?.nombre}</strong> ({deleteTarget?.email}) del sistema.
             </p>
             <div className="mt-5 flex justify-end gap-2">
               <button
@@ -301,9 +319,7 @@ export default function UsuariosAdminPage() {
                 Eliminar
               </button>
             </div>
-          </div>
-        </div>
-      ) : null}
+      </Modal>
     </div>
   );
 }
