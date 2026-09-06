@@ -24,11 +24,14 @@ export default function CrearInmueblePage() {
   const [ciudades, setCiudades] = useState([]);
   const [caracteristicas, setCaracteristicas] = useState([]);
   const [caracteristicasSel, setCaracteristicasSel] = useState({});
+  const [costosDisponibles, setCostosDisponibles] = useState([]);
+  const [costosSel, setCostosSel] = useState([]);
   const [form, setForm] = useState({
     titulo: "",
     descripcion: "",
     tipo_inmueble_id: "",
     estado_inmueble: "venta",
+    montoInicial: true,
     moneda: "BS",
     precio: "",
     area_m2: "",
@@ -38,6 +41,11 @@ export default function CrearInmueblePage() {
     punto_referencia: "",
     latitud: "10.4806",
     longitud: "-66.9036",
+    precio_por_noche: "",
+    capacidad_personas: "",
+    noches_minimas: "1",
+    hora_checkin: "",
+    hora_checkout: "",
   });
 
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -70,14 +78,16 @@ export default function CrearInmueblePage() {
   useEffect(() => {
     (async () => {
       try {
-        const [t, e, c] = await Promise.all([
+        const [t, e, c, ca] = await Promise.all([
           apiGet("/tipos"),
           apiGet("/estados"),
           apiGet("/caracteristicas"),
+          apiGet("/costos-adicionales"),
         ]);
         setTipos(t.data || []);
         setEstados(e.data || []);
         setCaracteristicas(c.data || []);
+        setCostosDisponibles(ca.data || []);
       } catch {}
     })();
   }, []);
@@ -104,6 +114,19 @@ export default function CrearInmueblePage() {
       ...prev,
       [id]: { ...prev[id], valor },
     }));
+  }
+
+  function agregarCosto(id) {
+    if (costosSel.some((c) => c.costo_adicional_id === id)) return;
+    setCostosSel((prev) => [...prev, { costo_adicional_id: id, descripcion: "", monto: "" }]);
+  }
+
+  function quitarCosto(id) {
+    setCostosSel((prev) => prev.filter((c) => c.costo_adicional_id !== id));
+  }
+
+  function setCostoField(id, field, value) {
+    setCostosSel((prev) => prev.map((c) => c.costo_adicional_id === id ? { ...c, [field]: value } : c));
   }
 
   useEffect(() => {
@@ -164,11 +187,19 @@ export default function CrearInmueblePage() {
     const errs = {};
     if (!form.titulo?.trim()) errs.titulo = "El título es obligatorio";
     if (!form.tipo_inmueble_id) errs.tipo_inmueble_id = "Selecciona un tipo de inmueble";
-    if (!form.precio || Number(form.precio) <= 0) errs.precio = "Ingresa un precio válido";
+    if (!form.precio || Number(form.precio) <= 0) {
+      if (!(form.estado_inmueble === "vacacional" && form.montoInicial === false)) {
+        errs.precio = "Ingresa un precio válido";
+      }
+    }
     if (!form.estado_id) errs.estado_id = "Selecciona un estado";
     if (!form.ciudad_id) errs.ciudad_id = "Selecciona una ciudad";
     if (!form.direccion_exacta?.trim()) errs.direccion_exacta = "La dirección es obligatoria";
     if (!form.latitud || !form.longitud) errs.ubicacion = "Señala la ubicación en el mapa";
+    if (form.estado_inmueble === "vacacional") {
+      if (!form.precio_por_noche || Number(form.precio_por_noche) <= 0) errs.precio_por_noche = "Precio por noche requerido";
+      if (!form.capacidad_personas || Number(form.capacidad_personas) <= 0) errs.capacidad_personas = "Capacidad requerida";
+    }
     setFieldErrors(errs);
     if (Object.keys(errs).length) {
       setErr("Corrige los campos marcados en rojo antes de continuar.");
@@ -204,6 +235,18 @@ export default function CrearInmueblePage() {
         caracteristicas,
       };
 
+      if (form.estado_inmueble === "vacacional") {
+        payload.precio_por_noche = Number(form.precio_por_noche);
+        payload.capacidad_personas = Number(form.capacidad_personas);
+        payload.noches_minimas = form.noches_minimas ? Number(form.noches_minimas) : 1;
+        payload.hora_checkin = form.hora_checkin || null;
+        payload.hora_checkout = form.hora_checkout || null;
+        payload.costos_adicionales = costosSel.map((c) => ({
+          costo_adicional_id: c.costo_adicional_id,
+          monto: c.monto ? Number(c.monto) : 0,
+        }));
+      }
+
       const fd = new FormData();
       fd.append("data", JSON.stringify(payload));
       selectedFiles.forEach((f) => fd.append("imagenes", f));
@@ -225,6 +268,16 @@ export default function CrearInmueblePage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
+      <nav className="mb-4 flex items-center gap-1.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center gap-1 font-medium whitespace-nowrap transition-colors hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
+        >
+          ← Volver
+        </button>
+      </nav>
+
       <div className="mb-6">
         <div className="text-2xl font-extrabold dark:text-slate-100">Crear inmueble</div>
         <div className="text-sm text-slate-500 dark:text-slate-400">Ingresa los datos del nuevo inmueble.</div>
@@ -264,10 +317,30 @@ export default function CrearInmueblePage() {
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div>
-            <label className={labelCls}>Precio *</label>
-            <input className={`${inputCls} ${fieldErrors.precio ? inputClsErr : ""}`} type="number" value={form.precio} onChange={(e) => { set("precio", e.target.value); setFieldErrors((p) => ({ ...p, precio: "" })); }} placeholder="0" />
-            {fieldErrors.precio && <p className={errMsgCls}>{fieldErrors.precio}</p>}
+          <div className={form.estado_inmueble === "vacacional" ? "md:col-span-3" : ""}>
+            {form.estado_inmueble === "vacacional" && (
+              <label className="flex items-center gap-2 mb-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={form.montoInicial}
+                  onChange={(e) => {
+                    set("montoInicial", e.target.checked);
+                    if (!e.target.checked) set("precio", "0");
+                  }}
+                  className="h-4 w-4 rounded border-slate-300 text-purple-900 focus:ring-purple-900 accent-purple-900"
+                />
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  ¿El vacacional tiene un monto inicial?
+                </span>
+              </label>
+            )}
+            {form.estado_inmueble === "vacacional" && !form.montoInicial ? null : (
+              <>
+                <label className={labelCls}>{form.estado_inmueble === "vacacional" ? "Monto Inicial" : "Precio"} *</label>
+                <input className={`${inputCls} ${fieldErrors.precio ? inputClsErr : ""}`} type="number" min="0" value={form.precio} onChange={(e) => { set("precio", e.target.value); setFieldErrors((p) => ({ ...p, precio: "" })); }} placeholder="0" />
+                {fieldErrors.precio && <p className={errMsgCls}>{fieldErrors.precio}</p>}
+              </>
+            )}
           </div>
           <div>
             <label className={labelCls}>Moneda</label>
@@ -334,7 +407,7 @@ export default function CrearInmueblePage() {
                     <button
                       type="button"
                       onClick={() => quitarCaracteristica(Number(id))}
-                      className="text-slate-400 hover:text-red-500 transition-colors"
+                      className="text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
                     >
                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -346,6 +419,88 @@ export default function CrearInmueblePage() {
             </div>
           )}
         </fieldset>
+
+        {form.estado_inmueble === "vacacional" && (
+          <fieldset>
+            <legend className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-3">Datos de alquiler vacacional</legend>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div>
+                <label className={labelCls}>Precio por noche *</label>
+                <input className={`${inputCls} ${fieldErrors.precio_por_noche ? inputClsErr : ""}`} type="number" value={form.precio_por_noche} onChange={(e) => { set("precio_por_noche", e.target.value); setFieldErrors((p) => ({ ...p, precio_por_noche: "" })); }} placeholder="0" />
+                {fieldErrors.precio_por_noche && <p className={errMsgCls}>{fieldErrors.precio_por_noche}</p>}
+              </div>
+              <div>
+                <label className={labelCls}>Capacidad personas *</label>
+                <input className={`${inputCls} ${fieldErrors.capacidad_personas ? inputClsErr : ""}`} type="number" value={form.capacidad_personas} onChange={(e) => { set("capacidad_personas", e.target.value); setFieldErrors((p) => ({ ...p, capacidad_personas: "" })); }} placeholder="0" />
+                {fieldErrors.capacidad_personas && <p className={errMsgCls}>{fieldErrors.capacidad_personas}</p>}
+              </div>
+              <div>
+                <label className={labelCls}>Noches mínimas</label>
+                <input className={inputCls} type="number" value={form.noches_minimas} onChange={(e) => set("noches_minimas", e.target.value)} placeholder="1" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 mt-4">
+              <div>
+                <label className={labelCls}>Hora check-in</label>
+                <input className={inputCls} type="time" value={form.hora_checkin} onChange={(e) => set("hora_checkin", e.target.value)} />
+              </div>
+              <div>
+                <label className={labelCls}>Hora check-out</label>
+                <input className={inputCls} type="time" value={form.hora_checkout} onChange={(e) => set("hora_checkout", e.target.value)} />
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <label className={labelCls}>Costos adicionales</label>
+              <select
+                className={inputCls + " mt-1"}
+                value=""
+                onChange={(e) => {
+                  if (e.target.value) agregarCosto(Number(e.target.value));
+                  e.target.value = "";
+                }}
+              >
+                <option value="">Agregar costo…</option>
+                {costosDisponibles
+                  .filter((c) => !costosSel.some((s) => s.costo_adicional_id === c.id))
+                  .map((c) => (
+                    <option key={c.id} value={c.id}>{c.nombre}</option>
+                  ))}
+              </select>
+
+              {costosSel.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  {costosSel.map((cs) => {
+                    const costo = costosDisponibles.find((c) => c.id === cs.costo_adicional_id);
+                    return (
+                      <div key={cs.costo_adicional_id} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
+                        <span className="text-sm font-medium text-slate-700 dark:text-slate-200 flex-1">{costo?.nombre}</span>
+                        <input
+                          type="number"
+                          value={cs.monto}
+                          onChange={(e) => setCostoField(cs.costo_adicional_id, "monto", e.target.value)}
+                          placeholder="Monto"
+                          className="w-20 rounded-lg border border-slate-200 px-2 py-1 text-xs text-right focus:border-blue-400 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => quitarCosto(cs.costo_adicional_id)}
+                          className="text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
+                        >
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </fieldset>
+        )}
 
         <fieldset>
           <legend className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-3">Ubicación</legend>
@@ -409,7 +564,7 @@ export default function CrearInmueblePage() {
               {previews.map((url, i) => (
                 <div key={i} className="relative h-20 w-20 overflow-hidden rounded-lg border border-slate-200 dark:border-slate-600">
                   <img src={url} alt="" className="h-full w-full object-cover" />
-                  {i === 0 ? <span className="absolute left-0 top-0 rounded-br bg-blue-600 px-1 text-[10px] text-white">Portada</span> : null}
+                  {i === 0 ? <span className="absolute left-0 top-0 rounded-br bg-purple-900 px-1 text-[10px] text-white">Portada</span> : null}
                 </div>
               ))}
             </div>
@@ -417,7 +572,7 @@ export default function CrearInmueblePage() {
         </div>
 
         <div className="flex justify-end gap-3 pt-2">
-          <button type="button" className="rounded-xl border border-slate-200 px-5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700" onClick={() => navigate("/inmuebles")}>
+          <button type="button" className="rounded-xl border border-slate-200 px-5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer" onClick={() => navigate("/inmuebles")}>
             Cancelar
           </button>
           <button type="submit" disabled={loading} className="btn-primary disabled:opacity-50">

@@ -16,9 +16,9 @@ exports.getUsuarioById = async (req, res) => {
   res.json({ ok: true, data });
 };
 
-exports.createUsuario = async (req, res) => {
-  const data = await usuariosService.createUsuario(req.body, buildCtx(req));
-  res.status(201).json({ ok: true, data });
+exports.patchUsuarioNormal = async (req, res) => {
+  const data = await usuariosService.patchUsuarioNormal(req.user.id, req.body, buildCtx(req));
+  res.json({ ok: true, data });
 };
 
 exports.patchUsuario = async (req, res) => {

@@ -13,7 +13,14 @@ function fmtPeriodo(p) {
   return String(p).slice(0, 10);
 }
 
-export default function SerieChart({ data }) {
+const moneySymbol = (to) => {
+  const m = (to || "USD").toUpperCase();
+  if (m === "EUR") return "€";
+  if (m === "BS") return " Bs.";
+  return "$";
+};
+
+export default function SerieChart({ data, moneda }) {
   const dark = useDarkMode();
   const tickColor = dark ? "#e2e8f0" : "#334155";
   const tooltipBg = dark ? "#1e293b" : "#fff";
@@ -35,7 +42,7 @@ export default function SerieChart({ data }) {
             <YAxis tick={{ fill: tickColor }} />
             <Tooltip
               contentStyle={{ backgroundColor: tooltipBg, color: tooltipColor }}
-              formatter={(value, name) => [Number(value).toLocaleString("es-DO"), name]}
+              formatter={(value, name) => [Number(value).toLocaleString("en-US", { maximumFractionDigits: 2 }) + moneySymbol(moneda), name]}
               labelFormatter={(label) => `Periodo: ${fmtPeriodo(label)}`}
             />
             <Line type="monotone" dataKey="monto_total_sum" dot={false} />

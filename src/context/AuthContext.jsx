@@ -24,15 +24,13 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     (async () => {
       try {
-        const cached = loadUser();
-        const params = cached?.id ? { id: cached.id } : {};
-        const res = await apiGet("/auth/me", params);
+        const res = await apiGet("/auth/me");
         const u = res?.data || res;
         setUser(u);
         saveUser(u);
       } catch {
-        // don't clear cached user on validation failure;
-        // only clear on explicit logout
+        setUser(null);
+        saveUser(null);
       } finally {
         setLoading(false);
       }
@@ -46,20 +44,26 @@ export function AuthProvider({ children }) {
 
   async function login(email, password) {
     const res = await apiPost("/auth/login", { email, password });
-    const token = res?.data?.token;
-    if (token) localStorage.setItem("token", token);
     const u = res?.data?.user || res;
     setAndPersist(u);
     return res;
   }
 
   async function logout() {
-    localStorage.removeItem("token");
+    await apiPost("/auth/logout").catch(() => {});
     setAndPersist(null);
   }
 
+  function updateUser(partialData) {
+    setUser((prev) => {
+      const updated = { ...prev, ...partialData };
+      saveUser(updated);
+      return updated;
+    });
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

@@ -7,8 +7,32 @@ import SerieChart from "../components/charts/SerieChart";
 import TopCorredoresBar from "../components/charts/TopCorredoresBar";
 import { formatDateTime } from "../utils/date";
 
+function toBs(v, from, rates) {
+  const m = String(from || "USD").toUpperCase();
+  if (m === "BS") return v;
+  if (m === "EUR") return v * Number(rates.bcv_euro);
+  return v * Number(rates.bcv_dolar);
+}
+
+function bsTo(v, to, rates) {
+  const m = String(to || "USD").toUpperCase();
+  if (m === "BS") return v;
+  if (m === "EUR") return v / Number(rates.bcv_euro);
+  return v / Number(rates.bcv_dolar);
+}
+
+const KPI_MONEY_FIELDS = [
+  "monto_total_sum",
+  "comision_total_sum",
+  "ganancia_empresa_sum",
+  "monto_total_pagado",
+  "monto_total_pendiente",
+  "monto_total_cancelado",
+  "ticket_promedio",
+];
+
 function money(n, moneda) {
-  const num = Number(n || 0).toLocaleString("en-US");
+  const num = Number(n || 0).toLocaleString("en-US", { maximumFractionDigits: 2 });
   const m = (moneda || "USD").toUpperCase();
   if (m === "EUR") return `${num}€`;
   if (m === "BS") return `${num} Bs.`;
@@ -18,7 +42,11 @@ function money(n, moneda) {
 export default function BitacoraPage() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [statsLoading, setStatsLoading] = useState(false);
   const [err, setErr] = useState("");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 10;
 
   const [desde, setDesde] = useState("");
   const [hasta, setHasta] = useState("");
@@ -27,6 +55,7 @@ export default function BitacoraPage() {
   const [usuarioId, setUsuarioId] = useState("");
   const [usuarioSel, setUsuarioSel] = useState(null);
   const [moneda, setMoneda] = useState("USD");
+  const [tasaDia, setTasaDia] = useState(null);
 
   const [kpis, setKpis] = useState(null);
   const [serie, setSerie] = useState([]);
@@ -44,7 +73,7 @@ export default function BitacoraPage() {
     { title: "pago promedio", value: kpis ? money(kpis.ticket_promedio, moneda) : "-" },
   ];
 
-  async function load() {
+  async function load(p) {
     setLoading(true);
     setErr("");
     if (desde && hasta && hasta < desde) {
@@ -53,15 +82,18 @@ export default function BitacoraPage() {
       return;
     }
     try {
+      const offset = ((p || page) - 1) * limit;
       const r = await apiGet("/auditoria", {
         desde: desde || undefined,
         hasta: hasta || undefined,
         tabla_afectada: tabla || undefined,
         accion: accion || undefined,
         usuario_id: usuarioId || undefined,
-        limit: 200,
+        limit,
+        offset,
       });
-      setRows(r.data || r);
+      setRows(r.data || []);
+      if (r.pagination) setTotal(r.pagination.total ?? 0);
     } catch (e) {
       setErr(e.message);
     } finally {
@@ -74,22 +106,28 @@ export default function BitacoraPage() {
       setErr("La fecha 'Hasta' no puede ser anterior a la fecha 'Desde'.");
       return;
     }
+    setStatsLoading(true);
     try {
       const params = {
         desde: dashDesde || undefined,
         hasta: dashHasta || undefined,
+        moneda,
       };
-      const [k, s, t] = await Promise.all([
+      const [k, s, t, tasas] = await Promise.all([
         apiGet("/dashboard/kpis", params),
         apiGet("/dashboard/serie", params),
         apiGet("/dashboard/top-corredores", { ...params, limit: 5 }),
+        apiGet("/tasas/actual").catch(() => null),
       ]);
 
       setKpis(k.data);
       setSerie(s.data || []);
       setTop(t.data || []);
+      setTasaDia(tasas?.data ?? null);
     } catch (error) {
       setErr(error.message || "Error cargando estadísticas");
+    } finally {
+      setStatsLoading(false);
     }
   }
 
@@ -97,6 +135,40 @@ export default function BitacoraPage() {
     load();
     loadStats();
   }, []); // eslint-disable-line
+
+  function changeMoneda(target) {
+    if (target === moneda) return;
+    const rates = tasaDia;
+    const hasRates = rates && Number(rates.bcv_dolar) > 0;
+    if (hasRates && kpis) {
+      const conv = (v) =>
+        Number(bsTo(toBs(v, moneda, rates), target, rates).toFixed(2));
+      setKpis((prev) => {
+        if (!prev) return prev;
+        const next = { ...prev };
+        KPI_MONEY_FIELDS.forEach((f) => {
+          if (next[f] !== undefined) next[f] = conv(next[f]);
+        });
+        return next;
+      });
+      setSerie((prev) =>
+        (prev || []).map((d) => ({
+          ...d,
+          monto_total_sum: conv(d.monto_total_sum),
+          comision_total_sum: conv(d.comision_total_sum),
+          ganancia_empresa_sum: conv(d.ganancia_empresa_sum),
+        }))
+      );
+      setTop((prev) =>
+        (prev || []).map((d) => ({
+          ...d,
+          comision_total_sum: conv(d.comision_total_sum),
+          ganancia_empresa_sum: conv(d.ganancia_empresa_sum),
+        }))
+      );
+    }
+    setMoneda(target);
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
@@ -111,10 +183,10 @@ export default function BitacoraPage() {
             {["USD", "EUR", "BS"].map((m) => (
               <button
                 key={m}
-                onClick={() => setMoneda(m)}
-                className={`px-3 py-1.5 text-xs font-medium transition ${
+                onClick={() => changeMoneda(m)}
+                className={`px-3 py-1.5 text-xs font-medium transition cursor-pointer ${
                   moneda === m
-                    ? "bg-blue-600 text-white"
+                    ? "bg-[#5a0e82] text-white hover:bg-[#470A68]"
                     : "bg-white dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
                 }`}
               >
@@ -122,8 +194,12 @@ export default function BitacoraPage() {
               </button>
             ))}
           </div>
-          <button onClick={() => { load(); loadStats(); }} disabled={loading} className="btn-primary disabled:opacity-60">
-            {loading ? "..." : "Actualizar"}
+          <button
+            onClick={() => { load(); loadStats(); }}
+            disabled={loading || statsLoading}
+            className="btn-primary disabled:opacity-60"
+          >
+            {loading || statsLoading ? "..." : "Actualizar"}
           </button>
         </div>
       </div>
@@ -143,26 +219,26 @@ export default function BitacoraPage() {
                 <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Hasta</div>
                 <input className="border rounded-xl px-3 py-2 bg-white dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600" type="date" value={dashHasta} onChange={(e) => setDashHasta(e.target.value)} />
               </div>
-              <button onClick={loadStats} className="btn-secondary disabled:opacity-60">
-                Aplicar
+              <button onClick={loadStats} disabled={statsLoading} className="btn-secondary disabled:opacity-60">
+                {statsLoading ? "Cargando…" : "Aplicar"}
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 ${statsLoading ? "opacity-60 animate-pulse" : ""}`}>
             {cards.map((c) => (
               <div key={c.title} className="bg-white border rounded-2xl p-4 shadow-sm dark:bg-slate-800 dark:border-slate-700">
                 <div className="text-xs text-slate-500 dark:text-slate-400">{c.title}</div>
-                <div className="text-xl font-extrabold mt-1 dark:text-slate-100">{c.value}</div>
+                <div className="text-xl font-extrabold mt-1 dark:text-slate-100">{statsLoading && !kpis ? "-" : c.value}</div>
               </div>
             ))}
           </div>
 
-          <SerieChart data={serie} />
+          <SerieChart data={serie} moneda={moneda} />
 
           <div className="bg-white border rounded-2xl p-4 shadow-sm dark:bg-slate-800 dark:border-slate-700">
             <div className="font-bold mb-3 dark:text-slate-100">Top corredores</div>
-            <TopCorredoresBar data={top} />
+            <TopCorredoresBar data={top} moneda={moneda} />
           </div>
         </div>
 
@@ -214,7 +290,7 @@ export default function BitacoraPage() {
                     }}
                   />
                 </div>
-                <button onClick={load} disabled={loading} className="btn-secondary disabled:opacity-60 mt-2">
+                <button onClick={() => { setPage(1); load(1); }} disabled={loading} className="btn-secondary disabled:opacity-60 mt-2">
                   Aplicar
                 </button>
               </div>
@@ -236,6 +312,26 @@ export default function BitacoraPage() {
               ]}
               rows={rows}
             />
+
+            <div className="mt-4 flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
+              <span>Página {page} de {Math.max(1, Math.ceil(total / limit))}</span>
+              <div className="flex gap-2">
+                <button
+                  disabled={page <= 1 || loading}
+                  onClick={() => { const p = page - 1; setPage(p); load(p); }}
+                  className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 cursor-pointer hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+                >
+                  ← Anterior
+                </button>
+                <button
+                  disabled={page >= Math.ceil(total / limit) || loading}
+                  onClick={() => { const p = page + 1; setPage(p); load(p); }}
+                  className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 cursor-pointer hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+                >
+                  Siguiente →
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

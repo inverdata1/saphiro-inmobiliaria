@@ -22,18 +22,24 @@ export default function ComisionesPage() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const [savingId, setSavingId] = useState(null);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 20;
 
-  async function load() {
+  async function load(p) {
     setLoading(true);
     setErr("");
     try {
+      const offset = ((p || page) - 1) * limit;
       const r = await apiGet("/comisiones", {
         corredor_id: corredorId || undefined,
         desde: desde || undefined,
         hasta: hasta || undefined,
-        limit: 100,
+        limit,
+        offset,
       });
       setRows(r.data || []);
+      if (r.pagination) setTotal(r.pagination.total ?? 0);
     } catch (e) {
       setErr(e.message);
     } finally {
@@ -108,7 +114,7 @@ export default function ComisionesPage() {
           </div>
 
           <button
-            onClick={load}
+            onClick={() => { setPage(1); load(1); }}
             disabled={loading}
             className="btn-primary disabled:opacity-60"
           >
@@ -127,6 +133,11 @@ export default function ComisionesPage() {
             { key: "corredor_nombre", header: "Corredor" },
             { key: "inmueble_titulo", header: "Inmueble" },
             { key: "inmueble_id", header: "ID Inmueble" },
+            {
+              key: "monto_total",
+              header: "Monto Transacción",
+              render: (r) => money(r.monto_total, r.moneda),
+            },
             {
               key: "fecha_pago",
               header: "Fecha y Hora",
@@ -150,6 +161,26 @@ export default function ComisionesPage() {
           ]}
           rows={rows}
         />
+
+        <div className="mt-4 flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
+          <span>Página {page} de {Math.max(1, Math.ceil(total / limit))}</span>
+          <div className="flex gap-2">
+            <button
+              disabled={page <= 1 || loading}
+              onClick={() => { const p = page - 1; setPage(p); load(p); }}
+              className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 cursor-pointer hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+            >
+              ← Anterior
+            </button>
+            <button
+              disabled={page >= Math.ceil(total / limit) || loading}
+              onClick={() => { const p = page + 1; setPage(p); load(p); }}
+              className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 cursor-pointer hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+            >
+              Siguiente →
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -92,63 +92,96 @@ exports.getUsuarioById = async (id) => {
   return rows[0];
 };
 
-exports.createUsuario = async (data, ctx) => {
-  const { nombre, email, telefono, estatus } = data;
-
-  if (!nombre) throw new AppError("nombre es requerido", 400);
-  if (!email) throw new AppError("email es requerido", 400);
-
-  const sql = `
-    INSERT INTO usuarios (nombre, email, estatus)
-    VALUES ($1,$2,$3)
-    RETURNING id, nombre, email, estatus, fecha_registro;
-  `;
-
-  const values = [nombre, email, estatus || null];
-  const { rows } = await pool.query(sql, values);
-
-  if (ctx) {
-    await auditoriaService.registrarInsert({
-      usuario_id: ctx.usuario_id,
-      tabla_afectada: "usuarios",
-      descripcion: `Creación de usuario ${rows[0].id} (${email})`,
-      ip_address: ctx.ip_address,
-      user_agent: ctx.user_agent,
-    });
-  }
-
-  return rows[0];
-};
-
 exports.deleteUsuario = async (id, ctx) => {
   if (!Number.isInteger(id) || id <= 0) throw new AppError("id inválido", 400);
 
-  const { rows } = await pool.query(
-    `UPDATE usuarios
-     SET deleted_at = NOW()
-     WHERE id = $1
-       AND deleted_at IS NULL
-     RETURNING id;`,
-    [id]
-  );
+  const client = await pool.connect();
+  let usuario;
 
-  if (!rows.length) throw new AppError("Usuario no encontrado", 404);
+  try {
+    await client.query("BEGIN");
 
-  if (ctx) {
-    await auditoriaService.registrarDelete({
-      usuario_id: ctx.usuario_id,
-      tabla_afectada: "usuarios",
-      descripcion: `Eliminado usuario ${id}`,
-      ip_address: ctx.ip_address,
-      user_agent: ctx.user_agent,
-    });
+    const { rows } = await client.query(
+      `UPDATE usuarios
+       SET deleted_at = NOW()
+       WHERE id = $1
+         AND deleted_at IS NULL
+       RETURNING id;`,
+      [id]
+    );
+
+    if (!rows.length) throw new AppError("Usuario no encontrado", 404);
+
+    if (ctx) {
+      await auditoriaService.registrarDelete({
+        usuario_id: ctx.usuario_id,
+        tabla_afectada: "usuarios",
+        descripcion: `Eliminado usuario ${id}`,
+        ip_address: ctx.ip_address,
+        user_agent: ctx.user_agent,
+      }, client);
+    }
+
+    usuario = rows[0];
+
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
   }
 
-  return rows[0];
+  return usuario;
+};
+
+exports.patchUsuarioNormal = async (userId, body, ctx) => {
+  if (!Number.isInteger(userId) || userId <= 0) throw new AppError("id inválido", 400);
+
+  const nombre = (body?.nombre || "").trim();
+  if (!nombre) throw new AppError("nombre es requerido", 400);
+
+  const client = await pool.connect();
+  let usuario;
+
+  try {
+    await client.query("BEGIN");
+
+    const { rows } = await client.query(
+      `UPDATE usuarios
+       SET nombre = $1
+       WHERE id = $2
+       RETURNING id, nombre, email, rol, fecha_registro, email_verified;
+       `,
+      [nombre, userId]
+    );
+
+    if (!rows.length) throw new AppError("Usuario no existe", 404);
+
+    if (ctx) {
+      await auditoriaService.registrarUpdate({
+        usuario_id: ctx.usuario_id,
+        tabla_afectada: "usuarios",
+        descripcion: `Actualizado nombre propio del usuario ${userId}`,
+        ip_address: ctx.ip_address,
+        user_agent: ctx.user_agent,
+      }, client);
+    }
+
+    usuario = rows[0];
+
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+
+  return usuario;
 };
 
 exports.patchUsuario = async (id, body, ctx) => {
-  if (!Number.isInteger(id) || id <= 0) throw new AppError("id inválido", 400);
 
   const allowed = new Set(["nombre", "email", "telefono", "estatus"]);
   const keys = Object.keys(body || {}).filter((k) => allowed.has(k));
@@ -172,18 +205,34 @@ exports.patchUsuario = async (id, body, ctx) => {
     RETURNING id, nombre, email, estatus, fecha_registro;
   `;
 
-  const { rows } = await pool.query(sql, values);
-  if (!rows.length) throw new AppError("Usuario no existe", 404);
+  const client = await pool.connect();
+  let usuario;
 
-  if (ctx) {
-    await auditoriaService.registrarUpdate({
-      usuario_id: ctx.usuario_id,
-      tabla_afectada: "usuarios",
-      descripcion: `Actualizado usuario ${id}: ${keys.join(", ")}`,
-      ip_address: ctx.ip_address,
-      user_agent: ctx.user_agent,
-    });
+  try {
+    await client.query("BEGIN");
+
+    const { rows } = await client.query(sql, values);
+    if (!rows.length) throw new AppError("Usuario no existe", 404);
+
+    if (ctx) {
+      await auditoriaService.registrarUpdate({
+        usuario_id: ctx.usuario_id,
+        tabla_afectada: "usuarios",
+        descripcion: `Actualizado usuario ${id}: ${keys.join(", ")}`,
+        ip_address: ctx.ip_address,
+        user_agent: ctx.user_agent,
+      }, client);
+    }
+
+    usuario = rows[0];
+
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
   }
 
-  return rows[0];
+  return usuario;
 };

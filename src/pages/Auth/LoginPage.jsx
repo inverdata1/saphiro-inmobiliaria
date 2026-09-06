@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { EmailNotVerifiedError } from "../../api";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -22,6 +23,12 @@ export default function LoginPage() {
       await login(form.email, form.password);
       navigate("/dashboard");
     } catch (e) {
+      if (e instanceof EmailNotVerifiedError || e.isEmailNotVerified) {
+        navigate(
+          `/verificacion-pendiente?email=${encodeURIComponent(form.email)}`
+        );
+        return;
+      }
       setErr(e.message);
     } finally {
       setLoading(false);

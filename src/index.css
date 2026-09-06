@@ -7,6 +7,16 @@
   --font-sans: "Outfit", "Inter", system-ui, sans-serif;
 }
 
+@keyframes fadein {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideup {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
 @layer base {
   html {
     scroll-behavior: smooth;
@@ -72,16 +82,158 @@
 
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm
-      font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.98] shadow-sm hover:shadow-[0_4px_12px_rgba(37,99,235,0.2)] dark:bg-purple-600 dark:hover:bg-purple-700;
-    /* Split transition: 450ms colors, 150ms active click scales */
+      font-bold text-white active:scale-[0.98] shadow-sm cursor-pointer;
+    background-color: #5a0e82;
     transition: background-color 450ms cubic-bezier(0.4, 0, 0.2, 1), border-color 450ms cubic-bezier(0.4, 0, 0.2, 1), color 450ms cubic-bezier(0.4, 0, 0.2, 1), transform 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .btn-primary:hover {
+    background-color: #470A68;
   }
 
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm
       font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 active:scale-[0.98]
-      dark:text-slate-200 dark:bg-[#1c1c21] dark:border-slate-800 dark:hover:bg-[#25252b];
+      dark:text-slate-200 dark:bg-[#1c1c21] dark:border-slate-800 dark:hover:bg-[#25252b] cursor-pointer;
     /* Split transition: 450ms colors, 150ms active click scales */
     transition: background-color 450ms cubic-bezier(0.4, 0, 0.2, 1), border-color 450ms cubic-bezier(0.4, 0, 0.2, 1), color 450ms cubic-bezier(0.4, 0, 0.2, 1), transform 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* ── FullCalendar: theme Saphiro (integra con paleta morada + dark) ── */
+  .calendar-saphiro {
+    --fc-small-font-size: 0.85em;
+    --fc-border-color: #cbd5e1;
+    --fc-page-bg-color: #ffffff;
+    --fc-neutral-bg-color: #f8fafc;
+    --fc-neutral-text-color: #64748b;
+    --fc-button-text-color: #ffffff;
+    --fc-button-bg-color: #5a0e82;
+    --fc-button-border-color: #5a0e82;
+    --fc-button-hover-bg-color: #470a68;
+    --fc-button-hover-border-color: #470a68;
+    --fc-button-active-bg-color: #470a68;
+    --fc-button-active-border-color: #3a0854;
+    --fc-today-bg-color: rgba(71, 10, 104, 0.08);
+    --fc-highlight-color: rgba(71, 10, 104, 0.12);
+  }
+  .dark .calendar-saphiro {
+    --fc-border-color: #3b3b45;
+    --fc-page-bg-color: #1c1c21;
+    --fc-neutral-bg-color: #232329;
+    --fc-neutral-text-color: #8b8b94;
+    --fc-button-bg-color: #5a0e82;
+    --fc-button-border-color: #5a0e82;
+    --fc-button-hover-bg-color: #470a68;
+    --fc-button-hover-border-color: #470a68;
+    --fc-button-active-bg-color: #470a68;
+    --fc-button-active-border-color: #3a0854;
+    --fc-today-bg-color: rgba(167, 139, 250, 0.12);
+    --fc-highlight-color: rgba(167, 139, 250, 0.18);
+  }
+  .calendar-saphiro .fc .fc-button {
+    border-radius: 0.625rem;
+    font-weight: 700;
+  }
+  .calendar-saphiro .fc .fc-toolbar.fc-header-toolbar {
+    margin-bottom: 0.75em;
+  }
+  .calendar-saphiro .fc .fc-toolbar-title {
+    font-size: 1em;
+    font-weight: 800;
+  }
+  .calendar-saphiro .fc .fc-col-header-cell {
+    background: var(--fc-neutral-bg-color);
+    font-size: 0.78em;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    color: var(--fc-neutral-text-color);
+    border-bottom: 2px solid var(--fc-border-color);
+  }
+  .calendar-saphiro .fc .fc-daygrid-day-number {
+    padding: 4px;
+    font-size: 0.9em;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .calendar-saphiro .fc .fc-daygrid-day {
+    cursor: pointer;
+    border-right: 1px solid var(--fc-border-color);
+    border-bottom: 1px solid var(--fc-border-color);
+  }
+  .calendar-saphiro .fc .fc-daygrid-day-frame {
+    padding-top: 2px;
+  }
+  .calendar-saphiro .fc .fc-scrollgrid {
+    border-radius: 0.75rem;
+    overflow: hidden;
+  }
+  .calendar-saphiro .fc .fc-theme-standard .fc-scrollgrid {
+    border-radius: 0.75rem;
+  }
+
+  .calendar-saphiro .fc .fc-date-selected .fc-daygrid-day-number {
+    background: #5a0e82;
+    color: #fff;
+    border-radius: 0.5rem;
+    font-weight: 800;
+  }
+  .dark .calendar-saphiro .fc .fc-date-selected .fc-daygrid-day-number {
+    background: #7c3aed;
+    color: #fff;
+  }
+
+  .calendar-saphiro .fc .fc-date-hover .fc-daygrid-day-number {
+    background: rgba(90, 14, 130, 0.12);
+    border-radius: 0.5rem;
+  }
+  .dark .calendar-saphiro .fc .fc-date-hover .fc-daygrid-day-number {
+    background: rgba(124, 58, 237, 0.2);
+  }
+
+  @media (max-width: 640px) {
+    .calendar-saphiro .fc .fc-toolbar-title {
+      font-size: 0.9em;
+    }
+    .calendar-saphiro .fc .fc-col-header-cell {
+      font-size: 0.7em;
+      padding-top: 3px;
+      padding-bottom: 3px;
+    }
+    .calendar-saphiro .fc .fc-daygrid-day-number {
+      padding: 3px;
+      font-size: 0.82em;
+    }
+    .calendar-saphiro .fc .fc-daygrid-day-frame {
+      padding-top: 1px;
+    }
+    .calendar-saphiro .fc .fc-button {
+      padding: 0.3em 0.6em;
+      font-size: 0.8em;
+    }
+  }
+
+  .calendar-saphiro .fc .fc-reserva-block {
+    background: linear-gradient(90deg, #5a0e82, #470A68) !important;
+    border: none !important;
+    border-radius: 0.25rem !important;
+    color: #fff !important;
+    font-size: 0.72em !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.03em !important;
+    overflow: hidden;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+  .calendar-saphiro .fc .fc-reserva-block .fc-event-main {
+    color: #fff !important;
+    text-align: center !important;
+  }
+  .dark .calendar-saphiro .fc .fc-reserva-block {
+    background: linear-gradient(90deg, #6d1b9e, #5a0e82) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35) !important;
   }
 }

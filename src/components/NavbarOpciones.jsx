@@ -5,7 +5,7 @@ const linkActive = "bg-white/15 text-white shadow-sm border border-white/10";
 const linkIdle = "text-white/80 hover:bg-white/10 hover:text-white";
 
 const sliderBase = "whitespace-nowrap px-4 py-2 rounded-xl text-sm font-bold border transition-all duration-200 active:scale-95";
-const sliderActive = "bg-blue-600 text-white border-blue-600 shadow-md dark:bg-purple-600 dark:border-purple-600";
+const sliderActive = "bg-[#5a0e82] text-white border-[#5a0e82] shadow-md hover:bg-[#470A68]";
 const sliderIdle = "bg-slate-50 text-slate-700 border-slate-200/80 hover:bg-slate-100 dark:bg-[#18181c] dark:text-slate-300 dark:border-slate-800 dark:hover:bg-slate-800";
 
 export function Item({ to, label }) {
@@ -41,7 +41,6 @@ export function ClienteOpciones({ user }) {
   return (
     <>
       <Item to="/" label="Inicio" />
-      {user ? <Item to="/dashboard" label="Dashboard" /> : null}
       <Item to="/inmuebles" label="Inmuebles" />
       {user ? <Item to="/guardados" label="Guardados" /> : null}
     </>
@@ -52,8 +51,8 @@ export function CorredorOpciones({ user }) {
   return (
     <>
       <Item to="/" label="Inicio" />
-      {user ? <Item to="/dashboard" label="Dashboard" /> : null}
       <Item to="/inmuebles" label="Inmuebles" />
+      {user ? <Item to="/mis-inmuebles" label="Mis inmuebles" /> : null}
       {user ? <Item to="/guardados" label="Guardados" /> : null}
     </>
   );
@@ -78,7 +77,6 @@ export function ClienteSlider({ user, onClick }) {
   return (
     <>
       <SliderItem to="/" label="Inicio" onClick={onClick} />
-      {user ? <SliderItem to="/dashboard" label="Dashboard" onClick={onClick} /> : null}
       <SliderItem to="/inmuebles" label="Inmuebles" onClick={onClick} />
       {user ? <SliderItem to="/guardados" label="Guardados" onClick={onClick} /> : null}
     </>
@@ -89,8 +87,8 @@ export function CorredorSlider({ user, onClick }) {
   return (
     <>
       <SliderItem to="/" label="Inicio" onClick={onClick} />
-      {user ? <SliderItem to="/dashboard" label="Dashboard" onClick={onClick} /> : null}
       <SliderItem to="/inmuebles" label="Inmuebles" onClick={onClick} />
+      {user ? <SliderItem to="/mis-inmuebles" label="Mis inmuebles" onClick={onClick} /> : null}
       {user ? <SliderItem to="/guardados" label="Guardados" onClick={onClick} /> : null}
     </>
   );

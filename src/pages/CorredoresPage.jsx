@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { apiPost, apiGet, apiPatch, apiPut, apiDelete } from "../api";
 import DataTable from "../components/DataTable";
 import ErrorBanner from "../components/ErrorBanner";
@@ -145,7 +146,7 @@ export default function CorredoresPage() {
           <button
             onClick={() => load(search, page)}
             disabled={fetching}
-            className="rounded-xl border border-slate-200 p-2 text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 disabled:opacity-50"
+            className="rounded-xl border border-slate-200 p-2 text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 disabled:opacity-50 cursor-pointer"
             title="Recargar"
           >
             <svg className={`h-5 w-5 ${fetching ? "animate-spin" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -179,7 +180,19 @@ export default function CorredoresPage() {
         <DataTable
           columns={[
             { key: "id", header: "ID" },
-            { key: "nombre", header: "Nombre" },
+            {
+              key: "nombre",
+              header: "Nombre",
+              render: (r) => (
+                <Link
+                  to={`/perfil/${r.id}`}
+                  className="font-bold text-slate-800 dark:text-slate-100 hover:text-purple-750 dark:hover:text-purple-400 transition hover:underline"
+                  title="Ver perfil completo e inmuebles del corredor"
+                >
+                  {r.nombre}
+                </Link>
+              ),
+            },
             { key: "email", header: "Email" },
             { key: "telefono", header: "Teléfono" },
             { key: "comisionBase", header: "Comisión base", render: (r) => r.comisionBase != null ? `${r.comisionBase}%` : "-" },
@@ -204,11 +217,20 @@ export default function CorredoresPage() {
               header: "Acciones",
               render: (r) => (
                 <div className="flex items-center justify-center gap-1">
+                  <Link
+                    to={`/perfil/${r.id}`}
+                    className="rounded-lg bg-purple-50 p-2 text-[#470A68] hover:bg-purple-100 dark:bg-purple-950/40 dark:text-purple-300 cursor-pointer"
+                    title="Ver perfil público e inmuebles"
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </Link>
                   {r.nombre === "-" && (
                     <button
                       onClick={() => handleReinvitar(r.id)}
                       disabled={resettingId === r.id}
-                      className="rounded-lg bg-amber-50 p-2 text-amber-700 hover:bg-amber-100 dark:bg-amber-900/20 dark:text-amber-400 disabled:opacity-50"
+                      className="rounded-lg bg-amber-50 p-2 text-amber-700 hover:bg-amber-100 dark:bg-amber-900/20 dark:text-amber-400 disabled:opacity-50 cursor-pointer"
                       title="Reenviar código de registro"
                     >
                       {resettingId === r.id ? (
@@ -225,7 +247,7 @@ export default function CorredoresPage() {
                   )}
                   <button
                     onClick={() => toggleActivo(r.id)}
-                    className={`rounded-lg p-2 transition-colors ${
+                    className={`rounded-lg p-2 transition-colors cursor-pointer ${
                       r.activo
                         ? "bg-red-50 text-red-700 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400"
                         : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400"
@@ -244,7 +266,7 @@ export default function CorredoresPage() {
                   </button>
                   <button
                     onClick={() => openEdit(r)}
-                    className="rounded-lg bg-violet-50 p-2 text-violet-700 hover:bg-violet-100 dark:bg-violet-900/20 dark:text-violet-400"
+                    className="rounded-lg bg-violet-50 p-2 text-violet-700 hover:bg-violet-100 dark:bg-violet-900/20 dark:text-violet-400 cursor-pointer"
                     title="Editar corredor"
                   >
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -253,7 +275,7 @@ export default function CorredoresPage() {
                   </button>
                   <button
                     onClick={() => setShowView(r)}
-                    className="rounded-lg bg-blue-50 p-2 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400"
+                    className="rounded-lg bg-blue-50 p-2 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 cursor-pointer"
                     title="Ver datos"
                   >
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -263,7 +285,7 @@ export default function CorredoresPage() {
                   </button>
                   <button
                     onClick={() => confirmDelete(r)}
-                    className="rounded-lg bg-red-50 p-2 text-red-700 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400"
+                    className="rounded-lg bg-red-50 p-2 text-red-700 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 cursor-pointer"
                     title="Eliminar"
                   >
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -282,14 +304,14 @@ export default function CorredoresPage() {
             <button
               disabled={page <= 1 || fetching}
               onClick={() => { const p = page - 1; setPage(p); load(search, p); }}
-              className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+              className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
             >
               ← Anterior
             </button>
             <button
               disabled={rows.length < limit || fetching}
               onClick={() => { const p = page + 1; setPage(p); load(search, p); }}
-              className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+              className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
             >
               Siguiente →
             </button>
@@ -305,7 +327,7 @@ export default function CorredoresPage() {
               </div>
               <button
                 type="button"
-                className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700"
+                className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 cursor-pointer"
                 onClick={() => { setShowModal(false); setEmail(""); setPorcentaje(""); }}
                 aria-label="Cerrar"
               >
@@ -341,7 +363,7 @@ export default function CorredoresPage() {
               <div className="flex justify-end gap-2">
                 <button
                   type="button"
-                  className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+                  className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
                   onClick={() => { setShowModal(false); setEmail(""); setPorcentaje(""); }}
                 >
                   Cancelar
@@ -366,7 +388,7 @@ export default function CorredoresPage() {
               </div>
               <button
                 type="button"
-                className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700"
+                className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 cursor-pointer"
                 onClick={() => setShowView(null)}
                 aria-label="Cerrar"
               >
@@ -392,7 +414,7 @@ export default function CorredoresPage() {
             <div className="mt-5 flex justify-end">
               <button
                 type="button"
-                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
                 onClick={() => setShowView(null)}
               >
                 Cerrar
@@ -408,14 +430,14 @@ export default function CorredoresPage() {
             <div className="mt-5 flex justify-end gap-2">
               <button
                 type="button"
-                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
                 onClick={() => setDeleteTarget(null)}
               >
                 Cancelar
               </button>
               <button
                 type="button"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 cursor-pointer"
                 onClick={handleDelete}
               >
                 Eliminar
@@ -431,7 +453,7 @@ export default function CorredoresPage() {
               </div>
               <button
                 type="button"
-                className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700"
+                className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 cursor-pointer"
                 onClick={() => setEditTarget(null)}
               >
                 ✕
@@ -453,7 +475,7 @@ export default function CorredoresPage() {
               <div className="flex justify-end gap-2">
                 <button
                   type="button"
-                  className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+                  className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
                   onClick={() => setEditTarget(null)}
                 >
                   Cancelar

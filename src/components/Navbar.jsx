@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { NavLink, Link, useNavigate } from "react-router-dom";
+import { NavLink, Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import logo from "../assets/logo.inverdata.jpg";
 import {
@@ -15,6 +15,7 @@ import NotificationDropdown from "./NotificationDropdown";
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [open, setOpen] = useState(false);
   const [dark, setDark] = useState(() => document.documentElement.classList.contains("dark"));
   const [searchQuery, setSearchQuery] = useState("");
@@ -66,14 +67,14 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-blue-600 text-white shadow-md dark:bg-purple-900 border-b border-blue-500/50 dark:border-purple-800/50">
+      <header className="sticky top-0 z-40 text-white shadow-md dark:bg-purple-900 border-b border-white/10 dark:border-purple-800/50" style={{ backgroundColor: "#470A68" }}>
         {/* Fila superior: logo + search + acciones */}
         <div className="px-4 py-3 flex items-center justify-between gap-3 max-w-7xl mx-auto">
           {/* Hamburger */}
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="inline-flex items-center justify-center rounded-xl border border-white/20 p-2.5 text-white/85 hover:bg-white/10 active:scale-95 shrink-0 dark:border-white/20"
+            className="inline-flex items-center justify-center rounded-xl border border-white/20 p-2.5 text-white/85 hover:bg-white/10 active:scale-95 shrink-0 dark:border-white/20 cursor-pointer"
             aria-label="Abrir menú"
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -113,7 +114,7 @@ export default function Navbar() {
             <button
               type="button"
               onClick={toggleDark}
-              className="relative inline-flex h-9.5 w-9.5 items-center justify-center rounded-xl text-white/85 hover:bg-white/10 transition active:scale-95"
+              className="relative inline-flex h-9.5 w-9.5 items-center justify-center rounded-xl text-white/85 hover:bg-white/10 transition active:scale-95 cursor-pointer"
               aria-label="Cambiar modo oscuro/claro"
             >
               <svg
@@ -133,13 +134,25 @@ export default function Navbar() {
 
             {user ? (
               <>
-                <NotificationDropdown />
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15 text-white border border-white/25 text-xs font-extrabold cursor-default">
-                  {initials}
-                </div>
+                {location.pathname !== "/notificaciones" && <NotificationDropdown />}
+                <Link
+                  to="/perfil"
+                  title="Ver mi perfil"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15 text-white border border-white/25 text-xs font-extrabold overflow-hidden hover:ring-2 hover:ring-white/40 hover:scale-105 transition-all cursor-pointer"
+                >
+                  {user.foto_perfil || user.avatar ? (
+                    <img
+                      src={user.foto_perfil || user.avatar}
+                      alt={user.nombre || "Perfil"}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    initials
+                  )}
+                </Link>
                 <button
                   onClick={() => { logout(); navigate("/"); }}
-                  className="hidden sm:inline-flex whitespace-nowrap items-center justify-center rounded-xl border border-white/25 bg-white/10 px-4 py-2 text-xs font-bold text-white hover:bg-white/20 transition-all"
+                  className="hidden sm:inline-flex whitespace-nowrap items-center justify-center rounded-xl border border-white/25 bg-white/10 px-4 py-2 text-xs font-bold text-white hover:bg-white/20 transition-all cursor-pointer"
                 >
                   Salir
                 </button>
@@ -147,7 +160,7 @@ export default function Navbar() {
             ) : (
               <Link
                 to="/login"
-                className="inline-flex whitespace-nowrap items-center justify-center rounded-xl bg-white text-blue-600 dark:text-purple-900 hover:bg-white/95 px-4 py-2 text-xs font-bold transition active:scale-95 shadow-sm"
+                className="inline-flex whitespace-nowrap items-center justify-center rounded-xl bg-white hover:bg-white/95 px-4 py-2 text-xs font-bold transition active:scale-95 shadow-sm" style={{ color: "#5a0e82" }}
               >
                 Iniciar sesión
               </Link>
@@ -156,7 +169,7 @@ export default function Navbar() {
         </div>
 
         {/* Fila inferior: navegación horizontal (desktop) */}
-        <nav className="hidden md:block border-t border-white/15 bg-white/5">
+        <nav className="hidden md:block border-t border-white/15" style={{ backgroundColor: "#5a0e82" }}>
           <div className="px-4 flex items-center gap-1.5 overflow-x-auto scrollbar-custom py-2 max-w-7xl mx-auto">
             <NavOpciones user={user} />
           </div>
@@ -184,7 +197,7 @@ export default function Navbar() {
           <button
             type="button"
             onClick={() => setOpen(false)}
-            className="rounded-xl p-2 text-slate-400 hover:bg-slate-50 dark:hover:bg-[#18181c]"
+            className="rounded-xl p-2 text-slate-400 hover:bg-slate-50 dark:hover:bg-[#18181c] cursor-pointer"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -202,30 +215,13 @@ export default function Navbar() {
         {/* Opciones del sidebar */}
         <nav className="flex-1 overflow-y-auto px-4 py-5 space-y-1.5 scrollbar-custom">
           <NavLink
-            to="/perfil"
-            onClick={() => setOpen(false)}
-            className={({ isActive }) =>
-              `flex items-center gap-3.5 rounded-xl px-4 py-3 text-sm font-bold transition-all ${
-                isActive
-                  ? "bg-blue-50/70 text-blue-700 dark:bg-purple-950/40 dark:text-purple-400"
-                  : "text-slate-650 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-[#18181c]"
-              }`
-            }
-          >
-            <svg className="h-5 w-5 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-            Perfil
-          </NavLink>
-
-          <NavLink
             to="/configuracion"
             onClick={() => setOpen(false)}
             className={({ isActive }) =>
               `flex items-center gap-3.5 rounded-xl px-4 py-3 text-sm font-bold transition-all ${
                 isActive
-                  ? "bg-blue-50/70 text-blue-700 dark:bg-purple-950/40 dark:text-purple-400"
-                  : "text-slate-650 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-[#18181c]"
+                  ? "bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-400"
+                  : "text-slate-400 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-[#18181c]"
               }`
             }
           >
@@ -242,8 +238,8 @@ export default function Navbar() {
             className={({ isActive }) =>
               `flex items-center gap-3.5 rounded-xl px-4 py-3 text-sm font-bold transition-all ${
                 isActive
-                  ? "bg-blue-50/70 text-blue-700 dark:bg-purple-950/40 dark:text-purple-400"
-                  : "text-slate-650 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-[#18181c]"
+                  ? "bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-400"
+                  : "text-slate-400 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-[#18181c]"
               }`
             }
           >
@@ -258,18 +254,34 @@ export default function Navbar() {
         <div className="border-t border-slate-100 dark:border-slate-850 px-4 py-5 space-y-3">
           {user ? (
             <>
-              <div className="flex items-center gap-3 px-3 py-1.5">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-650 text-xs font-bold text-white shadow-md">
-                  {initials}
+              <Link
+                to="/perfil"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-[#18181c] transition-colors group cursor-pointer"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#470A68] to-[#5a0e82] text-xs font-bold text-white shadow-md overflow-hidden">
+                  {user.foto_perfil || user.avatar ? (
+                    <img
+                      src={user.foto_perfil || user.avatar}
+                      alt={user.nombre || "Perfil"}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    initials
+                  )}
                 </div>
-                <div className="min-w-0">
-                  <div className="text-sm font-extrabold text-slate-800 dark:text-white truncate">{user.nombre || user.name || "Usuario"}</div>
-                  <div className="text-[11px] text-slate-400 dark:text-slate-500 font-bold capitalize">{user.rol}</div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-extrabold text-slate-800 dark:text-white truncate group-hover:text-purple-900 dark:group-hover:text-purple-400 transition-colors">
+                    {user.nombre || user.name || "Usuario"}
+                  </div>
+                  <div className="text-[11px] text-slate-400 dark:text-slate-500 font-bold capitalize">
+                    {user.rol} · <span className="text-purple-700 dark:text-purple-400">Ver perfil</span>
+                  </div>
                 </div>
-              </div>
+              </Link>
               <button
                 onClick={() => { logout(); navigate("/"); setOpen(false); }}
-                className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold text-red-650 hover:bg-red-50/60 dark:text-red-400 dark:hover:bg-red-950/20 transition active:scale-98"
+                className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold text-red-650 hover:bg-red-50/60 dark:text-red-400 dark:hover:bg-red-950/20 transition active:scale-98 cursor-pointer"
               >
                 <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -281,7 +293,7 @@ export default function Navbar() {
             <Link
               to="/login"
               onClick={() => setOpen(false)}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white hover:bg-blue-700 transition active:scale-98 shadow-sm"
+              className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white transition active:scale-98 shadow-sm" style={{ backgroundColor: "#5a0e82" }} onMouseEnter={e => e.currentTarget.style.backgroundColor = "#470A68"} onMouseLeave={e => e.currentTarget.style.backgroundColor = "#5a0e82"}
             >
               Iniciar sesión
             </Link>

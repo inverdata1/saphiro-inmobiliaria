@@ -89,24 +89,40 @@ exports.getCorredorByUserId = async (usuario_id) => {
 exports.updateCorredor = async (usuario_id, data) => {
   const { nombre, telefono, comision_base, licencia_nro } = data;
 
-  const { rows: userRows } = await pool.query(
-    `UPDATE usuarios
-     SET nombre = COALESCE($2, nombre)
-     WHERE id = $1 AND deleted_at IS NULL
-     RETURNING id;`,
-    [usuario_id, nombre]
-  );
-  if (!userRows.length) throw new AppError("Corredor no encontrado", 404);
+  const client = await pool.connect();
+  let corredor;
 
-  const { rows: corrRows } = await pool.query(
-    `UPDATE corredores
-     SET telefono = COALESCE($2, telefono),
-         comision_base = COALESCE($3, comision_base),
-         licencia_nro = COALESCE($4, licencia_nro)
-     WHERE usuario_id = $1
-     RETURNING *;`,
-    [usuario_id, telefono, comision_base, licencia_nro]
-  );
+  try {
+    await client.query("BEGIN");
 
-  return corrRows[0];
+    const { rows: userRows } = await client.query(
+      `UPDATE usuarios
+       SET nombre = COALESCE($2, nombre)
+       WHERE id = $1 AND deleted_at IS NULL
+       RETURNING id;`,
+      [usuario_id, nombre]
+    );
+    if (!userRows.length) throw new AppError("Corredor no encontrado", 404);
+
+    const { rows: corrRows } = await client.query(
+      `UPDATE corredores
+       SET telefono = COALESCE($2, telefono),
+           comision_base = COALESCE($3, comision_base),
+           licencia_nro = COALESCE($4, licencia_nro)
+       WHERE usuario_id = $1
+       RETURNING *;`,
+      [usuario_id, telefono, comision_base, licencia_nro]
+    );
+
+    corredor = corrRows[0];
+
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+
+  return corredor;
 };

@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
+const cookieParser = require("cookie-parser");
 const pool = require("./db/pool");
 
 const inmueblesRoutes = require("./routes/inmuebles.routes");
@@ -24,13 +25,30 @@ const imagenesRoutes = require("./routes/imagenes.routes");
 const caracteristicasRoutes = require("./routes/caracteristicas.routes");
 const resenasRoutes = require("./routes/resenas.routes");
 const guardadosRoutes = require("./routes/guardados.routes");
+const notificacionesRoutes = require("./routes/notificaciones.routes");
+const costosAdicionalesRoutes = require("./routes/costosAdicionales.routes");
+const tasasRoutes = require("./routes/tasasCambio.routes");
 const errorHandler = require("./middleware/errorHandler");
+const csrf = require("./middleware/csrf");
+const { initTasasJob } = require("./jobs/tasasCambio.job");
 
 const app = express();
 
+const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
+
 app.use(helmet());
-app.use(cors());
+app.use(cors({ origin: CLIENT_URL, credentials: true }));
+app.use(cookieParser());
 app.use(express.json());
+app.use(csrf);
+app.use((req, res, next) => {
+  req.setTimeout(30000, () => {
+    if (!res.headersSent) {
+      res.status(504).json({ ok: false, message: "Tiempo de respuesta agotado" });
+    }
+  });
+  next();
+});
 app.use(morgan("dev"));
 app.use("/uploads", express.static("uploads"));
 
@@ -70,8 +88,18 @@ app.use("/imagenes", imagenesRoutes);
 app.use("/caracteristicas", caracteristicasRoutes);
 app.use("/resenas", resenasRoutes);
 app.use("/guardados", guardadosRoutes);
+app.use("/notificaciones", notificacionesRoutes);
+app.use("/costos-adicionales", costosAdicionalesRoutes);
+app.use("/tasas", tasasRoutes);
 
 app.use(errorHandler);
 
 const port = process.env.PORT || 3001;
-app.listen(port, () => console.log(`API listening on http://localhost:${port}`));
+const server = app.listen(port, () => {
+  console.log(`API listening on http://localhost:${port}`);
+  initTasasJob();
+});
+
+server.requestTimeout = 60000;
+server.headersTimeout = 65000;
+server.timeout = 65000;

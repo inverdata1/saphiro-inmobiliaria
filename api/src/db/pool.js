@@ -12,7 +12,8 @@ const pool = new Pool({
   host: must("DB_HOST"),
   port: Number(must("DB_PORT")),
   user: must("DB_USER"),
-  password: String(must("DB_PASSWORD")), // ✅ fuerza string
+  password: String(must("DB_PASSWORD")),
+  max: 20,
   database: must("DB_NAME"),
   options: "-c timezone=America/Caracas",
 });

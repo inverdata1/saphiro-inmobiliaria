@@ -1,98 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { apiGet, apiPatch, apiDelete } from "../api";
 
-const MOCK_NOTIFICATIONS = [
-  {
-    id: 1,
-    tipo: "transaccion",
-    titulo: "Nueva transaccion registrada",
-    mensaje: 'Se registro la venta del apartamento en "Las Mercedes" por $120.000. El corredor Juan Perez gestoro la operacion exitosamente.',
-    fecha: "2026-07-20T10:30:00",
-    leida: false,
-    icono: "money",
-  },
-  {
-    id: 2,
-    tipo: "inmueble",
-    titulo: "Inmueble actualizado",
-    mensaje: 'El inmueble "Torre Bizancio" fue modificado por el corredor Juan Perez. Se actualizaron los precios y fotos.',
-    fecha: "2026-07-20T09:15:00",
-    leida: false,
-    icono: "home",
-  },
-  {
-    id: 3,
-    tipo: "sistema",
-    titulo: "Bienvenido a Inverdata",
-    mensaje: "Tu cuenta fue activada correctamente. Ya puedes acceder a todas las funcionalidades de la plataforma.",
-    fecha: "2026-07-19T16:00:00",
-    leida: true,
-    icono: "info",
-  },
-  {
-    id: 4,
-    tipo: "corredor",
-    titulo: "Nuevo corredor registrado",
-    mensaje: 'Maria Lopez se unio como corredora inmobiliaria. Ya esta disponible para gestionar propiedades.',
-    fecha: "2026-07-19T14:22:00",
-    leida: true,
-    icono: "user",
-  },
-  {
-    id: 5,
-    tipo: "comision",
-    titulo: "Comision pendiente de aprobacion",
-    mensaje: "Tienes una comision de $3.500 por la transaccion #1042 sin procesar. Aprobar o rechazar antes del 25 de julio.",
-    fecha: "2026-07-18T11:00:00",
-    leida: true,
-    icono: "alert",
-  },
-  {
-    id: 6,
-    tipo: "transaccion",
-    titulo: "Transaccion completada",
-    mensaje: 'La transaccion #1038 por el local en "Centro Comercial Abasto" fue finalizada con exito.',
-    fecha: "2026-07-17T09:45:00",
-    leida: true,
-    icono: "money",
-  },
-  {
-    id: 7,
-    tipo: "inmueble",
-    titulo: "Nuevo inmueble publicado",
-    mensaje: 'Se publico la casa en "Urb. El Paraiso" con 3 habitaciones y 2 banos. Precio: $85.000.',
-    fecha: "2026-07-16T15:30:00",
-    leida: true,
-    icono: "home",
-  },
-  {
-    id: 8,
-    tipo: "sistema",
-    titulo: "Mantenimiento programado",
-    mensaje: "El sistema estara en mantenimiento el sabado 26 de julio de 2:00 AM a 4:00 AM (hora local).",
-    fecha: "2026-07-15T08:00:00",
-    leida: true,
-    icono: "info",
-  },
-  {
-    id: 9,
-    tipo: "comision",
-    titulo: "Comision procesada",
-    mensaje: "La comision de $2.800 correspondiente a la transaccion #1035 fue procesada y esta en camino a tu cuenta.",
-    fecha: "2026-07-14T12:10:00",
-    leida: true,
-    icono: "money",
-  },
-  {
-    id: 10,
-    tipo: "corredor",
-    titulo: "Corredor desactivado",
-    mensaje: 'Pedro Ramirez fue removido del sistema como corredor inmobiliario.',
-    fecha: "2026-07-13T10:00:00",
-    leida: true,
-    icono: "user",
-  },
-];
+const TIPO_ICONO = {
+  Transaccion: "money",
+  Inmueble: "home",
+  Sistema: "info",
+  Corredor: "user",
+  Comision: "alert",
+};
 
 const ICON_MAP = {
   money: (
@@ -123,19 +40,11 @@ const ICON_MAP = {
 };
 
 const TIPO_COLORS = {
-  transaccion: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-  inmueble: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  sistema: "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300",
-  corredor: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-  comision: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-};
-
-const TIPO_LABELS = {
-  transaccion: "Transaccion",
-  inmueble: "Inmueble",
-  sistema: "Sistema",
-  corredor: "Corredor",
-  comision: "Comision",
+  Transaccion: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+  Inmueble: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+  Sistema: "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300",
+  Corredor: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+  Comision: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
 };
 
 const FILTROS = [
@@ -164,30 +73,90 @@ function formatHora(fecha) {
 }
 
 export default function NotificacionesPage() {
-  const [notificaciones, setNotificaciones] = useState(MOCK_NOTIFICATIONS);
+  const { user } = useAuth();
+  const usuarioId = user?.id;
+
+  const [notificaciones, setNotificaciones] = useState([]);
+  const [leidasSnapshot, setLeidasSnapshot] = useState(new Set());
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState("");
   const [filtro, setFiltro] = useState("todas");
   const [expandedId, setExpandedId] = useState(null);
+  const [marcadas, setMarcadas] = useState(new Set());
 
-  const noLeidas = notificaciones.filter((n) => !n.leida).length;
-
-  const filtradas = notificaciones.filter((n) => {
-    if (filtro === "todas") return true;
-    return !n.leida;
-  });
-
-  function toggleExpand(id) {
-    setExpandedId((prev) => (prev === id ? null : id));
-    if (!notificaciones.find((n) => n.id === id)?.leida) {
-      setNotificaciones((prev) => prev.map((n) => (n.id === id ? { ...n, leida: true } : n)));
+  async function load() {
+    if (!usuarioId) return;
+    setLoading(true);
+    setErr("");
+    try {
+      const r = await apiGet(`/notificaciones/${usuarioId}`);
+      const data = Array.isArray(r?.data) ? r.data : [];
+      setNotificaciones(data);
+      setLeidasSnapshot(new Set(data.filter((n) => n.leida).map((n) => n.id)));
+      setMarcadas(new Set());
+    } catch (e) {
+      setErr(e.message || "Error cargando notificaciones");
+    } finally {
+      setLoading(false);
     }
   }
 
-  function marcarTodasLeidas() {
-    setNotificaciones((prev) => prev.map((n) => ({ ...n, leida: true })));
+  useEffect(() => {
+    load();
+  }, [usuarioId]);
+
+  useEffect(() => {
+    load();
+  }, [filtro]);
+
+  const noLeidas = notificaciones.filter((n) => !leidasSnapshot.has(n.id) && !marcadas.has(n.id)).length;
+
+  const filtradas = notificaciones.filter((n) => {
+    if (filtro === "todas") return true;
+    return !leidasSnapshot.has(n.id);
+  });
+
+  async function toggleExpand(n) {
+    setExpandedId((prev) => (prev === n.id ? null : n.id));
+    if (!n.leida) {
+      setNotificaciones((prev) => prev.map((x) => (x.id === n.id ? { ...x, leida: true } : x)));
+      setMarcadas((prev) => new Set(prev).add(n.id));
+      apiPatch(`/notificaciones/${n.id}/read`).catch((e) => setErr(e.message));
+    }
   }
 
-  function eliminarNotificacion(id) {
-    setNotificaciones((prev) => prev.filter((n) => n.id !== id));
+  async function marcarTodasLeidas() {
+    if (!usuarioId) return;
+    try {
+      await apiPatch(`/notificaciones/${usuarioId}/read-all`);
+      setNotificaciones((prev) => prev.map((n) => ({ ...n, leida: true })));
+      setLeidasSnapshot(new Set(notificaciones.map((n) => n.id)));
+    } catch (e) {
+      setErr(e.message);
+    }
+  }
+
+  async function eliminarNotificacion(id) {
+    try {
+      await apiDelete(`/notificaciones/${id}`);
+      setNotificaciones((prev) => prev.filter((n) => n.id !== id));
+      if (expandedId === id) setExpandedId(null);
+    } catch (e) {
+      setErr(e.message);
+    }
+  }
+
+  async function eliminarTodas() {
+    if (!usuarioId) return;
+    try {
+      await apiDelete(`/notificaciones/user/${usuarioId}`);
+      setNotificaciones([]);
+      setLeidasSnapshot(new Set());
+      setMarcadas(new Set());
+      setExpandedId(null);
+    } catch (e) {
+      setErr(e.message);
+    }
   }
 
   return (
@@ -201,10 +170,16 @@ export default function NotificacionesPage() {
         </p>
       </div>
 
+      {err && (
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400">
+          {err}
+        </div>
+      )}
+
       <div className="card p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
           <div className="flex items-center gap-3">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
               </svg>
@@ -218,14 +193,24 @@ export default function NotificacionesPage() {
               </span>
             </div>
           </div>
-          {noLeidas > 0 && (
-            <button onClick={marcarTodasLeidas} className="btn-secondary text-xs">
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-              Marcar todas como leidas
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {noLeidas > 0 && (
+              <button onClick={marcarTodasLeidas} className="btn-secondary text-xs">
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                Marcar todas como leidas
+              </button>
+            )}
+            {notificaciones.length > 0 && (
+              <button onClick={eliminarTodas} className="btn-secondary text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300">
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Eliminar todas
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-hide">
@@ -233,9 +218,9 @@ export default function NotificacionesPage() {
             <button
               key={f.key}
               onClick={() => setFiltro(f.key)}
-              className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-medium border transition ${
+              className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-medium border transition cursor-pointer ${
                 filtro === f.key
-                  ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                  ? "bg-purple-600 text-white border-purple-600 shadow-sm"
                   : "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-600"
               }`}
             >
@@ -250,7 +235,9 @@ export default function NotificacionesPage() {
         </div>
 
         <div className="divide-y divide-slate-100 dark:divide-slate-700">
-          {filtradas.length === 0 ? (
+          {loading ? (
+            <div className="py-12 text-center text-sm text-slate-400">Cargando...</div>
+          ) : filtradas.length === 0 ? (
             <div className="py-12 text-center">
               <svg className="mx-auto h-12 w-12 text-slate-300 dark:text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
@@ -263,56 +250,60 @@ export default function NotificacionesPage() {
               </p>
             </div>
           ) : (
-            filtradas.map((n) => (
-              <div
-                key={n.id}
-                onClick={() => toggleExpand(n.id)}
-                className={`group flex gap-3 sm:gap-4 px-4 py-4 transition cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/30 ${
-                  !n.leida ? "bg-blue-50/40 dark:bg-blue-900/10" : ""
-                }`}
-              >
-                <div className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${TIPO_COLORS[n.tipo] || TIPO_COLORS.sistema}`}>
-                  {ICON_MAP[n.icono] || ICON_MAP.info}
-                </div>
+            filtradas.map((n) => {
+              const tipo = n.tipo_notificacion || "Sistema";
+              const icono = TIPO_ICONO[tipo] || "info";
+              return (
+                <div
+                  key={n.id}
+                  onClick={() => toggleExpand(n)}
+                  className={`group flex gap-3 sm:gap-4 px-4 py-4 transition cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/30 ${
+                    !n.leida ? "bg-purple-50/40 dark:bg-purple-900/10" : ""
+                  }`}
+                >
+                  <div className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${TIPO_COLORS[tipo] || TIPO_COLORS.Sistema}`}>
+                    {ICON_MAP[icono] || ICON_MAP.info}
+                  </div>
 
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className={`text-sm leading-snug ${!n.leida ? "font-bold text-slate-900 dark:text-white" : "font-medium text-slate-700 dark:text-slate-300"}`}>
-                          {n.titulo}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className={`text-sm leading-snug ${!n.leida ? "font-bold text-slate-900 dark:text-white" : "font-medium text-slate-700 dark:text-slate-300"}`}>
+                            {n.titulo}
+                          </p>
+                          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${TIPO_COLORS[tipo] || TIPO_COLORS.Sistema}`}>
+                            {tipo}
+                          </span>
+                          {!n.leida && (
+                            <span className="h-2 w-2 shrink-0 rounded-full bg-purple-500" />
+                          )}
+                        </div>
+                        <p className={`mt-0.5 text-xs leading-relaxed ${expandedId === n.id ? "text-slate-600 dark:text-slate-300" : "text-slate-500 dark:text-slate-400 line-clamp-2"}`}>
+                          {n.descripcion}
                         </p>
-                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${TIPO_COLORS[n.tipo] || TIPO_COLORS.sistema}`}>
-                          {TIPO_LABELS[n.tipo]}
-                        </span>
-                        {!n.leida && (
-                          <span className="h-2 w-2 shrink-0 rounded-full bg-blue-500" />
+                        {expandedId === n.id && (
+                          <div className="mt-3 flex items-center gap-3">
+                            <span className="text-[11px] text-slate-400 dark:text-slate-500">
+                              {formatFecha(n.fecha_hora)} a las {formatHora(n.fecha_hora)}
+                            </span>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); eliminarNotificacion(n.id); }}
+                              className="text-[11px] font-medium text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 cursor-pointer"
+                            >
+                              Eliminar
+                            </button>
+                          </div>
                         )}
                       </div>
-                      <p className={`mt-0.5 text-xs leading-relaxed ${expandedId === n.id ? "text-slate-600 dark:text-slate-300" : "text-slate-500 dark:text-slate-400 line-clamp-2"}`}>
-                        {n.mensaje}
-                      </p>
-                      {expandedId === n.id && (
-                        <div className="mt-3 flex items-center gap-3">
-                          <span className="text-[11px] text-slate-400 dark:text-slate-500">
-                            {formatFecha(n.fecha)} a las {formatHora(n.fecha)}
-                          </span>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); eliminarNotificacion(n.id); }}
-                            className="text-[11px] font-medium text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300"
-                          >
-                            Eliminar
-                          </button>
-                        </div>
-                      )}
+                      <span className="shrink-0 text-[11px] text-slate-400 dark:text-slate-500 whitespace-nowrap">
+                        {formatFecha(n.fecha_hora)}
+                      </span>
                     </div>
-                    <span className="shrink-0 text-[11px] text-slate-400 dark:text-slate-500 whitespace-nowrap">
-                      {formatFecha(n.fecha)}
-                    </span>
                   </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>

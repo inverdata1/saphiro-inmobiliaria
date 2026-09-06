@@ -1,20 +1,16 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { formatPrice } from "../utils/price";
 
 export default function PropertyCard({ property, className = "", tall = false }) {
   const [imgLoaded, setImgLoaded] = useState(false);
   const price = useMemo(() => {
     if (!property) return "";
-    const num = Number(property.precio ?? property.price ?? 0);
-    const moneda = (property.moneda || "USD").toUpperCase();
-    const formatted = num.toLocaleString("en-US");
-    if (moneda === "EUR") return `${formatted}€`;
-    if (moneda === "BS") return `${formatted} Bs.`;
-    return `$${formatted}`;
+    return formatPrice(property.precio ?? property.price ?? 0, property.moneda, property.alquiler_vacacional);
   }, [property]);
 
   const title = property.titulo || property.title || "Sin título";
-  const location = [property.ciudad, property.sector]
+  const location = [property.ciudad, property.sector || property.estado]
     .filter(Boolean)
     .join(" · ");
 
@@ -35,7 +31,7 @@ export default function PropertyCard({ property, className = "", tall = false })
       to={propertyId ? `/inmuebles/${propertyId}` : "#"}
       className="block no-underline h-full"
     >
-      <article className={`group relative flex flex-col h-full overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.015)] transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_12px_40px_rgba(0,0,0,0.04)] dark:border-slate-800/60 dark:bg-[#141417] dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)] dark:hover:shadow-[0_12px_40px_rgba(0,0,0,0.5)] ${className}`}>
+      <article className={`group relative flex flex-col h-full overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.015)] transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_12px_40px_rgba(0,0,0,0.04)] group-hover:-translate-y-1.5 group-hover:shadow-[0_12px_40px_rgba(0,0,0,0.04)] dark:border-slate-800/60 dark:bg-[#141417] dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)] dark:hover:shadow-[0_12px_40px_rgba(0,0,0,0.5)] dark:group-hover:shadow-[0_12px_40px_rgba(0,0,0,0.5)] ${className}`}>
         {/* Image Container */}
         <div className={`relative w-full overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950 ${tall ? "aspect-[4/3] max-h-[28rem]" : "aspect-[16/10] max-h-72"}`}>
           {!imgLoaded && (
@@ -84,7 +80,7 @@ export default function PropertyCard({ property, className = "", tall = false })
                 <div className="text-base font-extrabold text-slate-900 dark:text-slate-50 tracking-tight" style={{ fontVariantNumeric: "tabular-nums" }}>
                   {price}
                 </div>
-                <span className="inline-flex items-center rounded-full bg-blue-50/70 px-2 py-0.5 text-[10px] font-bold text-blue-600 dark:bg-blue-950/40 dark:text-blue-400">
+                <span className="inline-flex items-center rounded-full bg-purple-50/70 px-2 py-0.5 text-[10px] font-bold text-purple-600 dark:bg-purple-950/40 dark:text-purple-400">
                   {property.estatus || property.status || "Disponible"}
                 </span>
               </div>

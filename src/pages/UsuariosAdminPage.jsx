@@ -101,7 +101,7 @@ export default function UsuariosAdminPage() {
           <button
             onClick={() => load(search, page)}
             disabled={fetching}
-            className="rounded-xl border border-slate-200 p-2 text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 disabled:opacity-50"
+            className="rounded-xl border border-slate-200 p-2 text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 disabled:opacity-50 cursor-pointer"
             title="Recargar"
           >
             <svg className={`h-5 w-5 ${fetching ? "animate-spin" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -151,7 +151,7 @@ export default function UsuariosAdminPage() {
                     <button
                       onClick={() => handleReinvitar(r.id)}
                       disabled={resettingId === r.id}
-                      className="rounded-lg bg-amber-50 p-2 text-amber-700 hover:bg-amber-100 dark:bg-amber-900/20 dark:text-amber-400 disabled:opacity-50"
+                      className="rounded-lg bg-amber-50 p-2 text-amber-700 hover:bg-amber-100 dark:bg-amber-900/20 dark:text-amber-400 disabled:opacity-50 cursor-pointer"
                       title="Reenviar código de registro"
                     >
                       {resettingId === r.id ? (
@@ -168,7 +168,7 @@ export default function UsuariosAdminPage() {
                   ) : null}
                   <button
                     onClick={() => setShowView(r)}
-                    className="rounded-lg bg-blue-50 p-2 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400"
+                    className="rounded-lg bg-blue-50 p-2 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 cursor-pointer"
                     title="Ver datos"
                   >
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -178,7 +178,7 @@ export default function UsuariosAdminPage() {
                   </button>
                   <button
                     onClick={() => confirmDelete(r)}
-                    className="rounded-lg bg-red-50 p-2 text-red-700 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400"
+                    className="rounded-lg bg-red-50 p-2 text-red-700 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 cursor-pointer"
                     title="Eliminar"
                   >
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -197,14 +197,14 @@ export default function UsuariosAdminPage() {
             <button
               disabled={page <= 1 || fetching}
               onClick={() => { const p = page - 1; setPage(p); load(search, p); }}
-              className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+              className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
             >
               ← Anterior
             </button>
             <button
               disabled={rows.length < limit || fetching}
               onClick={() => { const p = page + 1; setPage(p); load(search, p); }}
-              className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+              className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
             >
               Siguiente →
             </button>
@@ -220,7 +220,7 @@ export default function UsuariosAdminPage() {
               </div>
               <button
                 type="button"
-                className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700"
+                className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 cursor-pointer"
                 onClick={() => { setShowCreate(false); setCreateEmail(""); }}
                 aria-label="Cerrar"
               >
@@ -242,7 +242,7 @@ export default function UsuariosAdminPage() {
               <div className="flex justify-end gap-2">
                 <button
                   type="button"
-                  className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+                  className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
                   onClick={() => { setShowCreate(false); setCreateEmail(""); }}
                 >
                   Cancelar
@@ -267,7 +267,7 @@ export default function UsuariosAdminPage() {
               </div>
               <button
                 type="button"
-                className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700"
+                className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 cursor-pointer"
                 onClick={() => setShowView(null)}
                 aria-label="Cerrar"
               >
@@ -290,7 +290,7 @@ export default function UsuariosAdminPage() {
             <div className="mt-5 flex justify-end">
               <button
                 type="button"
-                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
                 onClick={() => setShowView(null)}
               >
                 Cerrar
@@ -306,14 +306,14 @@ export default function UsuariosAdminPage() {
             <div className="mt-5 flex justify-end gap-2">
               <button
                 type="button"
-                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
                 onClick={() => setDeleteTarget(null)}
               >
                 Cancelar
               </button>
               <button
                 type="button"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 cursor-pointer"
                 onClick={handleDelete}
               >
                 Eliminar

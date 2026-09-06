@@ -18,6 +18,11 @@ exports.listInmuebles = async (req, res) => {
   res.json({ ok: true, data });
 };
 
+exports.listMisInmuebles = async (req, res) => {
+  const data = await inmueblesService.listInmueblesByCorredor(Number(req.params.usuario_id));
+  res.json({ ok: true, data });
+};
+
 exports.getInmuebleById = async (req, res) => {
   const data = await inmueblesService.getInmuebleById(Number(req.params.id));
   res.json({ ok: true, data });
@@ -48,5 +53,10 @@ exports.listDisponiblesPorCiudad = async (req, res) => {
 
 exports.listDisponiblesPorEstado = async (req, res) => {
   const data = await inmueblesService.listDisponiblesPorEstado(Number(req.query.estado_id));
+  res.json({ ok: true, data });
+};
+
+exports.listReservas = async (req, res) => {
+  const data = await inmueblesService.listReservasByInmueble(Number(req.params.id));
   res.json({ ok: true, data });
 };

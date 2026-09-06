@@ -9,7 +9,14 @@ import {
 } from "recharts";
 import useDarkMode from "../../hooks/useDarkMode";
 
-export default function TopCorredoresBar({ data }) {
+const moneySymbol = (to) => {
+  const m = (to || "USD").toUpperCase();
+  if (m === "EUR") return "€";
+  if (m === "BS") return " Bs.";
+  return "$";
+};
+
+export default function TopCorredoresBar({ data, moneda }) {
   const dark = useDarkMode();
   const tickColor = dark ? "#e2e8f0" : "#334155";
   const tooltipBg = dark ? "#1e293b" : "#fff";
@@ -26,7 +33,7 @@ export default function TopCorredoresBar({ data }) {
             <YAxis tick={{ fill: tickColor }} />
             <Tooltip
               contentStyle={{ backgroundColor: tooltipBg, color: tooltipColor }}
-              formatter={(value) => Number(value).toLocaleString("es-DO")}
+              formatter={(value) => Number(value).toLocaleString("en-US", { maximumFractionDigits: 2 }) + moneySymbol(moneda)}
             />
             <Bar dataKey="comision_total_sum" fill="#3b82f6" />
           </BarChart>

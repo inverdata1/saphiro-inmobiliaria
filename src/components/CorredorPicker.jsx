@@ -55,7 +55,7 @@ export default function CorredorPicker({ value, onChange, selectedItem }) {
         <button
           type="button"
           onClick={() => setShowModal(true)}
-          className="flex-1 text-left border rounded-xl px-3 py-2 bg-white dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 text-sm"
+          className="flex-1 text-left border rounded-xl px-3 py-2 bg-white dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 text-sm cursor-pointer"
         >
           {effectiveSelected ? (
             <div className="truncate">
@@ -68,7 +68,7 @@ export default function CorredorPicker({ value, onChange, selectedItem }) {
           <button
             type="button"
             onClick={handleClear}
-            className="rounded-lg bg-red-50 p-2 text-red-700 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 shrink-0"
+            className="rounded-lg bg-red-50 p-2 text-red-700 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 shrink-0 cursor-pointer"
             title="Limpiar selección"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -86,7 +86,7 @@ export default function CorredorPicker({ value, onChange, selectedItem }) {
               </div>
               <button
                 type="button"
-                className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700"
+                className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 cursor-pointer"
                 onClick={() => { setShowModal(false); setSearch(""); }}
               >
                 ✕
@@ -119,7 +119,7 @@ export default function CorredorPicker({ value, onChange, selectedItem }) {
                       key={c.id}
                       type="button"
                       onClick={() => handleSelect(c)}
-                      className={`w-full flex items-center gap-3 rounded-xl border p-3 text-left transition hover:-translate-y-0.5 hover:shadow-md dark:bg-slate-800 ${
+                      className={`w-full flex items-center gap-3 rounded-xl border p-3 text-left transition cursor-pointer hover:-translate-y-0.5 hover:shadow-md dark:bg-slate-800 ${
                         value == c.id
                           ? "border-blue-500 ring-2 ring-blue-200 dark:ring-blue-800"
                           : "border-slate-200 dark:border-slate-700"

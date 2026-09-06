@@ -101,7 +101,7 @@ export default function GuardadosPage() {
                   <PropertyCard property={item} tall />
                   <button
                     onClick={() => handleRemove(item.id)}
-                    className="absolute right-3 top-3 z-10 h-8 w-8 rounded-full bg-black/40 flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-red-500/80"
+                    className="absolute right-3 top-3 z-10 h-8 w-8 rounded-full bg-black/40 flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 group-hover:-translate-y-1.5 hover:bg-red-500/80 cursor-pointer"
                     title="Quitar de guardados"
                   >
                     <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">

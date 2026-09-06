@@ -7,8 +7,8 @@ const c = require("../controllers/usuarios.controller");
 router.get("/", auth, admin, asyncHandler(c.listUsuarios));
 router.get("/clientes", auth, asyncHandler(c.listClientes));
 
+router.patch("/me", auth, asyncHandler(c.patchUsuarioNormal));
 router.get("/:id", auth, asyncHandler(c.getUsuarioById));
-router.post("/", auth, admin, asyncHandler(c.createUsuario));
 router.patch("/:id", auth, admin, asyncHandler(c.patchUsuario));
 router.delete("/:id", auth, admin, asyncHandler(c.deleteUsuario));
 

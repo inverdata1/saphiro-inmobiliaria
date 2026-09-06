@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { v4 as uuid } from "uuid";
 import { apiGet, apiPost } from "../api";
 import DataTable from "../components/DataTable";
 import InmuebleZonaPicker from "../components/InmuebleZonaPicker";
@@ -6,6 +7,8 @@ import UsuarioPicker from "../components/UsuarioPicker";
 import CorredorPicker from "../components/CorredorPicker";
 import { formatDateTime } from "../utils/date";
 import ErrorBanner from "../components/ErrorBanner";
+
+const DatePickerCalendarModal = lazy(() => import("../components/DatePickerCalendarModal"));
 
 function money(n, moneda) {
   const num = Number(n || 0).toLocaleString("en-US");
@@ -20,6 +23,9 @@ export default function TransaccionesPage() {
   const [loading, setLoading] = useState(false); // para listar
   const [saving, setSaving] = useState(false);   // para crear
   const [err, setErr] = useState("");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 20;
 
   // filtros
   const [desde, setDesde] = useState("");
@@ -37,21 +43,81 @@ export default function TransaccionesPage() {
   const [clienteId, setClienteId] = useState("");
   const [clienteSel, setClienteSel] = useState(null);
   const [estatusPago, setEstatusPago] = useState("pagado");
+  const [fechaEntrada, setFechaEntrada] = useState("");
+  const [fechaSalida, setFechaSalida] = useState("");
 
-  async function load() {
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [calendarTarget, setCalendarTarget] = useState(null);
+  const [reservas, setReservas] = useState([]);
+
+  // Clave de idempotencia: se crea al abrir la página y se regenera tras cada intento
+  const idemKeyRef = useRef(uuid());
+
+  const esVacacional = String(inmuebleSel?.estado_inmueble || "").toLowerCase() === "vacacional";
+
+  const toYMD = (d) => {
+    const x = new Date(d);
+    return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`;
+  };
+  const formatDisplayDate = (dateStr) => {
+    if (!dateStr) return "";
+    const [y, m, d] = dateStr.split("-");
+    return `${d}/${m}/${y}`;
+  };
+  const hoy = toYMD(new Date());
+  const maxFecha = toYMD(new Date(new Date().getFullYear() + 2, new Date().getMonth(), new Date().getDate()));
+  const checkInMin = hoy;
+  const checkOutMin = fechaEntrada
+    ? toYMD(new Date(new Date(fechaEntrada).getTime() + 86400000))
+    : toYMD(new Date(new Date(hoy).getTime() + 86400000));
+
+  useEffect(() => {
+    if (!esVacacional || !inmuebleId) {
+      setReservas([]);
+      return;
+    }
+    (async () => {
+      try {
+        const r = await apiGet(`/inmuebles/${inmuebleId}/reservas`);
+        setReservas(Array.isArray(r?.data) ? r.data : []);
+      } catch {
+        setReservas([]);
+      }
+    })();
+  }, [esVacacional, inmuebleId]);
+
+  const openCalendar = (target) => {
+    setCalendarTarget(target);
+    setCalendarOpen(true);
+  };
+
+  const handleCalendarSelect = (dateStr) => {
+    if (calendarTarget === "checkIn") {
+      setFechaEntrada(dateStr);
+      if (fechaSalida && dateStr && fechaSalida <= dateStr) {
+        setFechaSalida(toYMD(new Date(new Date(dateStr).getTime() + 86400000)));
+      }
+    } else {
+      setFechaSalida(dateStr);
+    }
+  };
+
+  async function load(p) {
     setLoading(true);
     setErr("");
     try {
+      const offset = ((p || page) - 1) * limit;
       const r = await apiGet("/transacciones", {
         desde: desde || undefined,
         hasta: hasta || undefined,
         tipo_operacion: tipoOperacionFiltro || undefined,
         corredor_id: corredorId || undefined,
-        limit: 100,
+        limit,
+        offset,
       });
 
-      const data = r?.data ?? r; // soporta {data: []} o []
-      setRows(Array.isArray(data) ? data : []);
+      setRows(Array.isArray(r?.data) ? r.data : []);
+      if (r?.pagination) setTotal(r.pagination.total ?? 0);
     } catch (e) {
       setErr(e.message || "Error cargando transacciones");
     } finally {
@@ -93,17 +159,57 @@ export default function TransaccionesPage() {
       }
 
       // El trigger igual validará disponibilidad; esto es solo un check UX
-      if (String(inmueble.estatus || "").toLowerCase() !== "disponible") {
+      if (!["disponible", "reservado"].includes(String(inmueble.estatus || "").toLowerCase())) {
         throw new Error(
           `El inmueble está en estatus "${inmueble.estatus}". Debe estar "disponible" para transaccionar.`
         );
       }
 
-      await apiPost("/transacciones", {
-        inmueble_id: inmueble_id_num,
-        cliente_id: cliente_id_num,
-        estatus_pago: estatusPago,
-      });
+      const esVacInm = String(inmueble.estado_inmueble || "").toLowerCase() === "vacacional";
+
+      let fechaEntradaOk = fechaEntrada;
+      let fechaSalidaOk = fechaSalida;
+
+      if (esVacInm) {
+        if (!fechaEntrada) {
+          throw new Error("Selecciona la fecha de entrada de la reserva.");
+        }
+        if (!fechaSalida) {
+          throw new Error("Selecciona la fecha de salida de la reserva.");
+        }
+        if (fechaEntrada < hoy) {
+          throw new Error("La fecha de entrada no puede ser anterior a hoy.");
+        }
+        if (fechaEntrada > maxFecha) {
+          throw new Error("La fecha de entrada supera el máximo de 2 años.");
+        }
+        if (fechaSalida <= fechaEntrada) {
+          throw new Error("La fecha de salida debe ser posterior a la fecha de entrada.");
+        }
+      }
+
+      const inmueble_id_num2 = Number(inmueble_id_num);
+
+      if (esVacInm) {
+        await apiPost(
+          "/transacciones/reserva",
+          {
+            inmueble_id: inmueble_id_num2,
+            cliente_id: cliente_id_num,
+            fecha_entrada: fechaEntradaOk,
+            fecha_salida: fechaSalidaOk,
+            moneda: inmueble.moneda || "USD",
+            estatus_pago: estatusPago,
+          },
+          idemKeyRef.current
+        );
+      } else {
+        await apiPost("/transacciones", {
+          inmueble_id: inmueble_id_num2,
+          cliente_id: cliente_id_num,
+          estatus_pago: estatusPago,
+        });
+      }
 
       // reset + recarga
       setInmuebleId(null);
@@ -111,12 +217,15 @@ export default function TransaccionesPage() {
       setClienteId("");
       setClienteSel(null);
       setEstatusPago("pagado");
+      setFechaEntrada("");
+      setFechaSalida("");
 
       await load();
     } catch (e) {
       setErr(e.message || "Error creando transacción");
     } finally {
       setSaving(false);
+      idemKeyRef.current = uuid();
     }
   }
 
@@ -125,7 +234,8 @@ export default function TransaccionesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const canCreate = Boolean(inmuebleId && clienteId) && !saving;
+  const canCreate =
+    Boolean(inmuebleId && clienteId) && !saving && (!esVacacional || (fechaEntrada && fechaSalida));
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
@@ -135,7 +245,7 @@ export default function TransaccionesPage() {
         </div>
 
         <button
-          onClick={load}
+          onClick={() => load()}
           disabled={loading}
           className="btn-primary disabled:opacity-60"
         >
@@ -181,9 +291,35 @@ export default function TransaccionesPage() {
               <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
                 Corredor: <b>{inmuebleSel.corredor_id ?? "-"}</b> · Estatus:{" "}
                 <b>{inmuebleSel.estatus ?? "-"}</b>
+                {esVacacional ? " · Vacacional (reserva con fechas)" : null}
               </div>
             ) : null}
           </div>
+
+          {esVacacional && (
+            <>
+              <div className="md:col-span-2">
+                <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Fecha de entrada de la reserva</div>
+                <button
+                  type="button"
+                  onClick={() => openCalendar("checkIn")}
+                  className="w-full text-left border rounded-xl px-3 py-2 bg-white dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 text-sm truncate cursor-pointer hover:border-slate-400 dark:hover:border-slate-500"
+                >
+                  {fechaEntrada ? formatDisplayDate(fechaEntrada) : "Seleccionar fecha"}
+                </button>
+              </div>
+              <div className="md:col-span-2">
+                <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Fecha de salida de la reserva</div>
+                <button
+                  type="button"
+                  onClick={() => openCalendar("checkOut")}
+                  className="w-full text-left border rounded-xl px-3 py-2 bg-white dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 text-sm truncate cursor-pointer hover:border-slate-400 dark:hover:border-slate-500"
+                >
+                  {fechaSalida ? formatDisplayDate(fechaSalida) : "Seleccionar fecha"}
+                </button>
+              </div>
+            </>
+          )}
 
           <div className="md:col-span-5">
             <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Cliente (usuario)</div>
@@ -261,7 +397,7 @@ export default function TransaccionesPage() {
           </div>
 
           <button
-            onClick={load}
+            onClick={() => { setPage(1); load(1); }}
             disabled={loading}
             className="btn-secondary disabled:opacity-60"
           >
@@ -294,7 +430,44 @@ export default function TransaccionesPage() {
           ]}
           rows={rows}
         />
+
+        <div className="mt-4 flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
+          <span>Página {page} de {Math.max(1, Math.ceil(total / limit))}</span>
+          <div className="flex gap-2">
+            <button
+              disabled={page <= 1 || loading}
+              onClick={() => { const p = page - 1; setPage(p); load(p); }}
+              className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+            >
+              ← Anterior
+            </button>
+            <button
+              disabled={page >= Math.ceil(total / limit) || loading}
+              onClick={() => { const p = page + 1; setPage(p); load(p); }}
+              className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+            >
+              Siguiente →
+            </button>
+          </div>
+        </div>
       </div>
+
+      <Suspense fallback={null}>
+        <DatePickerCalendarModal
+          open={calendarOpen}
+          onClose={() => {
+            setCalendarOpen(false);
+            setCalendarTarget(null);
+          }}
+          onSelect={handleCalendarSelect}
+          selectedDate={calendarTarget === "checkIn" ? fechaEntrada : fechaSalida}
+          minDate={calendarTarget === "checkIn" ? checkInMin : checkOutMin}
+          maxDate={maxFecha}
+          reservas={reservas}
+          title={calendarTarget === "checkIn" ? "Fecha de entrada" : "Fecha de salida"}
+          subtitle={calendarTarget === "checkIn" ? "Selecciona cuándo llega el cliente" : "Selecciona cuándo se va el cliente"}
+        />
+      </Suspense>
     </div>
   );
 }

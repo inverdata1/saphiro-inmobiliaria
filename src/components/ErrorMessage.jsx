@@ -19,7 +19,7 @@ export default function ErrorMessage({ message, onClose }) {
           </div>
           <button
             onClick={onClose}
-            className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:text-slate-300 dark:hover:bg-slate-700"
+            className="h-8 w-8 rounded-full flex items-center justify-center cursor-pointer text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:text-slate-300 dark:hover:bg-slate-700"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -32,7 +32,7 @@ export default function ErrorMessage({ message, onClose }) {
         <div className="mt-6 flex justify-end">
           <button
             onClick={onClose}
-            className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+            className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium cursor-pointer text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
           >
             Cerrar
           </button>

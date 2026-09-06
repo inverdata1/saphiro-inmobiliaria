@@ -39,6 +39,18 @@ exports.listComisiones = async (filters) => {
   const lim = Math.min(Number(limit) || 100, 200);
   const off = Number(offset) || 0;
 
+  const countSql = `
+    SELECT COUNT(*)::int AS total
+    FROM comisiones c
+    JOIN transacciones t ON t.id = c.transaccion_id
+    JOIN inmuebles i ON i.id = t.inmueble_id
+    JOIN corredores co ON co.id = c.corredor_id
+    JOIN usuarios uco ON uco.id = co.usuario_id
+    ${where};
+  `;
+  const { rows: countRows } = await pool.query(countSql, values);
+  const total = Number(countRows[0]?.total || 0);
+
   values.push(lim);
   const limitIdx = values.length;
 
@@ -58,6 +70,7 @@ exports.listComisiones = async (filters) => {
       t.tipo_operacion,
       t.monto_total,
       t.fecha_transaccion,
+      t.moneda,
 
       i.id     AS inmueble_id,
       i.titulo AS inmueble_titulo,
@@ -80,7 +93,10 @@ exports.listComisiones = async (filters) => {
   `;
 
   const { rows } = await pool.query(sql, values);
-  return { data: rows, pagination: { limit: lim, offset: off } };
+  return {
+    data: rows,
+    pagination: { page: Math.floor(off / lim) + 1, limit: lim, offset: off, total },
+  };
 };
 
 exports.getComisionById = async (id) => {
@@ -90,6 +106,7 @@ exports.getComisionById = async (id) => {
       t.tipo_operacion,
       t.monto_total,
       t.fecha_transaccion,
+      t.moneda,
       i.titulo AS inmueble_titulo,
       uco.nombre AS corredor_nombre,
       uco.email  AS corredor_email
@@ -125,19 +142,34 @@ exports.updateEstatusPago = async (id, body, ctx) => {
     RETURNING *;
   `;
 
-  const { rows } = await pool.query(sql, [estatus_pago, fecha_pago || null, id]);
+  const client = await pool.connect();
+  let comision;
 
-  if (!rows.length) throw new AppError("Comisión no existe", 404);
+  try {
+    await client.query("BEGIN");
 
-  if (ctx) {
-    await auditoriaService.registrarUpdate({
-      usuario_id: ctx.usuario_id,
-      tabla_afectada: "comisiones",
-      descripcion: `Actualizado estatus de comisión ${id} a "${estatus_pago}"`,
-      ip_address: ctx.ip_address,
-      user_agent: ctx.user_agent,
-    });
+    const { rows } = await client.query(sql, [estatus_pago, fecha_pago || null, id]);
+    if (!rows.length) throw new AppError("Comisión no existe", 404);
+
+    if (ctx) {
+      await auditoriaService.registrarUpdate({
+        usuario_id: ctx.usuario_id,
+        tabla_afectada: "comisiones",
+        descripcion: `Actualizado estatus de comisión ${id} a "${estatus_pago}"`,
+        ip_address: ctx.ip_address,
+        user_agent: ctx.user_agent,
+      }, client);
+    }
+
+    comision = rows[0];
+
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
   }
 
-  return rows[0];
+  return comision;
 };

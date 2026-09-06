@@ -4,6 +4,7 @@ const path = require("path");
 const crypto = require("crypto");
 const auth = require("../middleware/auth");
 const asyncHandler = require("../middleware/asyncHandler");
+const requireEmailVerified = require("../middleware/requireEmailVerified");
 const c = require("../controllers/inmuebles.controller");
 const imagenesService = require("../services/imagenes.service");
 
@@ -26,10 +27,12 @@ const upload = multer({
 });
 
 router.get("/", asyncHandler(c.listInmuebles));
+router.get("/corredor/:usuario_id", auth, asyncHandler(c.listMisInmuebles));
 router.get("/disponibles", asyncHandler(c.listDisponiblesPorCiudad));
 router.get("/disponibles-por-estado", asyncHandler(c.listDisponiblesPorEstado));
+router.get("/:id/reservas", asyncHandler(c.listReservas));
 router.get("/:id", asyncHandler(c.getInmuebleById));
-router.post("/", auth, upload.array("imagenes", 20), asyncHandler(c.createInmueble));
-router.patch("/:id", auth, asyncHandler(c.patchInmueble));
+router.post("/", auth, requireEmailVerified, upload.array("imagenes", 20), asyncHandler(c.createInmueble));
+router.patch("/:id", auth, requireEmailVerified, asyncHandler(c.patchInmueble));
 
 module.exports = router;

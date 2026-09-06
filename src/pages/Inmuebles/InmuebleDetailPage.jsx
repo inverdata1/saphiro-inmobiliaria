@@ -1,16 +1,11 @@
-import { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef, lazy, Suspense } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { apiGet, apiPost, apiPut, apiDelete } from "../../api";
 import { useAuth } from "../../context/AuthContext";
 import { formatDate } from "../../utils/date";
-const fmtPrice = (n, moneda) => {
-  const num = Number(n || 0);
-  const m = (moneda || "USD").toUpperCase();
-  const formatted = num.toLocaleString("en-US");
-  if (m === "EUR") return `${formatted}€`;
-  if (m === "BS") return `${formatted} Bs.`;
-  return `$${formatted}`;
-};
+import { formatPrice as fmtPrice } from "../../utils/price";
+
+const VacacionalCalendarModal = lazy(() => import("../../components/VacacionalCalendarModal"));
 const fmtNum = (v) => {
   const n = Number(v);
   return Number.isNaN(n)
@@ -27,16 +22,16 @@ const PLACEHOLDER_IMGS = [
 ];
 const ESTADO_COLORS = {
   venta: "bg-emerald-500",
-  alquiler_fijo: "bg-blue-500",
+  alquiler_fijo: "bg-purple-500",
   vacacional: "bg-amber-500",
 };
 const ESTATUS_BADGE = {
   disponible:
     "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
   reservado:
-    "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+    "bg-[#470A68] text-white dark:bg-[#5a0e82] dark:text-white",
   vendido: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300",
-  alquilado: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
+  alquilado: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300",
 };
 
 /* ─── star rating component ─── */
@@ -128,6 +123,7 @@ export default function InmuebleDetailPage() {
   const [activeImg, setActiveImg] = useState(0);
   const [imgLoaded, setImgLoaded] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [calOpen, setCalOpen] = useState(false);
   const [miResena, setMiResena] = useState(null);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [editandoResena, setEditandoResena] = useState(null);
@@ -136,6 +132,7 @@ export default function InmuebleDetailPage() {
   const [reviewSaving, setReviewSaving] = useState(false);
   const [reviewError, setReviewError] = useState("");
   const [resenas, setResenas] = useState([]);
+  const [reservas, setReservas] = useState([]);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
   useEffect(() => {
@@ -213,6 +210,19 @@ export default function InmuebleDetailPage() {
     }
   }, [id, user?.id]);
   useEffect(() => { fetchResenas(); fetchMiResena(); }, [fetchResenas, fetchMiResena]);
+  /* ─── reservas vacacionales ─── */
+  useEffect(() => {
+    if (inmueble?.estado_inmueble !== "vacacional") { setReservas([]); return; }
+    (async () => {
+      try {
+        const r = await apiGet(`/inmuebles/${id}/reservas`);
+        setReservas(Array.isArray(r?.data) ? r.data : []);
+      } catch (e) {
+        console.error("Error al cargar reservas:", e);
+        setReservas([]);
+      }
+    })();
+  }, [id, inmueble?.estado_inmueble]);
   /* ─── guardado ─── */
   const [isGuardado, setIsGuardado] = useState(false);
   useEffect(() => {
@@ -251,8 +261,12 @@ export default function InmuebleDetailPage() {
     if (!inmueble) return "";
     return [inmueble.ciudad, inmueble.estado].filter(Boolean).join(" · ");
   }, [inmueble]);
-  /* Average rating
-   */
+  /* Average rating */
+  const averageRating = useMemo(() => {
+    if (resenas.length === 0) return inmueble?.promedio_estrellas || 0;
+    const sum = resenas.reduce((acc, r) => acc + (r.estrellas || 0), 0);
+    return (sum / resenas.length).toFixed(1);
+  }, [resenas, inmueble?.promedio_estrellas]);
   /* ─── loading ───
    */
   if (loading) return <DetailSkeleton />;
@@ -407,7 +421,7 @@ export default function InmuebleDetailPage() {
                   {" "}
                   <button
                     onClick={handlePrevImage}
-                    className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-white/80 dark:bg-slate-900/80 flex items-center justify-center shadow-lg opacity-70 sm:opacity-0 group-hover:opacity-100 transition-all active:scale-95 sm:hover:scale-110 hover:bg-white dark:hover:bg-slate-900"
+                    className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-white/80 dark:bg-slate-900/80 flex items-center justify-center shadow-lg opacity-70 sm:opacity-0 group-hover:opacity-100 transition-all active:scale-95 sm:hover:scale-110 hover:bg-white dark:hover:bg-slate-900 cursor-pointer"
                     aria-label="Anterior"
                   >
                     {" "}
@@ -428,7 +442,7 @@ export default function InmuebleDetailPage() {
                   </button>{" "}
                   <button
                     onClick={handleNextImage}
-                    className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-white/80 dark:bg-slate-900/80 flex items-center justify-center shadow-lg opacity-70 sm:opacity-0 group-hover:opacity-100 transition-all active:scale-95 sm:hover:scale-110 hover:bg-white dark:hover:bg-slate-900"
+                    className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-white/80 dark:bg-slate-900/80 flex items-center justify-center shadow-lg opacity-70 sm:opacity-0 group-hover:opacity-100 transition-all active:scale-95 sm:hover:scale-110 hover:bg-white dark:hover:bg-slate-900 cursor-pointer"
                     aria-label="Siguiente"
                   >
                     {" "}
@@ -458,7 +472,7 @@ export default function InmuebleDetailPage() {
                     <button
                       key={i}
                       onClick={() => goToImg(i)}
-                      className={`h-2 rounded-full transition-all duration-300 ${i === activeImg ? "w-8 bg-white shadow-lg" : "w-2 bg-white/50 hover:bg-white/80"}`}
+                      className={`h-2 rounded-full transition-all duration-300 ${i === activeImg ? "w-8 bg-white shadow-lg cursor-default" : "w-2 bg-white/50 hover:bg-white/80 cursor-pointer"}`}
                       aria-label={`Imagen ${i + 1}`}
                     />
                   ))}{" "}
@@ -474,7 +488,7 @@ export default function InmuebleDetailPage() {
                   <button
                     key={i}
                     onClick={() => goToImg(i)}
-                    className={`flex-shrink-0 h-12 w-18 sm:h-16 sm:w-24 rounded-lg sm:rounded-xl overflow-hidden border-2 transition-all duration-200 ${i === activeImg ? "border-blue-500 shadow-md scale-105" : "border-transparent opacity-60 hover:opacity-100"}`}
+                    className={`flex-shrink-0 h-12 w-18 sm:h-16 sm:w-24 rounded-lg sm:rounded-xl overflow-hidden border-2 transition-all duration-200 cursor-pointer ${i === activeImg ? "border-blue-500 shadow-md scale-105" : "border-transparent opacity-60 hover:opacity-100"}`}
                   >
                     {" "}
                     <img
@@ -524,7 +538,7 @@ export default function InmuebleDetailPage() {
                 </p>
               )}
               {inmueble.tipo_inmueble && (
-                <span className="mt-2 inline-block rounded-lg bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                <span className="mt-2 inline-block rounded-lg bg-purple-50 px-3 py-1 text-xs font-semibold text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
                   {" "}
                   {inmueble.tipo_inmueble}{" "}
                 </span>
@@ -540,9 +554,9 @@ export default function InmuebleDetailPage() {
               </div>{" "}
               <div className="mt-1 text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent dark:from-blue-400 dark:to-indigo-400">
                 {" "}
-                {fmtPrice(inmueble.precio, inmueble.moneda)}{" "}
+                {fmtPrice(inmueble.precio, inmueble.moneda, inmueble.alquiler_vacacional)}{" "}
               </div>{" "}
-              {inmueble.estado_inmueble !== "venta" && (
+              {inmueble.estado_inmueble !== "venta" && !(inmueble.estado_inmueble === "vacacional" && inmueble.alquiler_vacacional) && (
                 <span className="text-xs text-slate-500 dark:text-slate-400">
                   /mes
                 </span>
@@ -550,12 +564,15 @@ export default function InmuebleDetailPage() {
             </div>
             {/* Agent card
              */}
-            {inmueble.corredor_nombre && (
-              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+            {inmueble.corredor_nombre && inmueble.corredor_usuario_id && (
+              <button
+                onClick={() => navigate(`/perfil/${inmueble.corredor_usuario_id}`)}
+                className="w-full rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800 hover:border-purple-300 dark:hover:border-purple-700 hover:shadow-md transition-all cursor-pointer text-left"
+              >
                 {" "}
                 <div className="flex items-center gap-3">
                   {" "}
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-sm font-bold text-white shadow-md">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#5a0e82] text-sm font-bold text-white shadow-md">
                     {" "}
                     {inmueble.corredor_nombre
                       .split(" ")
@@ -572,11 +589,11 @@ export default function InmuebleDetailPage() {
                     </div>{" "}
                     <div className="text-xs text-slate-500 dark:text-slate-400">
                       {" "}
-                      Corredor asignado{" "}
+                      Corredor asignado · Ver perfil{" "}
                     </div>{" "}
                   </div>{" "}
                 </div>{" "}
-              </div>
+              </button>
             )}
             {/* Actions
              */}{" "}
@@ -624,14 +641,58 @@ export default function InmuebleDetailPage() {
                 </svg>{" "}
                 Compartir{" "}
               </button>{" "}
+
+              {inmueble.estado_inmueble === "vacacional" && (
+                <button
+                  onClick={() => setCalOpen((p) => !p)}
+                  className="btn-secondary flex items-center gap-1.5 sm:gap-2 text-xs flex-1 justify-center"
+                  aria-expanded={calOpen}
+                >
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                  {calOpen ? "Cerrar calendario" : "Ver calendario"}
+                </button>
+              )}
             </div>
 
-            {(user?.rol !== "admin" && user?.id !== inmueble.corredor_id && user !== null ) && (
-              
-              <button className="w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3.5 text-sm font-bold text-white shadow-lg hover:from-blue-700 hover:to-indigo-700 active:scale-[0.98] transition-all">
-                Realizar pago
+            {user?.rol !== "admin" && user?.id !== inmueble.corredor_usuario_id && inmueble.estatus !== "vendido" && inmueble.estatus !== "alquilado" && (
+              <button
+                onClick={() =>
+                  navigate(
+                    inmueble.estado_inmueble === "vacacional"
+                      ? `/reservar/${inmueble.id || id}`
+                      : `/pagos/${inmueble.id || id}`,
+                    { state: { inmueble } }
+                  )
+                }
+                className="w-full rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-emerald-900/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                {inmueble.estado_inmueble === "vacacional" ? (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <rect x="3" y="4" width="18" height="18" rx="2" strokeWidth="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" strokeWidth="2" />
+                    <line x1="8" y1="2" x2="8" y2="6" strokeWidth="2" />
+                    <line x1="3" y1="10" x2="21" y2="10" strokeWidth="2" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 16l2 2 4-4" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  </svg>
+                )}
+                {inmueble.estado_inmueble === "vacacional" ? "Reservar ahora" : "Pagar ahora"}
               </button>
-            
             )}
 
           </div>{" "}
@@ -671,6 +732,43 @@ export default function InmuebleDetailPage() {
                   {" "}
                   {inmueble.descripcion}{" "}
                 </p>{" "}
+              </section>
+            ) : null}
+            {inmueble.estado_inmueble === "vacacional" &&
+            Array.isArray(inmueble.costos_adicionales) &&
+            inmueble.costos_adicionales.length > 0 ? (
+              <section className="rounded-xl sm:rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <svg
+                    className="h-5 w-5 text-blue-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  Costos adicionales
+                </h2>
+                <div className="mt-3 sm:mt-4 space-y-2">
+                  {inmueble.costos_adicionales.map((c) => (
+                    <div
+                      key={c.costo_adicional_id}
+                      className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800/50"
+                    >
+                      <span className="text-slate-700 dark:text-slate-300">
+                        {c.costo_adicional_nombre || c.descripcion || "Costo"}
+                      </span>
+                      <span className="font-semibold text-slate-900 dark:text-white">
+                        {c.monto != null ? `$${Number(c.monto)} / noche` : "—"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </section>
             ) : null}
             {/* Detalles table */}
@@ -886,7 +984,7 @@ export default function InmuebleDetailPage() {
               </p>
             </div>
 
-            {!miResena && user?.id !== inmueble.corredor_id && (
+            {!miResena && user?.id !== inmueble.corredor_usuario_id && (
               <button
                 onClick={handleOpenReview}
                 className="btn-primary text-sm self-start"
@@ -912,12 +1010,15 @@ export default function InmuebleDetailPage() {
           {/* Average rating */}
           <div className="mt-4 sm:mt-6 flex justify-center rounded-lg sm:rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 p-5 sm:p-6 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-100 dark:border-amber-800/30">
             <div className="text-center">
-              <div className="text-5xl sm:text-6xl font-extrabold text-amber-600 dark:text-amber-400">
-                {inmueble.promedio_estrellas}
+              <div key={averageRating} className="text-5xl sm:text-6xl font-extrabold text-amber-400 animate-[pulse_0.3s_ease-in-out]">
+                {averageRating}
               </div>
               <div className="mt-2">
-                <Stars rating={inmueble.promedio_estrellas} size="w-6 h-6 sm:w-7 sm:h-7" />
+                <Stars rating={Math.round(averageRating)} size="w-6 h-6 sm:w-7 sm:h-7" />
               </div>
+              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                {resenas.length} {resenas.length === 1 ? "reseña" : "reseñas"}
+              </p>
             </div>
           </div>
 
@@ -958,7 +1059,7 @@ export default function InmuebleDetailPage() {
                         >
                           <button
                             onClick={handleToggleMenu}
-                            className="h-7 w-7 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 dark:hover:text-slate-300 dark:hover:bg-slate-700/50"
+                            className="h-7 w-7 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 dark:hover:text-slate-300 dark:hover:bg-slate-700/50 cursor-pointer"
                           >
                             <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 16 16">
                               <path d="M3 9.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm5 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm5 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" />
@@ -968,7 +1069,7 @@ export default function InmuebleDetailPage() {
                             <div className="absolute right-0 top-full mt-1 z-50 w-36 rounded-xl border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-600 dark:bg-slate-800">
                               <button
                                 onClick={handleEditReview}
-                                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
+                                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
                               >
                                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -977,7 +1078,7 @@ export default function InmuebleDetailPage() {
                               </button>
                               <button
                                 onClick={handleDeleteReview}
-                                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 cursor-pointer"
                               >
                                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -1063,7 +1164,7 @@ export default function InmuebleDetailPage() {
               </h3>
               <button
                 onClick={handleCloseReview}
-                className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:text-slate-300 dark:hover:bg-slate-700"
+                className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
               >
                 <svg
                   className="h-5 w-5"
@@ -1093,7 +1194,7 @@ export default function InmuebleDetailPage() {
                       key={star}
                       type="button"
                       onClick={() => setReviewRating(star)}
-                      className="transition-transform hover:scale-110"
+                      className="transition-transform hover:scale-110 cursor-pointer"
                     >
                       <svg
                         className={`h-8 w-8 ${
@@ -1177,7 +1278,7 @@ export default function InmuebleDetailPage() {
               </h3>{" "}
               <button
                 onClick={handleCloseShare}
-                className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:text-slate-300 dark:hover:bg-slate-700"
+                className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
               >
                 {" "}
                 <svg
@@ -1220,6 +1321,14 @@ export default function InmuebleDetailPage() {
           </div>{" "}
         </div>
       )}{" "}
+      <Suspense fallback={null}>
+        <VacacionalCalendarModal
+          open={calOpen}
+          onClose={() => setCalOpen(false)}
+          titulo={inmueble.titulo}
+          reservas={reservas}
+        />
+      </Suspense>
     </div>
   );
 }

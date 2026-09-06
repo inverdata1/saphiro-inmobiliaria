@@ -150,28 +150,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Category Shortcuts */}
-      <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.012)] dark:border-slate-800/60 dark:bg-[#141417] dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)]">
-        <div className="text-sm font-bold text-slate-900 dark:text-slate-100">Buscar por Categoría</div>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Link to="/inmuebles?q=villa" className="btn-secondary text-xs py-2 px-3">
-            Villas
-          </Link>
-          <Link to="/inmuebles?q=apartamento" className="btn-secondary text-xs py-2 px-3">
-            Apartamentos
-          </Link>
-          <Link to="/inmuebles?estado_inmueble=alquiler_fijo" className="btn-secondary text-xs py-2 px-3">
-            Alquiler
-          </Link>
-          <Link to="/inmuebles?estado_inmueble=vacacional" className="btn-secondary text-xs py-2 px-3">
-            Vacaciones
-          </Link>
-          <Link to="/inmuebles?q=airbnb" className="btn-secondary text-xs py-2 px-3">
-            Airbnb
-          </Link>
-        </div>
-      </div>
-
       {/* Latest Properties Section */}
       <div className="space-y-4 pt-4">
         <div className="flex items-center justify-between">

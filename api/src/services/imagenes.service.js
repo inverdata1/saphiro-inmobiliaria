@@ -15,32 +15,46 @@ exports.getImagesByInmuebleId = async (inmuebleId) => {
 };
 
 exports.createImages = async (inmuebleId, files) => {
-  const existing = await pool.query(
-    "SELECT COALESCE(MAX(orden), 0) AS max_orden FROM imagenes WHERE inmueble_id = $1",
-    [inmuebleId]
-  );
-  let nextOrden = existing.rows[0].max_orden + 1;
+  const client = await pool.connect();
 
-  const results = [];
-  for (let i = 0; i < files.length; i++) {
-    const orden = nextOrden + i;
-    const portada = i === 0 && nextOrden === 1;
+  try {
+    await client.query("BEGIN");
 
-    const { rows } = await pool.query(
-      `INSERT INTO imagenes (inmueble_id, url, orden, portada, ruta_s3)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING id, inmueble_id, url, orden, portada`,
-      [inmuebleId, "/uploads/" + files[i].filename, orden, portada, "/uploads/" + files[i].filename]
+    const existing = await client.query(
+      "SELECT COALESCE(MAX(orden), 0) AS max_orden FROM imagenes WHERE inmueble_id = $1",
+      [inmuebleId]
     );
+    let nextOrden = existing.rows[0].max_orden + 1;
 
-    const imgId = rows[0].id;
-    const url = `/imagenes/file/${imgId}`;
+    const results = [];
+    for (let i = 0; i < files.length; i++) {
+      const orden = nextOrden + i;
+      const portada = i === 0 && nextOrden === 1;
 
-    await pool.query(`UPDATE imagenes SET url = $1 WHERE id = $2;`, [url, imgId]);
+      const { rows } = await client.query(
+        `INSERT INTO imagenes (inmueble_id, url, orden, portada, ruta_s3)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING id, inmueble_id, url, orden, portada`,
+        [inmuebleId, "/uploads/" + files[i].filename, orden, portada, "/uploads/" + files[i].filename]
+      );
 
-    results.push({ ...rows[0], url });
+      const imgId = rows[0].id;
+      const url = `/imagenes/file/${imgId}`;
+
+      await client.query(`UPDATE imagenes SET url = $1 WHERE id = $2;`, [url, imgId]);
+
+      results.push({ ...rows[0], url });
+    }
+
+    await client.query("COMMIT");
+
+    return results;
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
   }
-  return results;
 };
 
 exports.deleteImage = async (id) => {

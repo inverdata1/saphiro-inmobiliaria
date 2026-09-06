@@ -18,24 +18,41 @@ function buildTxWhere({ desde, hasta }) {
   return { where, values };
 }
 
+function convExpr(amountExpr, monedaCol, moneda) {
+  const m = String(moneda || "USD").toUpperCase();
+  if (!["USD", "EUR", "BS"].includes(m)) return amountExpr;
+  const ves = `CASE ${monedaCol} WHEN 'USD' THEN ${amountExpr} * tau.bcv_dolar WHEN 'EUR' THEN ${amountExpr} * tau.bcv_euro ELSE ${amountExpr} END`;
+  let target;
+  if (m === "USD") target = `${ves} / tau.bcv_dolar`;
+  else if (m === "EUR") target = `${ves} / tau.bcv_euro`;
+  else target = ves;
+  const guard =
+    m === "EUR"
+      ? `(tau.bcv_dolar > 0 AND tau.bcv_euro > 0)`
+      : `tau.bcv_dolar > 0`;
+  return `CASE WHEN ${guard} THEN ${target} ELSE ${amountExpr} END`;
+}
+
 exports.getKpis = async (query) => {
-  const { desde, hasta, tipo_operacion } = query;
+  const { desde, hasta, tipo_operacion, moneda } = query;
   const { where, values } = buildTxWhere({ desde, hasta });
-  //comision_pagada_sum
-  //comision_pendiente_sum
-  //comision_cancelada_sum
+  const tExpr = convExpr("t.monto_total", "t.moneda", moneda);
+  const cExpr = convExpr("c.monto_comision", "t.moneda", moneda);
+  const gExpr = convExpr("c.empresa_ganancia", "t.moneda", moneda);
   const sql = `
+    WITH tau AS (SELECT bcv_dolar, bcv_euro FROM tasas_cambio ORDER BY fecha DESC LIMIT 1)
     SELECT
       COUNT(DISTINCT t.id)::int AS transacciones_count,
-      COALESCE(SUM(t.monto_total), 0) AS monto_total_sum,
-      COALESCE(SUM(c.monto_comision), 0) AS comision_total_sum,
-      COALESCE(SUM(c.empresa_ganancia), 0) AS ganancia_empresa_sum,
+      COALESCE(SUM(${tExpr}), 0) AS monto_total_sum,
+      COALESCE(SUM(${cExpr}), 0) AS comision_total_sum,
+      COALESCE(SUM(${gExpr}), 0) AS ganancia_empresa_sum,
 
-      COALESCE(SUM(CASE WHEN t.estatus_pago = 'pagado' THEN t.monto_total ELSE 0 END), 0) AS monto_total_pagado,
-      COALESCE(SUM(CASE WHEN t.estatus_pago = 'pendiente' THEN t.monto_total ELSE 0 END), 0) AS monto_total_pendiente,
-      COALESCE(SUM(CASE WHEN t.estatus_pago = 'cancelado' THEN t.monto_total ELSE 0 END), 0) AS monto_total_cancelado
+      COALESCE(SUM(CASE WHEN t.estatus_pago = 'pagado' THEN ${tExpr} ELSE 0 END), 0) AS monto_total_pagado,
+      COALESCE(SUM(CASE WHEN t.estatus_pago = 'pendiente' THEN ${tExpr} ELSE 0 END), 0) AS monto_total_pendiente,
+      COALESCE(SUM(CASE WHEN t.estatus_pago = 'cancelado' THEN ${tExpr} ELSE 0 END), 0) AS monto_total_cancelado
     FROM transacciones t
     LEFT JOIN comisiones c ON c.transaccion_id = t.id
+    CROSS JOIN tau
     ${where};
   `;
 
@@ -47,15 +64,24 @@ exports.getKpis = async (query) => {
   const ticketPromedio = txCount > 0 ? montoTotal / txCount : 0;
 
   return {
-    filtros: { desde: desde || null, hasta: hasta || null, tipo_operacion: tipo_operacion || null },
+    filtros: { desde: desde || null, hasta: hasta || null, tipo_operacion: tipo_operacion || null, moneda: (moneda || "USD").toUpperCase() },
     ...kpis,
+    monto_total_sum: Number(Number(kpis.monto_total_sum || 0).toFixed(2)),
+    comision_total_sum: Number(Number(kpis.comision_total_sum || 0).toFixed(2)),
+    ganancia_empresa_sum: Number(Number(kpis.ganancia_empresa_sum || 0).toFixed(2)),
+    monto_total_pagado: Number(Number(kpis.monto_total_pagado || 0).toFixed(2)),
+    monto_total_pendiente: Number(Number(kpis.monto_total_pendiente || 0).toFixed(2)),
+    monto_total_cancelado: Number(Number(kpis.monto_total_cancelado || 0).toFixed(2)),
     ticket_promedio: Number(ticketPromedio.toFixed(2)),
   };
 };
 
 exports.getSerie = async (query) => {
-  const { desde, hasta, tipo_operacion, granularidad = "dia" } = query;
+  const { desde, hasta, tipo_operacion, granularidad = "dia", moneda } = query;
   const { where, values } = buildTxWhere({ desde, hasta, tipo_operacion });
+  const tExpr = convExpr("t.monto_total", "t.moneda", moneda);
+  const cExpr = convExpr("c.monto_comision", "t.moneda", moneda);
+  const gExpr = convExpr("c.empresa_ganancia", "t.moneda", moneda);
 
   const bucket =
     granularidad === "mes"
@@ -63,14 +89,16 @@ exports.getSerie = async (query) => {
       : `date_trunc('day', t.fecha_transaccion)`;
 
   const sql = `
+    WITH tau AS (SELECT bcv_dolar, bcv_euro FROM tasas_cambio ORDER BY fecha DESC LIMIT 1)
     SELECT
       ${bucket} AS periodo,
       COUNT(DISTINCT t.id)::int AS transacciones_count,
-      COALESCE(SUM(t.monto_total), 0) AS monto_total_sum,
-      COALESCE(SUM(c.monto_comision), 0) AS comision_total_sum,
-      COALESCE(SUM(c.empresa_ganancia), 0) AS ganancia_empresa_sum
+      COALESCE(SUM(${tExpr}), 0) AS monto_total_sum,
+      COALESCE(SUM(${cExpr}), 0) AS comision_total_sum,
+      COALESCE(SUM(${gExpr}), 0) AS ganancia_empresa_sum
     FROM transacciones t
     LEFT JOIN comisiones c ON c.transaccion_id = t.id
+    CROSS JOIN tau
     ${where}
     GROUP BY 1
     ORDER BY 1 ASC;
@@ -79,12 +107,12 @@ exports.getSerie = async (query) => {
   const r = await pool.query(sql, values);
   return {
     data: r.rows,
-    meta: { granularidad, desde: desde || null, hasta: hasta || null, tipo_operacion: tipo_operacion || null },
+    meta: { granularidad, desde: desde || null, hasta: hasta || null, tipo_operacion: tipo_operacion || null, moneda: (moneda || "USD").toUpperCase() },
   };
 };
 
 exports.getTopCorredores = async (query) => {
-  const { desde, hasta, limit = 5 } = query;
+  const { desde, hasta, limit = 5, moneda } = query;
 
   const filters = [];
   const values = [];
@@ -102,18 +130,23 @@ exports.getTopCorredores = async (query) => {
   values.push(Math.min(Number(limit) || 5, 50));
   const limitIdx = values.length;
 
+  const cExpr = convExpr("c.monto_comision", "t.moneda", moneda);
+  const gExpr = convExpr("c.empresa_ganancia", "t.moneda", moneda);
+
   const sql = `
+    WITH tau AS (SELECT bcv_dolar, bcv_euro FROM tasas_cambio ORDER BY fecha DESC LIMIT 1)
     SELECT
       c.corredor_id,
       u.nombre AS corredor_nombre,
       u.email  AS corredor_email,
       COUNT(DISTINCT t.id)::int AS transacciones_count,
-      COALESCE(SUM(c.monto_comision), 0) AS comision_total_sum,
-      COALESCE(SUM(c.empresa_ganancia), 0) AS ganancia_empresa_sum
+      COALESCE(SUM(${cExpr}), 0) AS comision_total_sum,
+      COALESCE(SUM(${gExpr}), 0) AS ganancia_empresa_sum
     FROM comisiones c
     JOIN transacciones t ON t.id = c.transaccion_id
     JOIN corredores co ON co.id = c.corredor_id
     JOIN usuarios u ON u.id = co.usuario_id
+    CROSS JOIN tau
     ${where}
     GROUP BY c.corredor_id, u.nombre, u.email
     ORDER BY comision_total_sum DESC
@@ -121,7 +154,7 @@ exports.getTopCorredores = async (query) => {
   `;
 
   const r = await pool.query(sql, values);
-  return { data: r.rows, meta: { desde: desde || null, hasta: hasta || null } };
+  return { data: r.rows, meta: { desde: desde || null, hasta: hasta || null, moneda: (moneda || "USD").toUpperCase() } };
 };
 
 exports.getPorTipoOperacion = async (query) => {

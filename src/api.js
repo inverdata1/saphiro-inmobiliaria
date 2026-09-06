@@ -1,23 +1,74 @@
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3001";
 
-function getToken() {
-  try {
-    return localStorage.getItem("token");
-  } catch {
-    return null;
+let isRefreshing = false;
+let failedQueue = [];
+
+function processQueue(error) {
+  failedQueue.forEach(({ resolve, reject }) => {
+    if (error) reject(error);
+    else resolve();
+  });
+  failedQueue = [];
+}
+
+function baseHeaders() {
+  return { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" };
+}
+
+function redirectToLogin() {
+  if (window.location.pathname !== "/") {
+    window.location.href = "/";
   }
 }
 
-function authHeaders() {
-  const token = getToken();
-  const headers = { "Content-Type": "application/json" };
-  if (token) headers["Authorization"] = `Bearer ${token}`;
-  return headers;
+export class EmailNotVerifiedError extends Error {
+  constructor(message) {
+    super(message || "Correo no verificado");
+    this.name = "EmailNotVerifiedError";
+    this.isEmailNotVerified = true;
+  }
 }
 
-async function handleResponse(res) {
+async function doFetch(url, init) {
+  const res = await fetch(url, init);
+
+  if (res.status === 401 && !url.includes("/auth/refresh")) {
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        failedQueue.push({ resolve, reject });
+      }).then(() => doFetch(url, init));
+    }
+
+    isRefreshing = true;
+    try {
+      const refreshRes = await fetch(API_BASE + "/auth/refresh", {
+        method: "POST",
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+        credentials: "include",
+      });
+
+      if (!refreshRes.ok) {
+        processQueue(new Error("Sesión expirada"));
+        redirectToLogin();
+        throw new Error("Sesión expirada");
+      }
+
+      processQueue(null);
+      return doFetch(url, init);
+    } catch (e) {
+      processQueue(e);
+      redirectToLogin();
+      throw e;
+    } finally {
+      isRefreshing = false;
+    }
+  }
+
   const data = await res.json().catch(() => null);
   if (!res.ok) {
+    if (res.status === 403 && (data?.code || data?.error) === "EMAIL_NOT_VERIFIED") {
+      throw new EmailNotVerifiedError(data?.message);
+    }
     const msg = data?.message || data?.error || `HTTP ${res.status}`;
     throw new Error(msg);
   }
@@ -26,61 +77,63 @@ async function handleResponse(res) {
 
 export async function apiGet(path, params = {}) {
   const url = new URL(API_BASE + path);
-
   Object.entries(params).forEach(([k, v]) => {
     if (v === undefined || v === null || v === "") return;
     url.searchParams.set(k, v);
   });
-
-  const res = await fetch(url.toString(), { headers: authHeaders() });
-  return handleResponse(res);
+  return doFetch(url.toString(), { headers: baseHeaders(), credentials: "include" });
 }
 
-export async function apiPost(path, body = {}) {
-  const res = await fetch(API_BASE + path, {
+export async function apiPost(path, body = {}, idempotencyKey) {
+  const headers = baseHeaders();
+  if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey;
+  return doFetch(API_BASE + path, {
     method: "POST",
-    headers: authHeaders(),
+    headers,
+    credentials: "include",
     body: JSON.stringify(body),
   });
-  return handleResponse(res);
 }
 
-export async function apiPatch(path, body = {}) {
-  const res = await fetch(API_BASE + path, {
+export async function apiPatch(path, body = {}, idempotencyKey) {
+  const headers = baseHeaders();
+  if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey;
+  return doFetch(API_BASE + path, {
     method: "PATCH",
-    headers: authHeaders(),
+    headers,
+    credentials: "include",
     body: JSON.stringify(body),
   });
-  return handleResponse(res);
 }
 
-export async function apiPut(path, body = {}) {
-  const res = await fetch(API_BASE + path, {
+export async function apiPut(path, body = {}, idempotencyKey) {
+  const headers = baseHeaders();
+  if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey;
+  return doFetch(API_BASE + path, {
     method: "PUT",
-    headers: authHeaders(),
+    headers,
+    credentials: "include",
     body: JSON.stringify(body),
   });
-  return handleResponse(res);
 }
 
 export async function apiUpload(path, formData) {
-  const token = getToken();
-  const headers = {};
-  if (token) headers["Authorization"] = `Bearer ${token}`;
-  const res = await fetch(API_BASE + path, {
+  return doFetch(API_BASE + path, {
     method: "POST",
-    headers,
+    headers: { "X-Requested-With": "XMLHttpRequest" },
+    credentials: "include",
     body: formData,
   });
-  return handleResponse(res);
 }
 
-export async function apiDelete(path, body = null) {
-  const opts = {
+export async function apiDelete(path, body = null, idempotencyKey) {
+  const headers = baseHeaders();
+  if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey;
+  const init = {
     method: "DELETE",
-    headers: authHeaders(),
+    headers,
+    credentials: "include",
   };
-  if (body) opts.body = JSON.stringify(body);
-  const res = await fetch(API_BASE + path, opts);
-  return handleResponse(res);
+  if (body) init.body = JSON.stringify(body);
+  return doFetch(API_BASE + path, init);
 }

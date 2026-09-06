@@ -45,6 +45,10 @@ exports.listAuditoria = async (query) => {
   const lim = Math.min(Number(limit || 100), 200);
   const off = Math.max(Number(offset || 0), 0);
 
+  const countSql = `SELECT COUNT(*)::int AS total FROM bitacora_auditoria a ${where};`;
+  const { rows: countRows } = await pool.query(countSql, values);
+  const total = Number(countRows[0]?.total || 0);
+
   values.push(lim);
   const limIdx = values.length;
   values.push(off);
@@ -63,23 +67,30 @@ exports.listAuditoria = async (query) => {
   `;
 
   const { rows } = await pool.query(sql, values);
-  return rows;
+  return {
+    data: rows,
+    pagination: { page: Math.floor(off / lim) + 1, limit: lim, offset: off, total },
+  };
 };
 
-exports.registrarInsert = async ({ usuario_id, tabla_afectada, descripcion, ip_address, user_agent }) => {
-  await pool.query("CALL sp_registrar_auditoria_ins($1, $2, $3, $4, $5)", [
+//Si se recibe un client, la auditoría forma parte de la transacción del llamador
+exports.registrarInsert = async ({ usuario_id, tabla_afectada, descripcion, ip_address, user_agent }, client = null) => {
+  const db = client || pool;
+  await db.query("CALL sp_registrar_auditoria_ins($1, $2, $3, $4, $5)", [
     usuario_id, tabla_afectada, descripcion, ip_address, user_agent,
   ]);
 };
 
-exports.registrarUpdate = async ({ usuario_id, tabla_afectada, descripcion, ip_address, user_agent }) => {
-  await pool.query("CALL sp_registrar_auditoria_up($1, $2, $3, $4, $5)", [
+exports.registrarUpdate = async ({ usuario_id, tabla_afectada, descripcion, ip_address, user_agent }, client = null) => {
+  const db = client || pool;
+  await db.query("CALL sp_registrar_auditoria_up($1, $2, $3, $4, $5)", [
     usuario_id, tabla_afectada, descripcion, ip_address, user_agent,
   ]);
 };
 
-exports.registrarDelete = async ({ usuario_id, tabla_afectada, descripcion, ip_address, user_agent }) => {
-  await pool.query("CALL sp_registrar_auditoria_del($1, $2, $3, $4, $5)", [
+exports.registrarDelete = async ({ usuario_id, tabla_afectada, descripcion, ip_address, user_agent }, client = null) => {
+  const db = client || pool;
+  await db.query("CALL sp_registrar_auditoria_del($1, $2, $3, $4, $5)", [
     usuario_id, tabla_afectada, descripcion, ip_address, user_agent,
   ]);
 };

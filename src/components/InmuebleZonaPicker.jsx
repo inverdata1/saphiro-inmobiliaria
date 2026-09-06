@@ -1,15 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { apiGet } from "../api";
 import Modal from "./Modal";
-
-function fmtPrice(n, moneda) {
-  const num = Number(n || 0);
-  const m = (moneda || "USD").toUpperCase();
-  const formatted = num.toLocaleString("en-US");
-  if (m === "EUR") return `${formatted}€`;
-  if (m === "BS") return `${formatted} Bs.`;
-  return `$${formatted}`;
-}
+import { formatPrice } from "../utils/price";
 
 export default function InmuebleZonaPicker({ value, onChange, selectedItem, showZona = true }) {
   const [estadoId, setEstadoId] = useState("");
@@ -31,9 +23,9 @@ export default function InmuebleZonaPicker({ value, onChange, selectedItem, show
   async function fetchInmueblesPorZona(ciudad, q, { initial = false } = {}) {
     if (initial && !loadedRef.current) setLoading(true);
     try {
-      const params = { ciudad_id: ciudad };
+      const params = { ciudad_id: ciudad, estatus: "disponible,reservado", limit: 200 };
       if (q) params.q = q;
-      const r = await apiGet("/inmuebles/disponibles", params);
+      const r = await apiGet("/inmuebles", params);
       setInmuebles(r.data || []);
       loadedRef.current = true;
     } catch (e) {
@@ -46,7 +38,7 @@ export default function InmuebleZonaPicker({ value, onChange, selectedItem, show
   async function fetchInmueblesPorNombre(q, { initial = false } = {}) {
     if (initial && !loadedRef.current) setLoading(true);
     try {
-      const params = { estatus: "disponible", limit: 50 };
+      const params = { estatus: "disponible,reservado", limit: 50 };
       if (q) params.q = q;
       const r = await apiGet("/inmuebles", params);
       setInmuebles(r.data || []);
@@ -168,17 +160,17 @@ export default function InmuebleZonaPicker({ value, onChange, selectedItem, show
           type="button"
           onClick={() => setShowModal(true)}
           disabled={!canOpenModal}
-          className="flex-1 text-left border rounded-xl px-3 py-2 bg-white dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 text-sm truncate"
+          className="flex-1 text-left border rounded-xl px-3 py-2 bg-white dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 text-sm truncate cursor-pointer"
         >
           {effectiveSelected
-            ? `#${effectiveSelected.id} - ${effectiveSelected.titulo} - ${fmtPrice(effectiveSelected.precio, effectiveSelected.moneda)}`
+            ? `#${effectiveSelected.id} - ${effectiveSelected.titulo} - ${formatPrice(effectiveSelected.precio, effectiveSelected.moneda, effectiveSelected.alquiler_vacacional)}`
             : value ? `#${value}` : "Inmueble"}
         </button>
         {effectiveSelected ? (
           <button
             type="button"
             onClick={handleClear}
-            className="rounded-lg bg-red-50 p-2 text-red-700 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 shrink-0"
+            className="rounded-lg bg-red-50 p-2 text-red-700 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 shrink-0 cursor-pointer"
             title="Limpiar selección"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -196,7 +188,7 @@ export default function InmuebleZonaPicker({ value, onChange, selectedItem, show
               </div>
               <button
                 type="button"
-                className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700"
+                className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 cursor-pointer"
                 onClick={() => { setShowModal(false); setSearch(""); }}
               >
                 ✕
@@ -229,7 +221,7 @@ export default function InmuebleZonaPicker({ value, onChange, selectedItem, show
                       key={i.id}
                       type="button"
                       onClick={() => handleSelect(i)}
-                      className={`group relative flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:bg-slate-800 text-left ${
+                      className={`group relative flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:bg-slate-800 text-left cursor-pointer ${
                         value == i.id
                           ? "border-blue-500 ring-2 ring-blue-200 dark:ring-blue-800"
                           : "border-slate-200 dark:border-slate-700"
@@ -263,13 +255,29 @@ export default function InmuebleZonaPicker({ value, onChange, selectedItem, show
                           </div>
                           <div className="text-right shrink-0">
                             <div className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                              {fmtPrice(i.precio, i.moneda)}
+                              {formatPrice(i.precio, i.moneda, i.alquiler_vacacional)}
                             </div>
                             <div className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">{i.estatus || "Disponible"}</div>
                           </div>
                         </div>
 
                         <div className="mt-auto flex flex-wrap gap-1.5 text-[11px] text-slate-600 dark:text-slate-450">
+                          {i.habitaciones ? (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2.5 py-0.5 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/40">
+                              <svg className="h-3 w-3 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 10V19M21 10V19M3 14H21M3 10H21M6 6H18V10H6V6Z" />
+                              </svg>
+                              <span>{i.habitaciones} hab</span>
+                            </span>
+                          ) : null}
+                          {i.banos ? (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2.5 py-0.5 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/40">
+                              <svg className="h-3 w-3 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 4V16C4 17.1046 4.89543 18 6 18H18C19.1046 18 20 17.1046 20 16V4M2 8H22" />
+                              </svg>
+                              <span>{i.banos} baños</span>
+                            </span>
+                          ) : null}
                           {i.area_m2 ? (
                             <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2.5 py-0.5 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/40">
                               <svg className="h-3 w-3 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -278,14 +286,11 @@ export default function InmuebleZonaPicker({ value, onChange, selectedItem, show
                               <span>{i.area_m2} m²</span>
                             </span>
                           ) : null}
-                          {i.corredor_id ? (
-                            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2.5 py-0.5 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/40">
-                              <svg className="h-3 w-3 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                              </svg>
-                              <span>Corredor</span>
+                          {Array.isArray(i.caracteristicas) && i.caracteristicas.slice(0, 2).map((c, idx) => (
+                            <span key={idx} className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2.5 py-0.5 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/40">
+                              {c.valor != null ? `${c.nombre}: ${c.valor}${c.unidad_medicion ? ` ${c.unidad_medicion}` : ""}` : c.nombre}
                             </span>
-                          ) : null}
+                          ))}
                         </div>
                       </div>
                     </button>

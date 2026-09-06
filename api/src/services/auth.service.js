@@ -47,25 +47,61 @@ exports.register = async ({ nombre, email, password }, ctx) => {
   const rolDb = "cliente";
 
   //Inserta el usuario
-  const { rows } = await pool.query(
-    `INSERT INTO usuarios (nombre, email, password_hash, rol, fecha_registro)
-      VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
-      RETURNING id, nombre, email, rol, fecha_registro;`,
-    [nombre, email, password_hash, rolDb]
-  );
+  const client = await pool.connect();
+  let user;
 
-  const user = rows[0];
+  try {
+    await client.query("BEGIN");
 
-  if (ctx) {
-    await auditoriaService.registrarInsert({
-      usuario_id: ctx.usuario_id || user.id,
-      tabla_afectada: "usuarios",
-      descripcion: `Registro de usuario "${nombre}" (${email})`,
-      ip_address: ctx.ip_address,
-      user_agent: ctx.user_agent,
-    });
+    const { rows } = await client.query(
+      `INSERT INTO usuarios (nombre, email, password_hash, rol, fecha_registro, email_verified)
+        VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, false)
+        RETURNING id, nombre, email, rol, fecha_registro, email_verified;`,
+      [nombre, email, password_hash, rolDb]
+    );
+
+    user = rows[0];
+
+    if (ctx) {
+      await auditoriaService.registrarInsert({
+        usuario_id: ctx.usuario_id || user.id,
+        tabla_afectada: "usuarios",
+        descripcion: `Registro de usuario "${nombre}" (${email})`,
+        ip_address: ctx.ip_address,
+        user_agent: ctx.user_agent,
+      }, client);
+    }
+
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
   }
-  
+
+  //Genera token de verificación de correo
+  const verifyToken = crypto.randomUUID();
+  await redis.setex(`email-verify:${verifyToken}`, 86400, String(user.id));
+
+  //Envía correo de verificación
+  await sendEmail({
+    to: email,
+    subject: "Verifica tu correo electrónico",
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;">
+        <h2 style="color:#2563eb;">Verifica tu correo electrónico</h2>
+        <p>Hola <strong>${nombre}</strong>, gracias por registrarte en <strong>Inverdata C.A</strong>.</p>
+        <p>Para completar tu registro, haz clic en el siguiente botón:</p>
+        <a href="${CLIENT_BASE_URL}/verificar-email?token=${verifyToken}"
+           style="display:inline-block;background:#2563eb;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin:16px 0;">
+          Verificar correo
+        </a>
+        <p style="color:#6b7280;font-size:13px;">Este enlace expira en 24 horas. Si no creaste esta cuenta, ignora este correo.</p>
+      </div>
+    `,
+  });
+
   //Se retornan los datos del usuario
   return {
     id: user.id,
@@ -73,7 +109,95 @@ exports.register = async ({ nombre, email, password }, ctx) => {
     email: user.email,
     rol: user.rol,
     fecha_registro: user.fecha_registro,
+    email_verified: user.email_verified,
   };
+};
+
+//Verificar correo electrónico
+exports.verificarEmail = async ({ token }) => {
+  if (!token) throw new AppError("El token es requerido", 400);
+
+  //Busca el token en Redis
+  const userId = await redis.get(`email-verify:${token}`);
+  if (!userId) throw new AppError("Enlace inválido o expirado", 404);
+
+  //Obtiene datos del usuario
+  const { rows } = await pool.query(
+    `UPDATE usuarios SET email_verified = true WHERE id = $1 RETURNING id, nombre, email, rol;`,
+    [userId]
+  );
+
+  if (!rows.length) throw new AppError("Usuario no encontrado", 404);
+
+  const user = rows[0];
+
+  //Elimina el token de Redis
+  await redis.del(`email-verify:${token}`);
+
+  //Genera tokens de sesión
+  const tokens = await exports.issueTokenPair({ id: user.id, rol: user.rol });
+
+  return {
+    message: "Correo verificado exitosamente",
+    accessToken: tokens.accessToken,
+    refreshToken: tokens.refreshToken,
+    user: {
+      id: user.id,
+      nombre: user.nombre,
+      email: user.email,
+      rol: user.rol,
+      email_verified: true,
+    },
+  };
+};
+
+//Reenviar correo de verificación
+exports.reenviarVerificacion = async ({ email }) => {
+  if (!email) throw new AppError("El email es requerido", 400);
+
+  //Busca el usuario
+  const { rows } = await pool.query(
+    "SELECT id, nombre, email, email_verified FROM usuarios WHERE email = $1 LIMIT 1;",
+    [email]
+  );
+
+  if (!rows.length) throw new AppError("Usuario no encontrado", 404);
+  if (rows[0].email_verified) throw new AppError("El correo ya está verificado", 400);
+
+  const user = rows[0];
+
+  //Elimina tokens anteriores
+  const keys = await redis.keys("email-verify:*");
+  for (const key of keys) {
+    const val = await redis.get(key);
+    if (val === String(user.id)) {
+      await redis.del(key);
+    }
+  }
+
+  //Genera nuevo token
+  const verifyToken = crypto.randomUUID();
+  await redis.setex(`email-verify:${verifyToken}`, 86400, String(user.id));
+
+  //Envía correo de verificación
+  await sendEmail({
+    to: email,
+    subject: "Verifica tu correo electrónico",
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;">
+        <h2 style="color:#2563eb;">Verifica tu correo electrónico</h2>
+        <p>Hola <strong>${user.nombre}</strong>, has solicitado reenviar el correo de verificación.</p>
+        <p>Para completar tu registro, haz clic en el siguiente botón:</p>
+        <a href="${CLIENT_BASE_URL}/verificar-email?token=${verifyToken}"
+           style="display:inline-block;background:#2563eb;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin:16px 0;">
+          Verificar correo
+        </a>
+        <p style="color:#6b7280;font-size:13px;">Este enlace expira en 24 horas. Si no creaste esta cuenta, ignora este correo.</p>
+      </div>
+    `,
+  });
+
+  return { message: "Correo de verificación reenviado" };
 };
 
 //Registro de corredores
@@ -88,17 +212,41 @@ exports.registerCorredor = async ({ email, porcentaje }, ctx) => {
   //Verifica si existe un usuario con el mismo correo electronico
   await searchUserByEmail(email);
 
-  //Inserta el usuario
-  const InsertUserQ = await pool.query(`
-    INSERT INTO usuarios (email, rol, fecha_registro) VALUES ($1, 'corredor', CURRENT_TIMESTAMP) RETURNING id;
-  `, [email]);
-    
-  const id_corredor = InsertUserQ.rows[0].id;
+  const client = await pool.connect();
+  let id_corredor;
 
-  //Inserta el corredor
-  await pool.query(`
-    INSERT INTO corredores (usuario_id, comision_base) VALUES ($1, $2)
-  `, [id_corredor, porcentaje]);
+  try {
+    await client.query("BEGIN");
+
+    //Inserta el usuario
+    const InsertUserQ = await client.query(`
+      INSERT INTO usuarios (email, rol, fecha_registro) VALUES ($1, 'corredor', CURRENT_TIMESTAMP) RETURNING id;
+    `, [email]);
+
+    id_corredor = InsertUserQ.rows[0].id;
+
+    //Inserta el corredor
+    await client.query(`
+      INSERT INTO corredores (usuario_id, comision_base) VALUES ($1, $2)
+    `, [id_corredor, porcentaje]);
+
+    if (ctx) {
+      await auditoriaService.registrarInsert({
+        usuario_id: ctx.usuario_id,
+        tabla_afectada: "corredores",
+        descripcion: `Invitación de corredor (${email})`,
+        ip_address: ctx.ip_address,
+        user_agent: ctx.user_agent,
+      }, client);
+    }
+
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
 
   //Se genera un token para el registro
   const token = crypto.randomUUID();
@@ -125,16 +273,6 @@ exports.registerCorredor = async ({ email, porcentaje }, ctx) => {
       </div>
     `,
   });
-
-  if (ctx) {
-    await auditoriaService.registrarInsert({
-      usuario_id: ctx.usuario_id,
-      tabla_afectada: "corredores",
-      descripcion: `Invitación de corredor (${email})`,
-      ip_address: ctx.ip_address,
-      user_agent: ctx.user_agent,
-    });
-  }
 
 }
 
@@ -182,7 +320,7 @@ exports.login = async ({ email, password }) => {
 
   //Se busca al usuario en la base de datos por medio del email
   const { rows } = await pool.query(
-    "SELECT id, nombre, email, password_hash, rol, active FROM usuarios WHERE email = $1 LIMIT 1;",
+    "SELECT id, nombre, email, password_hash, rol, active, email_verified FROM usuarios WHERE email = $1 LIMIT 1;",
     [email]
   );
 
@@ -196,23 +334,90 @@ exports.login = async ({ email, password }) => {
   const match = await bcrypt.compare(String(password), String(user.password_hash));
   if (!match) throw new AppError("Credenciales inválidas", 401);
 
-  //Se genera un token jwt
-  const jwtSecret = process.env.JWT_SECRET || "inmob-secret";
-  const apiRol = user.rol;
-  const token = jwt.sign({ id: user.id, rol: apiRol }, jwtSecret, {
-    expiresIn: "7d",
-  });
+  //Si el correo no está verificado se bloquea el login
+  if (!user.email_verified) {
+    const err = new AppError("Debes verificar tu correo electrónico antes de iniciar sesión.", 403);
+    err.code = "EMAIL_NOT_VERIFIED";
+    throw err;
+  }
 
-  //Se retorna el token y los datos del usuario
+  //Se generan los tokens (access + refresh)
+  const tokens = await exports.issueTokenPair({ id: user.id, rol: user.rol });
+
+  //Se retornan los tokens y los datos del usuario
   return {
-    token,
+    ...tokens,
     user: {
       id: user.id,
       nombre: user.nombre,
       email: user.email,
-      rol: apiRol,
+      rol: user.rol,
+      email_verified: user.email_verified,
     },
   };
+};
+
+//Genera un par de tokens (access + refresh) y almacena el refresh en Redis
+exports.issueTokenPair = async ({ id, rol }) => {
+  const jwtSecret = process.env.JWT_SECRET || "inmob-secret";
+
+  const accessToken = jwt.sign({ id, rol }, jwtSecret, { expiresIn: "15m" });
+  const refreshToken = jwt.sign({ id, rol }, jwtSecret, { expiresIn: "7d" });
+
+  //Almacena el refresh token en Redis (7 días)
+  await redis.setex(`refresh:${refreshToken}`, 7 * 24 * 60 * 60, String(id));
+
+  return { accessToken, refreshToken };
+};
+
+//Rota el refresh token: valida el viejo, genera nuevos tokens, elimina el viejo
+exports.rotateRefreshToken = async (oldRefreshToken) => {
+  const jwtSecret = process.env.JWT_SECRET || "inmob-secret";
+
+  //Verifica que el refresh token sea válido
+  let payload;
+  try {
+    payload = jwt.verify(oldRefreshToken, jwtSecret);
+  } catch {
+    throw new AppError("Refresh token inválido o expirado", 401);
+  }
+
+  //Verifica que exista en Redis (no haya sido revocado)
+  const storedUserId = await redis.get(`refresh:${oldRefreshToken}`);
+  if (!storedUserId) throw new AppError("Refresh token revocado", 401);
+
+  //Elimina el refresh token viejo de Redis (rotación = single-use)
+  await redis.del(`refresh:${oldRefreshToken}`);
+
+  //Genera nuevos tokens
+  const tokens = await exports.issueTokenPair({ id: payload.id, rol: payload.rol });
+
+  //Obtiene email_verified del usuario
+  const { rows } = await pool.query(
+    "SELECT email_verified FROM usuarios WHERE id = $1 LIMIT 1;",
+    [payload.id]
+  );
+
+  return {
+    ...tokens,
+    user: { id: payload.id, rol: payload.rol, email_verified: rows[0]?.email_verified },
+  };
+};
+
+//Revoca un refresh token específico
+exports.revokeRefreshToken = async (refreshToken) => {
+  if (refreshToken) await redis.del(`refresh:${refreshToken}`);
+};
+
+//Revoca todos los refresh tokens de un usuario (logout global / cambio de contraseña)
+exports.revokeAllRefreshTokens = async (userId) => {
+  const keys = await redis.keys("refresh:*");
+  for (const key of keys) {
+    const val = await redis.get(key);
+    if (val === String(userId)) {
+      await redis.del(key);
+    }
+  }
 };
 
 //Obtiene los datos del usuario
@@ -222,7 +427,7 @@ exports.me = async (userId) => {
 
   //Se busca al usuario en la base de datos por medio del id
   const { rows } = await pool.query(
-    "SELECT id, nombre, email, rol, fecha_registro FROM usuarios WHERE id = $1 LIMIT 1;",
+    "SELECT id, nombre, email, rol, fecha_registro, email_verified FROM usuarios WHERE id = $1 LIMIT 1;",
     [userId]
   );
 
@@ -237,6 +442,7 @@ exports.me = async (userId) => {
     email: user.email,
     rol: user.rol,
     fecha_registro: user.fecha_registro,
+    email_verified: user.email_verified,
   };
 };
 
@@ -301,29 +507,47 @@ exports.completarRegistro = async ({ token, nombre, telefono, licencia_nro, pass
   //Se hashea su contraseña
   const password_hash = await bcrypt.hash(String(password), 10);
 
-  //Se llenan los datos faltantes del usuario
-  await pool.query(
-    `UPDATE usuarios SET nombre = $1, password_hash = $2 WHERE id = $3;`,
-    [nombre, password_hash, usuarioId]
-  );
+  const client = await pool.connect();
 
-  await pool.query(
-    `UPDATE corredores SET telefono = $1, licencia_nro = $2 WHERE usuario_id = $3;`,
-    [telefono || null, licencia_nro || null, usuarioId]
-  );
+  try {
+    await client.query("BEGIN");
+
+    //Se llenan los datos faltantes del usuario
+    await client.query(
+      `UPDATE usuarios SET nombre = $1, password_hash = $2 WHERE id = $3;`,
+      [nombre, password_hash, usuarioId]
+    );
+
+    await client.query(
+      `UPDATE corredores SET telefono = $1, licencia_nro = $2 WHERE usuario_id = $3;`,
+      [telefono || null, licencia_nro || null, usuarioId]
+    );
+
+    await client.query(
+      `UPDATE usuarios SET email_verified = true WHERE id = $1;`,
+      [usuarioId]
+    );
+
+    if (ctx) {
+      await auditoriaService.registrarUpdate({
+        usuario_id: ctx.usuario_id || Number(usuarioId),
+        tabla_afectada: "usuarios",
+        descripcion: `Completado registro de corredor ${usuarioId}`,
+        ip_address: ctx.ip_address,
+        user_agent: ctx.user_agent,
+      }, client);
+    }
+
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
 
   //Se elimina el token de redis
   await redis.del(`registro:corredor:${token}`);
-
-  if (ctx) {
-    await auditoriaService.registrarUpdate({
-      usuario_id: ctx.usuario_id || Number(usuarioId),
-      tabla_afectada: "usuarios",
-      descripcion: `Completado registro de corredor ${usuarioId}`,
-      ip_address: ctx.ip_address,
-      user_agent: ctx.user_agent,
-    });
-  }
 
   //Se retorna un mensaje de exito
   return { message: "Registro completado exitosamente" };
@@ -335,11 +559,35 @@ exports.invitarAdmin = async ({ email }, ctx) => {
 
   const existing = await searchUserByEmail(email);
 
-  const { rows } = await pool.query(`
-    INSERT INTO usuarios (email, rol, fecha_registro) VALUES ($1, 'admin', CURRENT_TIMESTAMP) RETURNING id;
-  `, [email]);
+  const client = await pool.connect();
+  let id_admin;
 
-  const id_admin = rows[0].id;
+  try {
+    await client.query("BEGIN");
+
+    const { rows } = await client.query(`
+      INSERT INTO usuarios (email, rol, fecha_registro) VALUES ($1, 'admin', CURRENT_TIMESTAMP) RETURNING id;
+    `, [email]);
+
+    id_admin = rows[0].id;
+
+    if (ctx) {
+      await auditoriaService.registrarInsert({
+        usuario_id: ctx.usuario_id,
+        tabla_afectada: "usuarios",
+        descripcion: `Invitación de admin (${email})`,
+        ip_address: ctx.ip_address,
+        user_agent: ctx.user_agent,
+      }, client);
+    }
+
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
 
   const token = crypto.randomUUID();
   await redis.setex(`registro:admin:${token}`, 86400, String(id_admin));
@@ -360,16 +608,6 @@ exports.invitarAdmin = async ({ email }, ctx) => {
       </div>
     `,
   });
-
-  if (ctx) {
-    await auditoriaService.registrarInsert({
-      usuario_id: ctx.usuario_id,
-      tabla_afectada: "usuarios",
-      descripcion: `Invitación de admin (${email})`,
-      ip_address: ctx.ip_address,
-      user_agent: ctx.user_agent,
-    });
-  }
 };
 
 //Reinvitar administrador (reenviar código de registro)
@@ -420,22 +658,35 @@ exports.completarRegistroAdmin = async ({ token, nombre, password }, ctx) => {
 
   const password_hash = await bcrypt.hash(String(password), 10);
 
-  await pool.query(
-    `UPDATE usuarios SET nombre = $1, password_hash = $2 WHERE id = $3;`,
-    [nombre, password_hash, usuarioId]
-  );
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    await client.query(
+      `UPDATE usuarios SET nombre = $1, password_hash = $2 WHERE id = $3;`,
+      [nombre, password_hash, usuarioId]
+    );
+
+    if (ctx) {
+      await auditoriaService.registrarUpdate({
+        usuario_id: ctx.usuario_id || Number(usuarioId),
+        tabla_afectada: "usuarios",
+        descripcion: `Completado registro de admin ${usuarioId}`,
+        ip_address: ctx.ip_address,
+        user_agent: ctx.user_agent,
+      }, client);
+    }
+
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
 
   await redis.del(`registro:admin:${token}`);
-
-  if (ctx) {
-    await auditoriaService.registrarUpdate({
-      usuario_id: ctx.usuario_id || Number(usuarioId),
-      tabla_afectada: "usuarios",
-      descripcion: `Completado registro de admin ${usuarioId}`,
-      ip_address: ctx.ip_address,
-      user_agent: ctx.user_agent,
-    });
-  }
 
   return { message: "Registro completado exitosamente" };
 };
@@ -514,35 +765,51 @@ exports.resetPassword = async ({ email, resetToken, newPassword }, ctx) => {
   if (!storedToken) throw new AppError("Token inválido o expirado", 400);
   if (storedToken !== resetToken) throw new AppError("Token inválido", 400);
 
-  //Se busca al usuario
-  const { rows: userRows } = await pool.query(
-    "SELECT id FROM usuarios WHERE email = $1 LIMIT 1;",
-    [email]
-  );
-
-  if (!userRows.length) throw new AppError("Usuario no encontrado", 404);
-
   //Se hashea la nueva contraseña
   const password_hash = await bcrypt.hash(String(newPassword), 10);
 
-  //Se actualiza la contraseña
-  await pool.query(
-    "UPDATE usuarios SET password_hash = $1 WHERE id = $2;",
-    [password_hash, userRows[0].id]
-  );
+  const client = await pool.connect();
+  let userId;
+
+  try {
+    await client.query("BEGIN");
+
+    //Se busca al usuario
+    const { rows: userRows } = await client.query(
+      "SELECT id FROM usuarios WHERE email = $1 LIMIT 1;",
+      [email]
+    );
+
+    if (!userRows.length) throw new AppError("Usuario no encontrado", 404);
+
+    userId = userRows[0].id;
+
+    //Se actualiza la contraseña
+    await client.query(
+      "UPDATE usuarios SET password_hash = $1 WHERE id = $2;",
+      [password_hash, userRows[0].id]
+    );
+
+    if (ctx) {
+      await auditoriaService.registrarUpdate({
+        usuario_id: ctx.usuario_id || userId,
+        tabla_afectada: "usuarios",
+        descripcion: `Restablecimiento de contraseña para ${email}`,
+        ip_address: ctx.ip_address,
+        user_agent: ctx.user_agent,
+      }, client);
+    }
+
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
 
   //Se elimina el token de autorizacion
   await redis.del(`password-reset-token:${email}`);
-
-  if (ctx) {
-    await auditoriaService.registrarUpdate({
-      usuario_id: ctx.usuario_id || userRows[0].id,
-      tabla_afectada: "usuarios",
-      descripcion: `Restablecimiento de contraseña para ${email}`,
-      ip_address: ctx.ip_address,
-      user_agent: ctx.user_agent,
-    });
-  }
 
   return { message: "Contraseña restablecida exitosamente" };
 };

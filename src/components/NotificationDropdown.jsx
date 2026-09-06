@@ -1,53 +1,15 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { apiGet, apiPatch } from "../api";
 
-const MOCK_NOTIFICATIONS = [
-  {
-    id: 1,
-    tipo: "transaccion",
-    titulo: "Nueva transaccion registrada",
-    mensaje: 'Se registro la venta del apartamento en "Las Mercedes" por $120.000.',
-    fecha: "2026-07-20T10:30:00",
-    leida: false,
-    icono: "money",
-  },
-  {
-    id: 2,
-    tipo: "inmueble",
-    titulo: "Inmueble actualizado",
-    mensaje: 'El inmueble "Torre Bizancio" fue modificado por el corredor Juan Perez.',
-    fecha: "2026-07-20T09:15:00",
-    leida: false,
-    icono: "home",
-  },
-  {
-    id: 3,
-    tipo: "sistema",
-    titulo: "Bienvenido a Inverdata",
-    mensaje: "Tu cuenta fue activada correctamente. Ya puedes acceder a todas las funcionalidades.",
-    fecha: "2026-07-19T16:00:00",
-    leida: true,
-    icono: "info",
-  },
-  {
-    id: 4,
-    tipo: "corredor",
-    titulo: "Nuevo corredor registrado",
-    mensaje: 'Maria Lopez se unio como corredora inmobiliaria.',
-    fecha: "2026-07-19T14:22:00",
-    leida: true,
-    icono: "user",
-  },
-  {
-    id: 5,
-    tipo: "comision",
-    titulo: "Comision pendiente",
-    mensaje: "Tienes una comision de $3.500 por la transaccion #1042 sin procesar.",
-    fecha: "2026-07-18T11:00:00",
-    leida: true,
-    icono: "alert",
-  },
-];
+const TIPO_ICONO = {
+  Transaccion: "money",
+  Inmueble: "home",
+  Sistema: "info",
+  Corredor: "user",
+  Comision: "alert",
+};
 
 const ICON_MAP = {
   money: (
@@ -78,11 +40,11 @@ const ICON_MAP = {
 };
 
 const TIPO_COLORS = {
-  transaccion: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-  inmueble: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  sistema: "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300",
-  corredor: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-  comision: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+  Transaccion: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+  Inmueble: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+  Sistema: "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300",
+  Corredor: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+  Comision: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
 };
 
 function timeAgo(fecha) {
@@ -97,10 +59,35 @@ function timeAgo(fecha) {
 }
 
 export default function NotificationDropdown() {
+  const { user } = useAuth();
+  const usuarioId = user?.id;
+
   const [open, setOpen] = useState(false);
   const [visible, setVisible] = useState(false);
-  const [notificaciones, setNotificaciones] = useState(MOCK_NOTIFICATIONS);
+  const [notificaciones, setNotificaciones] = useState([]);
+  const [loading, setLoading] = useState(false);
   const ref = useRef(null);
+
+  async function load() {
+    if (!usuarioId) return;
+    setLoading(true);
+    try {
+      const r = await apiGet(`/notificaciones/${usuarioId}`);
+      setNotificaciones(Array.isArray(r?.data) ? r.data : []);
+    } catch {
+      // silent
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    load();
+  }, [usuarioId]);
+
+  useEffect(() => {
+    if (open) load();
+  }, [open]);
 
   const noLeidas = notificaciones.filter((n) => !n.leida).length;
 
@@ -136,22 +123,34 @@ export default function NotificationDropdown() {
     };
   }, [open]);
 
-  function marcarLeidas() {
-    setNotificaciones((prev) => prev.map((n) => ({ ...n, leida: true })));
+  async function marcarLeidas() {
+    if (!usuarioId) return;
+    try {
+      await apiPatch(`/notificaciones/${usuarioId}/read-all`);
+      setNotificaciones((prev) => prev.map((n) => ({ ...n, leida: true })));
+    } catch {
+      // silent
+    }
+  }
+
+  async function marcarLeida(n) {
+    if (n.leida) return;
+    setNotificaciones((prev) => prev.map((x) => (x.id === n.id ? { ...x, leida: true } : x)));
+    apiPatch(`/notificaciones/${n.id}/read`).catch(() => {});
   }
 
   return (
     <div className="relative" ref={ref}>
       <button
         onClick={handleToggle}
-        className="relative inline-flex items-center justify-center rounded-full border border-white/20 p-2 text-white hover:bg-white/10 transition-colors"
+        className="relative inline-flex items-center justify-center rounded-full border border-white/20 p-2 text-white hover:bg-white/10 transition-colors cursor-pointer"
         aria-label="Notificaciones"
       >
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
         </svg>
         {noLeidas > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white ring-2 ring-blue-700">
+          <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white ring-2 ring-purple-700">
             {noLeidas}
           </span>
         )}
@@ -164,7 +163,7 @@ export default function NotificationDropdown() {
             {noLeidas > 0 && (
               <button
                 onClick={marcarLeidas}
-                className="text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                className="text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 cursor-pointer"
               >
                 Marcar todas como leidas
               </button>
@@ -172,7 +171,9 @@ export default function NotificationDropdown() {
           </div>
 
           <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700 scrollbar-custom">
-            {notificaciones.length === 0 ? (
+            {loading ? (
+              <div className="px-4 py-8 text-center text-sm text-slate-400">Cargando...</div>
+            ) : notificaciones.length === 0 ? (
               <div className="px-4 py-8 text-center">
                 <svg className="mx-auto h-10 w-10 text-slate-300 dark:text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
@@ -180,30 +181,35 @@ export default function NotificationDropdown() {
                 <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">No tienes notificaciones</p>
               </div>
             ) : (
-              notificaciones.map((n) => (
-                <div
-                  key={n.id}
-                  className={`flex gap-3 px-4 py-3 transition hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer ${
-                    !n.leida ? "bg-blue-50/50 dark:bg-blue-900/10" : ""
-                  }`}
-                >
-                  <div className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${TIPO_COLORS[n.tipo] || TIPO_COLORS.sistema}`}>
-                    {ICON_MAP[n.icono] || ICON_MAP.info}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className={`text-sm leading-snug ${!n.leida ? "font-semibold text-slate-900 dark:text-white" : "font-medium text-slate-700 dark:text-slate-300"}`}>
-                        {n.titulo}
-                      </p>
-                      <span className="shrink-0 text-[11px] text-slate-400 dark:text-slate-500">{timeAgo(n.fecha)}</span>
+              notificaciones.map((n) => {
+                const tipo = n.tipo_notificacion || "Sistema";
+                const icono = TIPO_ICONO[tipo] || "info";
+                return (
+                  <div
+                    key={n.id}
+                    onClick={() => marcarLeida(n)}
+                    className={`flex gap-3 px-4 py-3 transition hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer ${
+                      !n.leida ? "bg-purple-50/50 dark:bg-purple-900/10" : ""
+                    }`}
+                  >
+                    <div className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${TIPO_COLORS[tipo] || TIPO_COLORS.Sistema}`}>
+                      {ICON_MAP[icono] || ICON_MAP.info}
                     </div>
-                    <p className="mt-0.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400 line-clamp-2">{n.mensaje}</p>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className={`text-sm leading-snug ${!n.leida ? "font-semibold text-slate-900 dark:text-white" : "font-medium text-slate-700 dark:text-slate-300"}`}>
+                          {n.titulo}
+                        </p>
+                        <span className="shrink-0 text-[11px] text-slate-400 dark:text-slate-500">{timeAgo(n.fecha_hora)}</span>
+                      </div>
+                      <p className="mt-0.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400 line-clamp-2">{n.descripcion}</p>
+                    </div>
+                    {!n.leida && (
+                      <div className="mt-2 h-2 w-2 shrink-0 rounded-full bg-purple-500" />
+                    )}
                   </div>
-                  {!n.leida && (
-                    <div className="mt-2 h-2 w-2 shrink-0 rounded-full bg-blue-500" />
-                  )}
-                </div>
-              ))
+                );
+              })
             )}
           </div>
 

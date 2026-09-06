@@ -31,7 +31,7 @@ function PropertyCarousel({ title, subtitle, properties, loading }) {
         <div className="flex items-center gap-2">
           <button
             onClick={() => scroll("left")}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-850 dark:text-slate-300 dark:hover:bg-slate-800"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-850 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer"
             aria-label="Anterior"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -40,7 +40,7 @@ function PropertyCarousel({ title, subtitle, properties, loading }) {
           </button>
           <button
             onClick={() => scroll("right")}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-850 dark:text-slate-300 dark:hover:bg-slate-800"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-850 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer"
             aria-label="Siguiente"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -191,7 +191,7 @@ export default function InicioPage() {
         </div>
         {/* Hero Content */}
         <div className="relative z-10 max-w-5xl mx-auto px-4 text-center">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 px-3 py-1 text-xs font-semibold text-blue-400 border border-blue-500/20 backdrop-blur-md mb-4">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-purple-500/10 px-3 py-1 text-xs font-semibold text-purple-400 border border-purple-500/20 backdrop-blur-md mb-4">
             Encuentra tu lugar ideal
           </span>
           <h1 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight">
@@ -281,7 +281,7 @@ export default function InicioPage() {
                       ordenar: "newest",
                     })
                   }
-                  className="text-xs font-semibold text-red-500 hover:text-red-600 transition underline mr-2"
+                  className="text-xs font-semibold text-red-500 hover:text-red-600 transition underline mr-2 cursor-pointer"
                 >
                   Limpiar filtros
                 </button>
