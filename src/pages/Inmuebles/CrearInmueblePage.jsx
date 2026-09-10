@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiGet, apiUpload } from "../../api";
 import { useAuth } from "../../context/AuthContext";
-import ErrorMessage from "../../components/ErrorMessage";
+import ErrorMessage from "../../components/error/ErrorMessage";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -50,6 +50,7 @@ export default function CrearInmueblePage() {
 
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [previews, setPreviews] = useState([]);
+  const [caracteristicasErrs, setCaracteristicasErrs] = useState({});
   const fileRef = useRef(null);
 
   const mapRef = useRef(null);
@@ -57,7 +58,7 @@ export default function CrearInmueblePage() {
   const markerRef = useRef(null);
 
   useEffect(() => {
-    return () => previews.forEach((u) => URL.revokeObjectURL(u));
+    return () => previews.forEach((u) => URL.revokeObjectURL(u.url));
   }, [previews]);
 
   const [loading, setLoading] = useState(false);
@@ -71,8 +72,22 @@ export default function CrearInmueblePage() {
 
   function handleFiles(e) {
     const files = Array.from(e.target.files || []);
-    setSelectedFiles(files);
-    setPreviews(files.map((f) => URL.createObjectURL(f)));
+    const items = files.map((f) => ({
+      id: (crypto?.randomUUID?.() || Math.random().toString(36).slice(2)),
+      file: f,
+    }));
+    setSelectedFiles((p) => [...p, ...items]);
+    setPreviews((p) => [...p, ...items.map((it) => ({ id: it.id, url: URL.createObjectURL(it.file) }))]);
+    setFieldErrors((p) => ({ ...p, imagenes: "" }));
+  }
+
+  function removeFile(id) {
+    setSelectedFiles((p) => p.filter((it) => it.id !== id));
+    setPreviews((p) => {
+      const target = p.find((it) => it.id === id);
+      if (target) URL.revokeObjectURL(target.url);
+      return p.filter((it) => it.id !== id);
+    });
   }
 
   useEffect(() => {
@@ -107,6 +122,11 @@ export default function CrearInmueblePage() {
       delete next[id];
       return next;
     });
+    setCaracteristicasErrs((p) => {
+      const next = { ...p };
+      delete next[id];
+      return next;
+    });
   }
 
   function setCaracteristicaValor(id, valor) {
@@ -114,6 +134,7 @@ export default function CrearInmueblePage() {
       ...prev,
       [id]: { ...prev[id], valor },
     }));
+    setCaracteristicasErrs((p) => ({ ...p, [id]: "" }));
   }
 
   function agregarCosto(id) {
@@ -200,6 +221,19 @@ export default function CrearInmueblePage() {
       if (!form.precio_por_noche || Number(form.precio_por_noche) <= 0) errs.precio_por_noche = "Precio por noche requerido";
       if (!form.capacidad_personas || Number(form.capacidad_personas) <= 0) errs.capacidad_personas = "Capacidad requerida";
     }
+
+    const carctErrs = {};
+    Object.entries(caracteristicasSel).forEach(([id, data]) => {
+      const c = caracteristicas.find((x) => x.id === Number(id));
+      if (c?.unidad_medicion && !String(data.valor ?? "").trim()) {
+        carctErrs[id] = "Ingresa un valor";
+      }
+    });
+    setCaracteristicasErrs(carctErrs);
+    if (Object.keys(carctErrs).length) errs.caracteristicas = true;
+
+    if (!selectedFiles.length) errs.imagenes = "Debes cargar al menos una imagen";
+
     setFieldErrors(errs);
     if (Object.keys(errs).length) {
       setErr("Corrige los campos marcados en rojo antes de continuar.");
@@ -249,7 +283,7 @@ export default function CrearInmueblePage() {
 
       const fd = new FormData();
       fd.append("data", JSON.stringify(payload));
-      selectedFiles.forEach((f) => fd.append("imagenes", f));
+      selectedFiles.forEach((it) => fd.append("imagenes", it.file));
 
       await apiUpload("/inmuebles", fd);
 
@@ -391,14 +425,23 @@ export default function CrearInmueblePage() {
 
                     {c.unidad_medicion ? (
                       <>
-                        <input
-                          type="text"
-                          value={data.valor}
-                          onChange={(e) => setCaracteristicaValor(Number(id), e.target.value)}
-                          placeholder="Valor"
-                          className="w-20 rounded-lg border border-slate-200 px-2 py-1 text-xs text-right focus:border-blue-400 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
-                        />
-                        <span className="text-xs text-slate-400">{c.unidad_medicion}</span>
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="text"
+                            value={data.valor}
+                            onChange={(e) => setCaracteristicaValor(Number(id), e.target.value)}
+                            placeholder="Valor"
+                            className={`w-20 rounded-lg border px-2 py-1 text-xs text-right focus:border-blue-400 focus:outline-none dark:bg-slate-700 dark:text-slate-100 ${
+                              caracteristicasErrs[id]
+                                ? "border-red-400 dark:border-red-700"
+                                : "border-slate-200 dark:border-slate-600"
+                            }`}
+                          />
+                          <span className="text-xs text-slate-400">{c.unidad_medicion}</span>
+                        </div>
+                        {caracteristicasErrs[id] && (
+                          <span className="text-xs text-red-600 dark:text-red-400">{caracteristicasErrs[id]}</span>
+                        )}
                       </>
                     ) : (
                       <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Sí</span>
@@ -443,11 +486,11 @@ export default function CrearInmueblePage() {
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 mt-4">
               <div>
-                <label className={labelCls}>Hora check-in</label>
+                <label className={labelCls}>Hora de entrada</label>
                 <input className={inputCls} type="time" value={form.hora_checkin} onChange={(e) => set("hora_checkin", e.target.value)} />
               </div>
               <div>
-                <label className={labelCls}>Hora check-out</label>
+                <label className={labelCls}>Hora de salida</label>
                 <input className={inputCls} type="time" value={form.hora_checkout} onChange={(e) => set("hora_checkout", e.target.value)} />
               </div>
             </div>
@@ -556,15 +599,29 @@ export default function CrearInmueblePage() {
             type="file"
             multiple
             accept="image/jpeg,image/png,image/webp,image/avif,image/gif"
-            className="mt-1 w-full text-sm text-slate-500 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-100 dark:text-slate-400 dark:file:bg-blue-900/30 dark:file:text-blue-300"
+            className="mt-1 w-full text-sm text-transparent selection:bg-transparent file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900/30 dark:file:text-blue-300"
             onChange={handleFiles}
           />
+          {fieldErrors.imagenes && <p className={errMsgCls}>{fieldErrors.imagenes}</p>}
           {previews.length ? (
             <div className="mt-2 flex flex-wrap gap-2">
-              {previews.map((url, i) => (
-                <div key={i} className="relative h-20 w-20 overflow-hidden rounded-lg border border-slate-200 dark:border-slate-600">
-                  <img src={url} alt="" className="h-full w-full object-cover" />
-                  {i === 0 ? <span className="absolute left-0 top-0 rounded-br bg-purple-900 px-1 text-[10px] text-white">Portada</span> : null}
+              <span className="w-full text-xs text-slate-500 dark:text-slate-400">
+                {previews.length} {previews.length === 1 ? "imagen seleccionada" : "imágenes seleccionadas"}
+              </span>
+              {previews.map((p) => (
+                <div key={p.id} className="group relative h-20 w-20 overflow-hidden rounded-lg border border-slate-200 dark:border-slate-600">
+                  <img src={p.url} alt="" className="h-full w-full object-cover" />
+                  {previews[0]?.id === p.id ? <span className="absolute left-0 top-0 rounded-br bg-purple-900 px-1 text-[10px] text-white">Portada</span> : null}
+                  <button
+                    type="button"
+                    onClick={() => removeFile(p.id)}
+                    title="Quitar imagen"
+                    className="absolute right-1 top-1 hidden h-5 w-5 items-center justify-center rounded-full bg-black/60 text-white hover:bg-red-600 group-hover:flex cursor-pointer"
+                  >
+                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </div>
               ))}
             </div>

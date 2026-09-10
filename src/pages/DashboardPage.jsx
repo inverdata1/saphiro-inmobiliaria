@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { apiGet } from "../api";
 import { useAuth } from "../context/AuthContext";
 import PropertyCard from "../components/PropertyCard";
-import ErrorBanner from "../components/ErrorBanner";
+import ErrorBanner from "../components/error/ErrorBanner";
 
 function MenuCard({ to, icon, title, subtitle, className = "" }) {
   return (
@@ -47,11 +47,11 @@ export default function DashboardPage() {
 
   const initials = user
     ? (user.nombre || user.name || "")
-        .split(" ")
-        .map((p) => p[0])
-        .slice(0, 2)
-        .join("")
-        .toUpperCase()
+      .split(" ")
+      .map((p) => p[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase()
     : "US";
 
   return (

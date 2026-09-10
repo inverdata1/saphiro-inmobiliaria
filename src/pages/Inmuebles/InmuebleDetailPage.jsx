@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo, useCallback, useRef, lazy, Suspense } fro
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { apiGet, apiPost, apiPut, apiDelete } from "../../api";
 import { useAuth } from "../../context/AuthContext";
+import ShareModal from "../../components/ShareModal";
 import { formatDate } from "../../utils/date";
 import { formatPrice as fmtPrice } from "../../utils/price";
 
@@ -13,6 +14,11 @@ const fmtNum = (v) => {
     : Number.isInteger(n)
       ? n.toString()
       : n.toFixed(2);
+};
+const fmtHora = (v) => {
+  if (!v) return "-";
+  const s = String(v);
+  return s.includes(":") ? s.slice(0, 5) : s;
 };
 const PLACEHOLDER_IMGS = [
   "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80",
@@ -283,7 +289,6 @@ export default function InmuebleDetailPage() {
   };
   const handleOpenShare = () => setShareOpen(true);
   const handleCloseShare = () => setShareOpen(false);
-  const handleCopyLink = () => { navigator.clipboard.writeText(shareUrl); };
   const handleOpenReview = () => setReviewOpen(true);
   const handleCloseReview = () => {
     setReviewOpen(false);
@@ -666,7 +671,7 @@ export default function InmuebleDetailPage() {
               )}
             </div>
 
-            {user?.rol !== "admin" && user?.id !== inmueble.corredor_usuario_id && inmueble.estatus !== "vendido" && inmueble.estatus !== "alquilado" && (
+            {user && user?.rol !== "admin" && user?.id !== inmueble.corredor_usuario_id && inmueble.estatus !== "vendido" && inmueble.estatus !== "alquilado" && (
               <button
                 onClick={() =>
                   navigate(
@@ -822,7 +827,7 @@ export default function InmuebleDetailPage() {
 
                 {/* Cluster 3: Especificaciones Clave */}
                 <div className="space-y-4">
-                  <h3 className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-550 font-extrabold">Dimensión & Estatus</h3>
+                  <h3 className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-550 font-extrabold">Dimensión y Estatus</h3>
                   <div className="space-y-3">
                     <div className="flex flex-col gap-0.5">
                       <span className="text-xs text-slate-450 dark:text-slate-500 font-semibold">Área Construida</span>
@@ -836,6 +841,40 @@ export default function InmuebleDetailPage() {
                 </div>
               </div>
             </section>
+            {inmueble.estado_inmueble === "vacacional" && inmueble.alquiler_vacacional && (
+              <section className="rounded-xl sm:rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <svg
+                    className="h-5 w-5 text-blue-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  Horarios de la estancia
+                </h2>
+                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 flex flex-col items-center text-center dark:border-slate-700 dark:bg-slate-800/50">
+                    <span className="text-xs text-slate-450 dark:text-slate-500 font-semibold">Hora de entrada</span>
+                    <span className="mt-1 text-lg font-bold text-slate-850 dark:text-slate-200">
+                      {fmtHora(inmueble.alquiler_vacacional.hora_checkin)}
+                    </span>
+                  </div>
+                  <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 flex flex-col items-center text-center dark:border-slate-700 dark:bg-slate-800/50">
+                    <span className="text-xs text-slate-450 dark:text-slate-500 font-semibold">Hora de salida</span>
+                    <span className="mt-1 text-lg font-bold text-slate-850 dark:text-slate-200">
+                      {fmtHora(inmueble.alquiler_vacacional.hora_checkout)}
+                    </span>
+                  </div>
+                </div>
+              </section>
+            )}
             {/* Amenities / Features
              */}{" "}
             <section className="rounded-xl sm:rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
@@ -1262,65 +1301,7 @@ export default function InmuebleDetailPage() {
       )}
       {/* ── Share Modal ──
        */}
-      {shareOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-        >
-          {" "}
-          <div
-            className="w-full max-w-md mx-4 rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-800 max-h-[85vh] overflow-y-auto scrollbar-custom"
-          >
-            {" "}
-            <div className="flex items-center justify-between mb-4">
-              {" "}
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                Compartir propiedad
-              </h3>{" "}
-              <button
-                onClick={handleCloseShare}
-                className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
-              >
-                {" "}
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  {" "}
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6 18L18 6M6 6l12 12"
-                  />{" "}
-                </svg>{" "}
-              </button>{" "}
-            </div>{" "}
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
-              {" "}
-              Copia el enlace para compartir esta propiedad:{" "}
-            </p>{" "}
-            <div className="flex gap-2">
-              {" "}
-              <input
-                type="text"
-                readOnly
-                value={shareUrl}
-                className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200"
-                onFocus={(e) => e.target.select()}
-              />{" "}
-              <button
-                onClick={handleCopyLink}
-                className="btn-primary text-sm whitespace-nowrap"
-              >
-                {" "}
-                Copiar{" "}
-              </button>{" "}
-            </div>{" "}
-          </div>{" "}
-        </div>
-      )}{" "}
+      <ShareModal open={shareOpen} onClose={handleCloseShare} url={shareUrl} title="Compartir propiedad" description="Copia el enlace para compartir:"/>{" "}
       <Suspense fallback={null}>
         <VacacionalCalendarModal
           open={calOpen}

@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { apiGet, apiPatch } from "../api";
 import DataTable from "../components/DataTable";
-import CorredorPicker from "../components/CorredorPicker";
-import ErrorBanner from "../components/ErrorBanner";
+import CorredorPicker from "../components/pickers/CorredorPicker";
+import ErrorBanner from "../components/error/ErrorBanner";
 import { formatDateTime } from "../utils/date";
 
 function money(n, moneda) {
@@ -155,7 +155,7 @@ export default function ComisionesPage() {
               header: "Ganancia",
               render: (r) => money(r.empresa_ganancia, r.moneda),
             },
-            
+
 
 
           ]}

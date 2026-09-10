@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { apiGet } from "../../api";
 import { useAuth } from "../../context/AuthContext";
 import PropertyCard from "../../components/PropertyCard";
-import ErrorBanner from "../../components/ErrorBanner";
+import ErrorBanner from "../../components/error/ErrorBanner";
 
 export default function InmueblesPage() {
   const { user } = useAuth();
@@ -62,7 +62,7 @@ export default function InmueblesPage() {
     const q = searchParams.get("q") || "";
     const est = searchParams.get("estado_inmueble") || "";
     setEstadoInmueble(est);
-    
+
     setLoading(true);
     setErr("");
     apiGet("/inmuebles", {

@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { apiGet } from "../api";
 import { useAuth } from "../context/AuthContext";
 import PropertyCard from "../components/PropertyCard";
+import ShareModal from "../components/ShareModal";
 
 export default function PerfilUsuarioPage() {
   const { id } = useParams();
@@ -15,7 +16,7 @@ export default function PerfilUsuarioPage() {
   const [loading, setLoading] = useState(true);
   const [filtroTipo, setFiltroTipo] = useState("todos");
   const [busqueda, setBusqueda] = useState("");
-  const [copiado, setCopiado] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -95,10 +96,6 @@ export default function PerfilUsuarioPage() {
 
   // Teléfono formateado
   const telefono = corredorInfo?.telefono || usuario?.telefono || "+58 412 514 8799";
-  const telefonoClean = telefono.replace(/[^\d+]/g, "");
-  const whatsappUrl = `https://wa.me/${telefonoClean.replace("+", "")}?text=${encodeURIComponent(
-    `Hola ${nombreCompleto}, vi tus propiedades en Saphiro Inmobiliaria y me gustaría más información.`
-  )}`;
 
   // Filtrado de inmuebles
   const inmueblesFiltrados = useMemo(() => {
@@ -130,11 +127,9 @@ export default function PerfilUsuarioPage() {
   const conteoAlquiler = inmuebles.filter((i) => (i.estado_inmueble || "").toLowerCase().includes("alquiler")).length;
   const conteoVacacional = inmuebles.filter((i) => (i.estado_inmueble || "").toLowerCase().includes("vacacional")).length;
 
-  const handleCopiarEnlace = () => {
-    navigator.clipboard?.writeText(window.location.href);
-    setCopiado(true);
-    setTimeout(() => setCopiado(false), 3000);
-  };
+  const handleCopiarEnlace = () => setShareOpen(true);
+
+  const shareUrl = typeof window !== "undefined" ? window.location.href : "";
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-slate-50/70 dark:bg-[#0c0c0e] py-8 px-4 sm:px-6 lg:px-8 transition-colors">
@@ -163,7 +158,7 @@ export default function PerfilUsuarioPage() {
               <svg className="w-3.5 h-3.5 text-purple-850 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
               </svg>
-              <span>{copiado ? "¡Enlace copiado!" : "Compartir perfil"}</span>
+              <span>Compartir perfil</span>
             </button>
 
             {esMiPropioPerfil && (
@@ -374,6 +369,14 @@ export default function PerfilUsuarioPage() {
         </div>
 
       </div>
+
+      <ShareModal
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+        url={shareUrl}
+        title="Compartir perfil"
+        description={`Copia el enlace para compartir el perfil de ${nombreCompleto}:`}
+      />
     </div>
   );
 }

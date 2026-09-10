@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { apiGet } from "../api";
 import PropertyCard from "../components/PropertyCard";
-import ErrorBanner from "../components/ErrorBanner";
+import ErrorBanner from "../components/error/ErrorBanner";
 // Carousel Component
 function PropertyCarousel({ title, subtitle, properties, loading }) {
   const containerRef = useRef(null);

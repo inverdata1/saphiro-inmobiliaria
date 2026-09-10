@@ -1,46 +1,24 @@
-# deps / build
-node_modules/
-dist/
-dist-ssr/
-cache/
-*.local
-
-# env / secrets
-.env
-.env.*
-!.env.example
-api/.env
-api/.env.*
-!api/.env.example
-
-# uploads (binarios locales)
-api/uploads/*
-!api/uploads/.gitkeep
-
-# logs
-logs/
+# Logs
+logs
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+lerna-debug.log*
 
-# editor / OS
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
 .vscode/*
 !.vscode/extensions.json
-.idea/
+.idea
 .DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
-
-# dumps / backups locales
-*.dump
-Saphiro_Inmobiliaria_DB.sql
-
-# deploy
-scripts/.deploy_secret
-scripts/deploy.log
-scripts/auto-pull.log

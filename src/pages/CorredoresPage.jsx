@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiPost, apiGet, apiPatch, apiPut, apiDelete } from "../api";
 import DataTable from "../components/DataTable";
-import ErrorBanner from "../components/ErrorBanner";
+import ErrorBanner from "../components/error/ErrorBanner";
 import Modal from "../components/Modal";
 
 export default function CorredoresPage() {
@@ -125,7 +125,7 @@ export default function CorredoresPage() {
     if (!deleteTarget) return;
     setLoading(true);
     try {
-      await apiDelete(`/corredores/${deleteTarget.id}`);
+      await apiDelete(`/usuarios/${deleteTarget.id}`);
       setRows((prev) => prev.filter((r) => r.id !== deleteTarget.id));
       setDeleteTarget(null);
     } catch (e) {
@@ -183,15 +183,18 @@ export default function CorredoresPage() {
             {
               key: "nombre",
               header: "Nombre",
-              render: (r) => (
-                <Link
-                  to={`/perfil/${r.id}`}
-                  className="font-bold text-slate-800 dark:text-slate-100 hover:text-purple-750 dark:hover:text-purple-400 transition hover:underline"
-                  title="Ver perfil completo e inmuebles del corredor"
-                >
-                  {r.nombre}
-                </Link>
-              ),
+              render: (r) =>
+                r.nombre !== "-" && r.telefono !== "-" ? (
+                  <Link
+                    to={`/perfil/${r.id}`}
+                    className="font-bold text-slate-800 dark:text-slate-100 hover:text-purple-750 dark:hover:text-purple-400 transition hover:underline"
+                    title="Ver perfil completo e inmuebles del corredor"
+                  >
+                    {r.nombre}
+                  </Link>
+                ) : (
+                  <span className="font-bold text-slate-800 dark:text-slate-100">{r.nombre}</span>
+                ),
             },
             { key: "email", header: "Email" },
             { key: "telefono", header: "Teléfono" },
@@ -202,11 +205,10 @@ export default function CorredoresPage() {
               className: "w-28",
               render: (r) => (
                 <span
-                  className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                    r.activo
+                  className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${r.activo
                       ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
                       : "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300"
-                  }`}
+                    }`}
                 >
                   {r.activo ? "Activo" : "Inactivo"}
                 </span>
@@ -217,15 +219,17 @@ export default function CorredoresPage() {
               header: "Acciones",
               render: (r) => (
                 <div className="flex items-center justify-center gap-1">
-                  <Link
-                    to={`/perfil/${r.id}`}
-                    className="rounded-lg bg-purple-50 p-2 text-[#470A68] hover:bg-purple-100 dark:bg-purple-950/40 dark:text-purple-300 cursor-pointer"
-                    title="Ver perfil público e inmuebles"
-                  >
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                  </Link>
+                  {r.nombre !== "-" && r.telefono !== "-" && (
+                    <Link
+                      to={`/perfil/${r.id}`}
+                      className="rounded-lg bg-purple-50 p-2 text-[#470A68] hover:bg-purple-100 dark:bg-purple-950/40 dark:text-purple-300 cursor-pointer"
+                      title="Ver perfil público e inmuebles"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </Link>
+                  )}
                   {r.nombre === "-" && (
                     <button
                       onClick={() => handleReinvitar(r.id)}
@@ -247,11 +251,10 @@ export default function CorredoresPage() {
                   )}
                   <button
                     onClick={() => toggleActivo(r.id)}
-                    className={`rounded-lg p-2 transition-colors cursor-pointer ${
-                      r.activo
+                    className={`rounded-lg p-2 transition-colors cursor-pointer ${r.activo
                         ? "bg-red-50 text-red-700 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400"
                         : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400"
-                    }`}
+                      }`}
                     title={r.activo ? "Inhabilitar" : "Habilitar"}
                   >
                     {r.activo ? (
@@ -320,176 +323,190 @@ export default function CorredoresPage() {
       </div>
 
       <Modal open={showModal} onClose={() => { setShowModal(false); setEmail(""); setPorcentaje(""); }} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg dark:bg-slate-800 dark:border dark:border-slate-700">
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="text-lg font-extrabold dark:text-slate-100">Crear corredor</div>
-                <div className="text-sm text-slate-500 dark:text-slate-400">Datos del nuevo corredor.</div>
-              </div>
-              <button
-                type="button"
-                className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 cursor-pointer"
-                onClick={() => { setShowModal(false); setEmail(""); setPorcentaje(""); }}
-                aria-label="Cerrar"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="mt-5 space-y-4">
-              <div>
-                <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Correo electrónico</label>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900"
-                  placeholder="corredor@correo.com"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Porcentaje de comisión</label>
-                <input
-                  type="number"
-                  required
-                  min="0"
-                  max="100"
-                  step="0.01"
-                  value={porcentaje}
-                  onChange={(e) => setPorcentaje(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900"
-                  placeholder="3.5"
-                />
-              </div>
-              <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
-                  onClick={() => { setShowModal(false); setEmail(""); setPorcentaje(""); }}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  className="btn-primary disabled:opacity-60"
-                  disabled={!email || !porcentaje}
-                  onClick={handleCreate}
-                >
-                  Aceptar
-                </button>
-              </div>
-            </div>
+        <div className="flex items-start justify-between">
+          <div>
+            <div className="text-lg font-extrabold dark:text-slate-100">Crear corredor</div>
+            <div className="text-sm text-slate-500 dark:text-slate-400">Datos del nuevo corredor.</div>
+          </div>
+          <button
+            type="button"
+            className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 cursor-pointer"
+            onClick={() => { if (!loading) { setShowModal(false); setEmail(""); setPorcentaje(""); } }}
+            aria-label="Cerrar"
+          >
+            ✕
+          </button>
+        </div>
+        <div className="mt-5 space-y-4">
+          <div>
+            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Correo electrónico</label>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900"
+              placeholder="corredor@correo.com"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Porcentaje de comisión</label>
+            <input
+              type="number"
+              required
+              min="0"
+              max="100"
+              step="0.01"
+              value={porcentaje}
+              onChange={(e) => setPorcentaje(e.target.value)}
+              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900"
+              placeholder="3.5"
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading}
+              onClick={() => { if (!loading) { setShowModal(false); setEmail(""); setPorcentaje(""); } }}
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              className="btn-primary disabled:opacity-60 inline-flex items-center justify-center gap-2"
+              disabled={!email || !porcentaje || loading}
+              onClick={handleCreate}
+            >
+              {loading && (
+                <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              )}
+              {loading ? "Creando..." : "Aceptar"}
+            </button>
+          </div>
+        </div>
       </Modal>
 
       <Modal open={!!showView} onClose={() => setShowView(null)} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg dark:bg-slate-800 dark:border dark:border-slate-700">
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="text-lg font-extrabold dark:text-slate-100">Datos del corredor</div>
-                <div className="text-sm text-slate-500 dark:text-slate-400">Información del corredor seleccionado.</div>
-              </div>
-              <button
-                type="button"
-                className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 cursor-pointer"
-                onClick={() => setShowView(null)}
-                aria-label="Cerrar"
-              >
-                ✕
-              </button>
+        <div className="flex items-start justify-between">
+          <div>
+            <div className="text-lg font-extrabold dark:text-slate-100">Datos del corredor</div>
+            <div className="text-sm text-slate-500 dark:text-slate-400">Información del corredor seleccionado.</div>
+          </div>
+          <button
+            type="button"
+            className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 cursor-pointer"
+            onClick={() => setShowView(null)}
+            aria-label="Cerrar"
+          >
+            ✕
+          </button>
+        </div>
+        <div className="mt-5 space-y-3">
+          {[
+            ["ID", showView?.id],
+            ["Nombre", showView?.nombre],
+            ["Email", showView?.email],
+            ["Teléfono", showView?.telefono || "-"],
+            ["Licencia", showView?.licencia],
+            ["Comisión base", showView?.comisionBase != null ? `${showView.comisionBase}%` : "-"],
+            ["Estado", showView?.activo ? "Activo" : "Inactivo"],
+          ].map(([label, value]) => (
+            <div key={label} className="flex justify-between border-b border-slate-100 pb-2 dark:border-slate-700">
+              <span className="text-sm text-slate-500 dark:text-slate-400">{label}</span>
+              <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">{value}</span>
             </div>
-            <div className="mt-5 space-y-3">
-              {[
-                ["ID", showView?.id],
-                ["Nombre", showView?.nombre],
-                ["Email", showView?.email],
-                 ["Teléfono", showView?.telefono || "-"],
-                 ["Licencia", showView?.licencia],
-                 ["Comisión base", showView?.comisionBase != null ? `${showView.comisionBase}%` : "-"],
-                ["Estado", showView?.activo ? "Activo" : "Inactivo"],
-              ].map(([label, value]) => (
-                <div key={label} className="flex justify-between border-b border-slate-100 pb-2 dark:border-slate-700">
-                  <span className="text-sm text-slate-500 dark:text-slate-400">{label}</span>
-                  <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">{value}</span>
-                </div>
-              ))}
-            </div>
-            <div className="mt-5 flex justify-end">
-              <button
-                type="button"
-                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
-                onClick={() => setShowView(null)}
-              >
-                Cerrar
-              </button>
-            </div>
+          ))}
+        </div>
+        <div className="mt-5 flex justify-end">
+          <button
+            type="button"
+            className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+            onClick={() => setShowView(null)}
+          >
+            Cerrar
+          </button>
+        </div>
       </Modal>
 
       <Modal open={!!deleteTarget} onClose={() => setDeleteTarget(null)} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg dark:bg-slate-800 dark:border dark:border-slate-700">
-            <div className="text-lg font-extrabold dark:text-slate-100">¿Eliminar corredor?</div>
-            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-              Esta acción no se puede deshacer. Se eliminará a <strong>{deleteTarget?.nombre}</strong> ({deleteTarget?.email}) del sistema.
-            </p>
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                type="button"
-                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
-                onClick={() => setDeleteTarget(null)}
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 cursor-pointer"
-                onClick={handleDelete}
-              >
-                Eliminar
-              </button>
-            </div>
+        <div className="text-lg font-extrabold dark:text-slate-100">¿Eliminar corredor?</div>
+        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+          Esta acción no se puede deshacer. Se eliminará a <strong>{deleteTarget?.nombre}</strong> ({deleteTarget?.email}) del sistema.
+        </p>
+        <div className="mt-5 flex justify-end gap-2">
+          <button
+            type="button"
+            className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+            onClick={() => setDeleteTarget(null)}
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60 cursor-pointer"
+            disabled={loading}
+            onClick={handleDelete}
+          >
+            {loading && (
+              <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            )}
+            {loading ? "Eliminando..." : "Eliminar"}
+          </button>
+        </div>
       </Modal>
 
       <Modal open={!!editTarget} onClose={() => setEditTarget(null)} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg dark:bg-slate-800 dark:border dark:border-slate-700">
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="text-lg font-extrabold dark:text-slate-100">Editar corredor</div>
-                <div className="text-sm text-slate-500 dark:text-slate-400">{editTarget?.nombre}</div>
-              </div>
-              <button
-                type="button"
-                className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 cursor-pointer"
-                onClick={() => setEditTarget(null)}
-              >
-                ✕
-              </button>
-            </div>
-            <div className="mt-5 space-y-4">
-              <div>
-                <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Comisión base (%)</label>
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.01"
-                  value={editForm.comisionBase}
-                  onChange={(e) => setEditForm({ ...editForm, comisionBase: e.target.value })}
-                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900"
-                />
-              </div>
-              <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
-                  onClick={() => setEditTarget(null)}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  className="btn-primary disabled:opacity-60"
-                  disabled={loading}
-                  onClick={handleUpdate}
-                >
-                  {loading ? "Guardando..." : "Guardar"}
-                </button>
-              </div>
-            </div>
+        <div className="flex items-start justify-between">
+          <div>
+            <div className="text-lg font-extrabold dark:text-slate-100">Editar corredor</div>
+            <div className="text-sm text-slate-500 dark:text-slate-400">{editTarget?.nombre}</div>
+          </div>
+          <button
+            type="button"
+            className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 cursor-pointer"
+            onClick={() => setEditTarget(null)}
+          >
+            ✕
+          </button>
+        </div>
+        <div className="mt-5 space-y-4">
+          <div>
+            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Comisión base (%)</label>
+            <input
+              type="number"
+              min="0"
+              max="100"
+              step="0.01"
+              value={editForm.comisionBase}
+              onChange={(e) => setEditForm({ ...editForm, comisionBase: e.target.value })}
+              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900"
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+              onClick={() => setEditTarget(null)}
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              className="btn-primary disabled:opacity-60"
+              disabled={loading}
+              onClick={handleUpdate}
+            >
+              {loading ? "Guardando..." : "Guardar"}
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

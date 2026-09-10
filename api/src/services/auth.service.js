@@ -10,13 +10,8 @@ const auditoriaService = require("./auditoria.service");
 const CLIENT_BASE_URL = process.env.CLIENT_BASE_URL || "http://localhost:5173";
 
 async function borrarTokensRegistro(prefijo, usuarioId) {
-  const keys = await redis.keys(`registro:${prefijo}:*`);
-  for (const key of keys) {
-    const val = await redis.get(key);
-    if (val === String(usuarioId)) {
-      await redis.del(key);
-    }
-  }
+  const keys = await redis.keys(`registro:${prefijo}:${usuarioId}:*`);
+  if (keys.length) await redis.del(...keys);
 }
 
 const searchUserByEmail = async (email) => {
@@ -50,6 +45,9 @@ exports.register = async ({ nombre, email, password }, ctx) => {
   const client = await pool.connect();
   let user;
 
+  //Convertir el correo a minusculas para normalizarlo
+  email = email.toLowerCase();
+
   try {
     await client.query("BEGIN");
 
@@ -82,7 +80,7 @@ exports.register = async ({ nombre, email, password }, ctx) => {
 
   //Genera token de verificación de correo
   const verifyToken = crypto.randomUUID();
-  await redis.setex(`email-verify:${verifyToken}`, 86400, String(user.id));
+  await redis.setex(`email-verify:${user.id}:${verifyToken}`, 86400, String(user.id));
 
   //Envía correo de verificación
   await sendEmail({
@@ -118,7 +116,8 @@ exports.verificarEmail = async ({ token }) => {
   if (!token) throw new AppError("El token es requerido", 400);
 
   //Busca el token en Redis
-  const userId = await redis.get(`email-verify:${token}`);
+  const evKeys = await redis.keys(`email-verify:*:${token}`);
+  const userId = evKeys.length ? await redis.get(evKeys[0]) : null;
   if (!userId) throw new AppError("Enlace inválido o expirado", 404);
 
   //Obtiene datos del usuario
@@ -132,7 +131,8 @@ exports.verificarEmail = async ({ token }) => {
   const user = rows[0];
 
   //Elimina el token de Redis
-  await redis.del(`email-verify:${token}`);
+  const evDelKeys = await redis.keys(`email-verify:${userId}:*`);
+  if (evDelKeys.length) await redis.del(...evDelKeys);
 
   //Genera tokens de sesión
   const tokens = await exports.issueTokenPair({ id: user.id, rol: user.rol });
@@ -167,17 +167,12 @@ exports.reenviarVerificacion = async ({ email }) => {
   const user = rows[0];
 
   //Elimina tokens anteriores
-  const keys = await redis.keys("email-verify:*");
-  for (const key of keys) {
-    const val = await redis.get(key);
-    if (val === String(user.id)) {
-      await redis.del(key);
-    }
-  }
+  const evOldKeys = await redis.keys(`email-verify:${user.id}:*`);
+  if (evOldKeys.length) await redis.del(...evOldKeys);
 
   //Genera nuevo token
   const verifyToken = crypto.randomUUID();
-  await redis.setex(`email-verify:${verifyToken}`, 86400, String(user.id));
+  await redis.setex(`email-verify:${user.id}:${verifyToken}`, 86400, String(user.id));
 
   //Envía correo de verificación
   await sendEmail({
@@ -253,7 +248,7 @@ exports.registerCorredor = async ({ email, porcentaje }, ctx) => {
 
   //El token se almacena en redis
   //El token expera en 24 horas y al 
-  await redis.setex(`registro:corredor:${token}`, 86400, String(id_corredor));
+  await redis.setex(`registro:corredor:${id_corredor}:${token}`, 86400, String(id_corredor));
 
   //Se envia el correo electronico al usuario
   await sendEmail({
@@ -291,7 +286,8 @@ exports.reinvitarCorredor = async ({ id }) => {
   await borrarTokensRegistro("corredor", id);
 
   const token = crypto.randomUUID();
-  await redis.setex(`registro:corredor:${token}`, 86400, String(id));
+  //Se guarda 24 horas en Redis
+  await redis.setex(`registro:corredor:${id}:${token}`, 86400, String(id));
 
   await sendEmail({
     to: rows[0].email,
@@ -318,9 +314,10 @@ exports.login = async ({ email, password }) => {
   //Validaciones
   if (!email || !password) throw new AppError("email y password son requeridos", 400);
 
+  email= email.toLowerCase();
   //Se busca al usuario en la base de datos por medio del email
   const { rows } = await pool.query(
-    "SELECT id, nombre, email, password_hash, rol, active, email_verified FROM usuarios WHERE email = $1 LIMIT 1;",
+    "SELECT id, nombre, email, password_hash, rol, active, email_verified FROM usuarios WHERE email = $1 AND deleted_at IS NULL LIMIT 1;",
     [email]
   );
 
@@ -366,6 +363,7 @@ exports.issueTokenPair = async ({ id, rol }) => {
 
   //Almacena el refresh token en Redis (7 días)
   await redis.setex(`refresh:${refreshToken}`, 7 * 24 * 60 * 60, String(id));
+  await redis.sadd(`refresh:user:${id}`, refreshToken);
 
   return { accessToken, refreshToken };
 };
@@ -388,6 +386,7 @@ exports.rotateRefreshToken = async (oldRefreshToken) => {
 
   //Elimina el refresh token viejo de Redis (rotación = single-use)
   await redis.del(`refresh:${oldRefreshToken}`);
+  await redis.srem(`refresh:user:${storedUserId}`, oldRefreshToken);
 
   //Genera nuevos tokens
   const tokens = await exports.issueTokenPair({ id: payload.id, rol: payload.rol });
@@ -406,18 +405,20 @@ exports.rotateRefreshToken = async (oldRefreshToken) => {
 
 //Revoca un refresh token específico
 exports.revokeRefreshToken = async (refreshToken) => {
-  if (refreshToken) await redis.del(`refresh:${refreshToken}`);
+  if (refreshToken) {
+    const userId = await redis.get(`refresh:${refreshToken}`);
+    await redis.del(`refresh:${refreshToken}`);
+    if (userId) await redis.srem(`refresh:user:${userId}`, refreshToken);
+  }
 };
 
 //Revoca todos los refresh tokens de un usuario (logout global / cambio de contraseña)
 exports.revokeAllRefreshTokens = async (userId) => {
-  const keys = await redis.keys("refresh:*");
-  for (const key of keys) {
-    const val = await redis.get(key);
-    if (val === String(userId)) {
-      await redis.del(key);
-    }
+  const tokens = await redis.smembers(`refresh:user:${userId}`);
+  for (const token of tokens) {
+    await redis.del(`refresh:${token}`);
   }
+  await redis.del(`refresh:user:${userId}`);
 };
 
 //Obtiene los datos del usuario
@@ -453,9 +454,11 @@ exports.validarTokenRegistro = async (token, rol) => {
   //Se busca el token en redis segun el rol
   let usuarioId;
   if (rol === "corredor") {
-    usuarioId = await redis.get(`registro:corredor:${token}`);
+    const keys = await redis.keys(`registro:corredor:*:${token}`);
+    if (keys.length) usuarioId = await redis.get(keys[0]);
   } else if (rol === "admin") {
-    usuarioId = await redis.get(`registro:admin:${token}`);
+    const keys = await redis.keys(`registro:admin:*:${token}`);
+    if (keys.length) usuarioId = await redis.get(keys[0]);
   }
   
   //Si no se encuentra el token entonces significa que es invalido o expirado
@@ -500,7 +503,8 @@ exports.completarRegistro = async ({ token, nombre, telefono, licencia_nro, pass
   };
 
   //Se obtiene el Id del usuario mediante el
-  let usuarioId = await redis.get(`registro:corredor:${token}`);
+  const corredorKeys = await redis.keys(`registro:corredor:*:${token}`);
+  let usuarioId = corredorKeys.length ? await redis.get(corredorKeys[0]) : null;
   if (!usuarioId) usuarioId = await redis.get(`registro:${token}`);
   if (!usuarioId) throw new AppError("Enlace inválido o expirado", 404);
 
@@ -547,7 +551,8 @@ exports.completarRegistro = async ({ token, nombre, telefono, licencia_nro, pass
   }
 
   //Se elimina el token de redis
-  await redis.del(`registro:corredor:${token}`);
+  const corredorDelKeys = await redis.keys(`registro:corredor:${usuarioId}:*`);
+  if (corredorDelKeys.length) await redis.del(...corredorDelKeys);
 
   //Se retorna un mensaje de exito
   return { message: "Registro completado exitosamente" };
@@ -590,7 +595,7 @@ exports.invitarAdmin = async ({ email }, ctx) => {
   }
 
   const token = crypto.randomUUID();
-  await redis.setex(`registro:admin:${token}`, 86400, String(id_admin));
+  await redis.setex(`registro:admin:${id_admin}:${token}`, 86400, String(id_admin));
 
   await sendEmail({
     to: email,
@@ -625,7 +630,7 @@ exports.reinvitarAdmin = async ({ id }) => {
   await borrarTokensRegistro("admin", id);
 
   const token = crypto.randomUUID();
-  await redis.setex(`registro:admin:${token}`, 86400, String(id));
+  await redis.setex(`registro:admin:${id}:${token}`, 86400, String(id));
 
   await sendEmail({
     to: rows[0].email,
@@ -653,7 +658,8 @@ exports.completarRegistroAdmin = async ({ token, nombre, password }, ctx) => {
   if (!nombre) throw new AppError("El nombre es requerido", 400);
   if (!password) throw new AppError("La contraseña es requerida", 400);
 
-  const usuarioId = await redis.get(`registro:admin:${token}`);
+  const adminKeys = await redis.keys(`registro:admin:*:${token}`);
+  const usuarioId = adminKeys.length ? await redis.get(adminKeys[0]) : null;
   if (!usuarioId) throw new AppError("Enlace inválido o expirado", 404);
 
   const password_hash = await bcrypt.hash(String(password), 10);
@@ -664,7 +670,7 @@ exports.completarRegistroAdmin = async ({ token, nombre, password }, ctx) => {
     await client.query("BEGIN");
 
     await client.query(
-      `UPDATE usuarios SET nombre = $1, password_hash = $2 WHERE id = $3;`,
+      `UPDATE usuarios SET nombre = $1, password_hash = $2, email_verified = true WHERE id = $3;`,
       [nombre, password_hash, usuarioId]
     );
 
@@ -686,7 +692,8 @@ exports.completarRegistroAdmin = async ({ token, nombre, password }, ctx) => {
     client.release();
   }
 
-  await redis.del(`registro:admin:${token}`);
+  const adminDelKeys = await redis.keys(`registro:admin:${usuarioId}:*`);
+  if (adminDelKeys.length) await redis.del(...adminDelKeys);
 
   return { message: "Registro completado exitosamente" };
 };

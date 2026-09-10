@@ -226,7 +226,7 @@ export default function PasarelaPagoPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 py-8 px-4 sm:px-6 lg:px-8 transition-colors">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 py-8 px-4 sm:px-6 lg:px-8 transition-colors">
       <div className="max-w-6xl mx-auto">
         {/* Navigation Breadcrumb */}
         <div className="mb-6 flex items-center justify-between">

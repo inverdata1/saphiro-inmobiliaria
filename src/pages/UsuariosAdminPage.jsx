@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { apiGet, apiPost, apiDelete } from "../api";
 import DataTable from "../components/DataTable";
 import { formatDate } from "../utils/date";
-import ErrorBanner from "../components/ErrorBanner";
+import ErrorBanner from "../components/error/ErrorBanner";
 import Modal from "../components/Modal";
 
 export default function UsuariosAdminPage() {
@@ -25,7 +25,7 @@ export default function UsuariosAdminPage() {
     setFetching(true);
     try {
       const offset = ((p || page) - 1) * limit;
-      const params = new URLSearchParams({ isAdmin: "true", limit: String(limit), offset: String(offset) });
+      const params = new URLSearchParams({ isAdmin: "true", allUsuarios: "true", limit: String(limit), offset: String(offset) });
       if (q) params.set("q", q);
       const res = await apiGet(`/usuarios?${params}`);
       setRows(res.data || []);
@@ -213,112 +213,126 @@ export default function UsuariosAdminPage() {
       </div>
 
       <Modal open={showCreate} onClose={() => { setShowCreate(false); setCreateEmail(""); }} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg dark:bg-slate-800 dark:border dark:border-slate-700">
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="text-lg font-extrabold dark:text-slate-100">Crear administrador</div>
-                <div className="text-sm text-slate-500 dark:text-slate-400">Correo del nuevo administrador.</div>
-              </div>
-              <button
-                type="button"
-                className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 cursor-pointer"
-                onClick={() => { setShowCreate(false); setCreateEmail(""); }}
-                aria-label="Cerrar"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="mt-5 space-y-4">
-              <div>
-                <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Correo electrónico</label>
-                <input
-                  type="email"
-                  required
-                  value={createEmail}
-                  onChange={(e) => setCreateEmail(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900"
-                  placeholder="admin@correo.com"
-                />
-              </div>
-              <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
-                  onClick={() => { setShowCreate(false); setCreateEmail(""); }}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  className="btn-primary disabled:opacity-60"
-                  disabled={!createEmail || loading}
-                  onClick={handleCreate}
-                >
-                  Aceptar
-                </button>
-              </div>
-            </div>
+        <div className="flex items-start justify-between">
+          <div>
+            <div className="text-lg font-extrabold dark:text-slate-100">Crear administrador</div>
+            <div className="text-sm text-slate-500 dark:text-slate-400">Correo del nuevo administrador.</div>
+          </div>
+          <button
+            type="button"
+            className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 cursor-pointer"
+            onClick={() => { if (!loading) { setShowCreate(false); setCreateEmail(""); } }}
+            aria-label="Cerrar"
+          >
+            ✕
+          </button>
+        </div>
+        <div className="mt-5 space-y-4">
+          <div>
+            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Correo electrónico</label>
+            <input
+              type="email"
+              required
+              value={createEmail}
+              onChange={(e) => setCreateEmail(e.target.value)}
+              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900"
+              placeholder="admin@correo.com"
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading}
+              onClick={() => { if (!loading) { setShowCreate(false); setCreateEmail(""); } }}
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              className="btn-primary disabled:opacity-60 inline-flex items-center justify-center gap-2"
+              disabled={!createEmail || loading}
+              onClick={handleCreate}
+            >
+              {loading && (
+                <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              )}
+              {loading ? "Creando..." : "Aceptar"}
+            </button>
+          </div>
+        </div>
       </Modal>
 
       <Modal open={!!showView} onClose={() => setShowView(null)} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg dark:bg-slate-800 dark:border dark:border-slate-700">
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="text-lg font-extrabold dark:text-slate-100">Datos del usuario</div>
-                <div className="text-sm text-slate-500 dark:text-slate-400">Información del usuario seleccionado.</div>
-              </div>
-              <button
-                type="button"
-                className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 cursor-pointer"
-                onClick={() => setShowView(null)}
-                aria-label="Cerrar"
-              >
-                ✕
-              </button>
+        <div className="flex items-start justify-between">
+          <div>
+            <div className="text-lg font-extrabold dark:text-slate-100">Datos del usuario</div>
+            <div className="text-sm text-slate-500 dark:text-slate-400">Información del usuario seleccionado.</div>
+          </div>
+          <button
+            type="button"
+            className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 cursor-pointer"
+            onClick={() => setShowView(null)}
+            aria-label="Cerrar"
+          >
+            ✕
+          </button>
+        </div>
+        <div className="mt-5 space-y-3">
+          {[
+            ["ID", showView?.id],
+            ["Nombre", showView?.nombre],
+            ["Email", showView?.email],
+            ["Fecha de registro", formatDate(showView?.fecha_registro)],
+          ].map(([label, value]) => (
+            <div key={label} className="flex justify-between border-b border-slate-100 pb-2 dark:border-slate-700">
+              <span className="text-sm text-slate-500 dark:text-slate-400">{label}</span>
+              <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">{value}</span>
             </div>
-            <div className="mt-5 space-y-3">
-              {[
-                ["ID", showView?.id],
-                ["Nombre", showView?.nombre],
-                ["Email", showView?.email],
-                ["Fecha de registro", formatDate(showView?.fecha_registro)],
-              ].map(([label, value]) => (
-                <div key={label} className="flex justify-between border-b border-slate-100 pb-2 dark:border-slate-700">
-                  <span className="text-sm text-slate-500 dark:text-slate-400">{label}</span>
-                  <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">{value}</span>
-                </div>
-              ))}
-            </div>
-            <div className="mt-5 flex justify-end">
-              <button
-                type="button"
-                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
-                onClick={() => setShowView(null)}
-              >
-                Cerrar
-              </button>
-            </div>
+          ))}
+        </div>
+        <div className="mt-5 flex justify-end">
+          <button
+            type="button"
+            className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+            onClick={() => setShowView(null)}
+          >
+            Cerrar
+          </button>
+        </div>
       </Modal>
 
       <Modal open={!!deleteTarget} onClose={() => setDeleteTarget(null)} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg dark:bg-slate-800 dark:border dark:border-slate-700">
-            <div className="text-lg font-extrabold dark:text-slate-100">¿Eliminar usuario?</div>
-            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-              Esta acción no se puede deshacer. Se eliminará a <strong>{deleteTarget?.nombre}</strong> ({deleteTarget?.email}) del sistema.
-            </p>
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                type="button"
-                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
-                onClick={() => setDeleteTarget(null)}
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 cursor-pointer"
-                onClick={handleDelete}
-              >
-                Eliminar
-              </button>
-            </div>
+        <div className="text-lg font-extrabold dark:text-slate-100">¿Eliminar usuario?</div>
+        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+          Esta acción no se puede deshacer. Se eliminará a <strong>{deleteTarget?.nombre}</strong> ({deleteTarget?.email}) del sistema.
+        </p>
+        <div className="mt-5 flex justify-end gap-2">
+          <button
+            type="button"
+            className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+            onClick={() => setDeleteTarget(null)}
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60 cursor-pointer"
+            disabled={loading}
+            onClick={handleDelete}
+          >
+            {loading && (
+              <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            )}
+            {loading ? "Eliminando..." : "Eliminar"}
+          </button>
+        </div>
       </Modal>
     </div>
   );

@@ -29,14 +29,33 @@ export class EmailNotVerifiedError extends Error {
   }
 }
 
-async function doFetch(url, init) {
+async function parseResponse(res) {
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    if (res.status === 403 && (data?.code || data?.error) === "EMAIL_NOT_VERIFIED") {
+      throw new EmailNotVerifiedError(data?.message);
+    }
+    const msg = data?.message || data?.error || `HTTP ${res.status}`;
+    throw new Error(msg);
+  }
+  return data;
+}
+
+async function doFetch(url, init, isRetry = false) {
   const res = await fetch(url, init);
 
-  if (res.status === 401 && !url.includes("/auth/refresh")) {
+  if (
+    res.status === 401 &&
+    !url.includes("/auth/refresh") &&
+    !url.includes("/auth/login") &&
+    !url.includes("/auth/registro-token/") && !url.includes("/auth/me")
+  ) {
+    if (isRetry) return parseResponse(res);
+
     if (isRefreshing) {
       return new Promise((resolve, reject) => {
         failedQueue.push({ resolve, reject });
-      }).then(() => doFetch(url, init));
+      }).then(() => doFetch(url, init, true));
     }
 
     isRefreshing = true;
@@ -47,32 +66,31 @@ async function doFetch(url, init) {
         credentials: "include",
       });
 
-      if (!refreshRes.ok) {
+      // 401/403 en refresh = token realmente expirado/inválido → sesión muerta
+      if (refreshRes.status === 401 || refreshRes.status === 403) {
         processQueue(new Error("Sesión expirada"));
         redirectToLogin();
         throw new Error("Sesión expirada");
       }
 
+      // Otro fallo (red, 5xx): no matar la sesión, propagar el error del endpoint original
+      if (!refreshRes.ok) {
+        const e = new Error(`No se pudo renovar la sesión (HTTP ${refreshRes.status})`);
+        processQueue(e);
+        throw e;
+      }
+
       processQueue(null);
-      return doFetch(url, init);
+      return doFetch(url, init, true);
     } catch (e) {
       processQueue(e);
-      redirectToLogin();
       throw e;
     } finally {
       isRefreshing = false;
     }
   }
 
-  const data = await res.json().catch(() => null);
-  if (!res.ok) {
-    if (res.status === 403 && (data?.code || data?.error) === "EMAIL_NOT_VERIFIED") {
-      throw new EmailNotVerifiedError(data?.message);
-    }
-    const msg = data?.message || data?.error || `HTTP ${res.status}`;
-    throw new Error(msg);
-  }
-  return data;
+  return parseResponse(res);
 }
 
 export async function apiGet(path, params = {}) {

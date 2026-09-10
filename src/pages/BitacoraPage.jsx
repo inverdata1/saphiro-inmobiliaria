@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { apiGet } from "../api";
 import DataTable from "../components/DataTable";
-import UsuarioPicker from "../components/UsuarioPicker";
-import ErrorBanner from "../components/ErrorBanner";
+import UsuarioPicker from "../components/pickers/UsuarioPicker";
+import ErrorBanner from "../components/error/ErrorBanner";
 import SerieChart from "../components/charts/SerieChart";
 import TopCorredoresBar from "../components/charts/TopCorredoresBar";
 import { formatDateTime } from "../utils/date";
@@ -184,11 +184,10 @@ export default function BitacoraPage() {
               <button
                 key={m}
                 onClick={() => changeMoneda(m)}
-                className={`px-3 py-1.5 text-xs font-medium transition cursor-pointer ${
-                  moneda === m
+                className={`px-3 py-1.5 text-xs font-medium transition cursor-pointer ${moneda === m
                     ? "bg-[#5a0e82] text-white hover:bg-[#470A68]"
                     : "bg-white dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
-                }`}
+                  }`}
               >
                 {m}
               </button>

@@ -1,6 +1,33 @@
 const pool = require("../db/pool");
+const redis = require("./redis.service");
 const AppError = require("../utils/AppError");
 const auditoriaService = require("./auditoria.service");
+
+async function deleteUsuarioTokens(usuarioId) {
+  const uid = String(usuarioId);
+
+  // email-verify: key contiene userId
+  const evKeys = await redis.keys(`email-verify:${uid}:*`);
+  if (evKeys.length) await redis.del(...evKeys);
+
+  // refresh: secondary index
+  const refreshTokens = await redis.smembers(`refresh:user:${uid}`);
+  for (const token of refreshTokens) {
+    await redis.del(`refresh:${token}`);
+  }
+  await redis.del(`refresh:user:${uid}`);
+
+  // registro: key contiene userId
+  const registroKeys = [
+    ...await redis.keys(`registro:corredor:${uid}:*`),
+    ...await redis.keys(`registro:admin:${uid}:*`),
+  ];
+  if (registroKeys.length) await redis.del(...registroKeys);
+
+  // idempotency: key contiene userId
+  const idemKeys = await redis.keys(`idem:${uid}:*`);
+  if (idemKeys.length) await redis.del(...idemKeys);
+}
 
 exports.listClientes = async (query) => {
   const { q, limit = 100, offset = 0 } = query;
@@ -28,7 +55,7 @@ exports.listClientes = async (query) => {
       SELECT id, nombre, email, fecha_registro
       FROM usuarios
       ${where}
-      ORDER BY id DESC
+      ORDER BY id ASC
       LIMIT $${limitIdx} OFFSET $${offsetIdx};
     `,
     values
@@ -70,7 +97,7 @@ exports.listUsuarios = async (query) => {
       SELECT id, nombre, email, fecha_registro
       FROM usuarios
       ${where}
-      ORDER BY id DESC
+      ORDER BY id ASC
       LIMIT $${limitIdx} OFFSET $${offsetIdx};
     `,
     values
@@ -94,6 +121,7 @@ exports.getUsuarioById = async (id) => {
 
 exports.deleteUsuario = async (id, ctx) => {
   if (!Number.isInteger(id) || id <= 0) throw new AppError("id inválido", 400);
+  if (ctx && ctx.usuario_id === id) throw new AppError("No puedes eliminarte a ti mismo", 400);
 
   const client = await pool.connect();
   let usuario;
@@ -125,6 +153,8 @@ exports.deleteUsuario = async (id, ctx) => {
     usuario = rows[0];
 
     await client.query("COMMIT");
+
+    await deleteUsuarioTokens(id).catch(() => {});
   } catch (err) {
     await client.query("ROLLBACK");
     throw err;

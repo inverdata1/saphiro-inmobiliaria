@@ -22,6 +22,18 @@ function luhnAlgorithm(numeroTarjeta) {
   return suma % 10 === 0;
 }
 
+async function generarNumeroFactura(client = pool) {
+  const anio = new Date().getFullYear();
+  const { rows } = await client.query(
+    `SELECT COUNT(*)::int AS total
+     FROM transacciones
+     WHERE EXTRACT(YEAR FROM fecha_transaccion) = $1`,
+    [anio]
+  );
+  const secuencial = Number(rows[0]?.total || 0) + 1;
+  return `FAC-${anio}-${String(secuencial).padStart(5, "0")}`;
+}
+
 exports.listTransacciones = async (filters) => {
   const {
     desde,
@@ -217,8 +229,8 @@ exports.createTransaccion = async (data, ctx) => {
   const tipoOperacion = inmueble.estado_inmueble === "venta" ? "venta" : "alquiler";
 
   const sql = `
-    INSERT INTO transacciones (inmueble_id, cliente_id, tipo_operacion, monto_total, moneda, estatus_pago, fecha_transaccion)
-    VALUES ($1,$2,$3,$4,$5,$6, NOW())
+    INSERT INTO transacciones (inmueble_id, cliente_id, tipo_operacion, monto_total, moneda, estatus_pago, fecha_transaccion, numero_factura)
+    VALUES ($1,$2,$3,$4,$5,$6, NOW(), $7)
     RETURNING *;
   `;
 
@@ -228,7 +240,9 @@ exports.createTransaccion = async (data, ctx) => {
   try {
     await client.query("BEGIN");
 
-    const { rows } = await client.query(sql, [inmueble_id, cliente_id, tipoOperacion, inmueble.precio, inmueble.moneda, estatus_pago]);
+    const numeroFactura = await generarNumeroFactura(client);
+
+    const { rows } = await client.query(sql, [inmueble_id, cliente_id, tipoOperacion, inmueble.precio, inmueble.moneda, estatus_pago, numeroFactura]);
 
     if (ctx) {
       await auditoriaService.registrarInsert({
@@ -307,11 +321,12 @@ exports.procesarPago = async (data, ctx) => {
   try {
     await client.query("BEGIN");
 
+    const numero_factura = await generarNumeroFactura(client);
     const { rows } = await client.query(
-      `INSERT INTO transacciones (inmueble_id, cliente_id, tipo_operacion, monto_total, moneda, estatus_pago, fecha_transaccion)
-       VALUES ($1, $2, $3, $4, $5, 'pendiente', NOW())
+      `INSERT INTO transacciones (inmueble_id, cliente_id, tipo_operacion, monto_total, moneda, estatus_pago, fecha_transaccion, numero_factura)
+       VALUES ($1, $2, $3, $4, $5, 'pagado', NOW(), $6)
        RETURNING *`,
-      [inmueble_id, cliente_id, tipoOperacion, Number(monto), monedaUpper]
+      [inmueble_id, cliente_id, tipoOperacion, Number(monto), monedaUpper, numero_factura]
     );
     transaccion = rows[0];
 
@@ -453,11 +468,13 @@ exports.crearReserva = async (data, ctx) => {
   try {
     await client.query("BEGIN");
 
+    const numero_factura = await generarNumeroFactura(client);
+
     const { rows: txRows } = await client.query(
-      `INSERT INTO transacciones (inmueble_id, cliente_id, tipo_operacion, monto_total, moneda, estatus_pago, fecha_transaccion)
-       VALUES ($1, $2, 'alquiler', $3, $4, $5, NOW())
+      `INSERT INTO transacciones (inmueble_id, cliente_id, tipo_operacion, monto_total, moneda, estatus_pago, fecha_transaccion, numero_factura)
+       VALUES ($1, $2, 'alquiler', $3, $4, $5, NOW(), $6)
        RETURNING *`,
-      [inmueble_id, cliente_id, montoTotal, monedaUpper, estatus_pago]
+      [inmueble_id, cliente_id, montoTotal, monedaUpper, estatus_pago, numero_factura]
     );
     const transaccion = txRows[0];
 
