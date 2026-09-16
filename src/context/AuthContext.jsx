@@ -1,7 +1,9 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import { apiGet, apiPost } from "../api";
+import { createContext, useEffect, useRef, useState } from "react";
+import { apiGet, apiPost, refreshSession, SessionExpiredError } from "../api";
 
-const AuthContext = createContext(null);
+export const AuthContext = createContext(null);
+
+const AUTO_REFRESH_INTERVAL = 14 * 60 * 1000;
 
 function loadUser() {
   try {
@@ -20,21 +22,53 @@ function saveUser(u) {
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(loadUser);
   const [loading, setLoading] = useState(true);
+  const timerRef = useRef(null);
+
+  function stopAutoRefresh() {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }
+
+  function startAutoRefresh() {
+    stopAutoRefresh();
+    timerRef.current = setInterval(() => {
+      refreshSession().catch((err) => {
+        if (err instanceof SessionExpiredError) {
+          setUser(null);
+          saveUser(null);
+          stopAutoRefresh();
+        }
+      });
+    }, AUTO_REFRESH_INTERVAL);
+  }
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
       try {
         const res = await apiGet("/auth/me");
+        if (cancelled) return;
         const u = res?.data || res;
         setUser(u);
         saveUser(u);
-      } catch {
-        setUser(null);
-        saveUser(null);
+        startAutoRefresh();
+      } catch (err) {
+        if (cancelled) return;
+        if (err instanceof SessionExpiredError) {
+          setUser(null);
+          saveUser(null);
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
+    return () => {
+      cancelled = true;
+      stopAutoRefresh();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function setAndPersist(u) {
@@ -46,10 +80,12 @@ export function AuthProvider({ children }) {
     const res = await apiPost("/auth/login", { email, password });
     const u = res?.data?.user || res;
     setAndPersist(u);
+    startAutoRefresh();
     return res;
   }
 
   async function logout() {
+    stopAutoRefresh();
     await apiPost("/auth/logout").catch(() => {});
     setAndPersist(null);
   }
@@ -67,10 +103,4 @@ export function AuthProvider({ children }) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within an AuthProvider");
-  return ctx;
 }

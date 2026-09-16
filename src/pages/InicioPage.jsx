@@ -100,6 +100,7 @@ export default function InicioPage() {
     maxPrecio: "",
     ordenar: "newest",
   });
+  const [heroBusqueda, setHeroBusqueda] = useState("");
   useEffect(() => {
     window.scrollTo(0, 0);
     loadAll();
@@ -200,6 +201,39 @@ export default function InicioPage() {
           <p className="mt-4 text-sm sm:text-base text-slate-350 max-w-2xl mx-auto dark:text-slate-350 text-slate-200">
             Casas exclusivas, apartamentos modernos y villas paradisíacas con la seguridad, respaldo y profesionalismo que te mereces.
           </p>
+          {/* Barra de búsqueda grande */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (heroBusqueda.trim()) {
+                navigate(`/inmuebles?q=${encodeURIComponent(heroBusqueda.trim())}`);
+                setHeroBusqueda("");
+              }
+            }}
+            className="mt-8 flex items-center w-full max-w-xl mx-auto bg-white dark:bg-slate-800 rounded-full shadow-xl shadow-slate-950/40 p-1 gap-1"
+          >
+            <div className="flex-1 flex items-center pl-3.5 gap-2.5 min-w-0">
+              <svg className="w-5 h-5 text-slate-400 dark:text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                value={heroBusqueda}
+                onChange={(e) => setHeroBusqueda(e.target.value)}
+                placeholder="Buscar inmuebles..."
+                className="w-full bg-transparent text-slate-800 dark:text-white text-sm sm:text-base font-medium placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none py-1.5"
+              />
+            </div>
+            <button
+              type="submit"
+              className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-purple-700 hover:bg-purple-600 text-white font-bold text-xs sm:text-sm px-4 sm:px-5 py-2 transition-colors cursor-pointer"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              Buscar
+            </button>
+          </form>
         </div>
       </section>
       {/* ERROR BANNER */}

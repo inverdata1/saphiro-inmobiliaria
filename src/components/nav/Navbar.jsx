@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { NavLink, Link, useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/useAuth";
+import useProfilePhotoSync from "../../hooks/useProfilePhotoSync";
 import logo from "../../assets/logo.inverdata.jpg";
 import {
   ClienteOpciones,
@@ -20,6 +21,8 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [dark, setDark] = useState(() => document.documentElement.classList.contains("dark"));
   const [searchQuery, setSearchQuery] = useState("");
+
+  useProfilePhotoSync();
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -91,23 +94,27 @@ export default function Navbar() {
             <span className="hidden sm:block text-base font-extrabold tracking-tight text-white">Inverdata C.A</span>
           </NavLink>
 
-          {/* Search bar */}
-          <form onSubmit={handleSearchSubmit} className="flex-1 max-w-md mx-4 min-w-0">
-            <div className="relative flex items-center">
-              <input
-                type="text"
-                placeholder="Buscar inmuebles..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-white/15 text-white placeholder-white/60 focus:placeholder-white/80 rounded-xl px-4 py-2 pl-10 text-sm focus:outline-none focus:ring-2 focus:ring-white/20 focus:bg-white/25 border border-transparent dark:bg-white/10 dark:focus:bg-white/20"
-              />
-              <div className="absolute left-3.5 flex items-center pointer-events-none">
-                <svg className="h-4 w-4 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+          {/* Search bar (oculta en página de inicio) */}
+          {location.pathname === "/" ? (
+            <div className="flex-1 max-w-md mx-4 min-w-0" aria-hidden="true" />
+          ) : (
+            <form onSubmit={handleSearchSubmit} className="flex-1 max-w-md mx-4 min-w-0">
+              <div className="relative flex items-center">
+                <input
+                  type="text"
+                  placeholder="Buscar inmuebles..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-white/15 text-white placeholder-white/60 focus:placeholder-white/80 rounded-xl px-4 py-2 pl-10 text-sm focus:outline-none focus:ring-2 focus:ring-white/20 focus:bg-white/25 border border-transparent dark:bg-white/10 dark:focus:bg-white/20"
+                />
+                <div className="absolute left-3.5 flex items-center pointer-events-none">
+                  <svg className="h-4 w-4 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
               </div>
-            </div>
-          </form>
+            </form>
+          )}
 
           {/* Acciones derecha */}
           <div className="flex items-center gap-2">

@@ -167,7 +167,6 @@ exports.listInmuebles = async (filters) => {
           FROM caracteristica_inmueble ci2
           WHERE ci2.inmueble_id = i.id
           ORDER BY ci2.caracteristica_id ASC
-          LIMIT 4
         ) ci
         JOIN caracteristicas c ON c.id = ci.caracteristica_id
       ) AS caracteristicas
@@ -192,32 +191,36 @@ exports.listInmueblesByCorredor = async (usuarioId) => {
   if (!usuarioId) throw new AppError("usuario_id requerido", 400);
 
   const sql = `
-    SELECT
-      i.*,
-      INITCAP(REPLACE(i.estado_inmueble, '_', ' ')) AS estado_inmueble,
-      ti.nombre AS tipo_inmueble,
-      c.nombre  AS ciudad,
-      e.nombre  AS estado,
-      (SELECT img.url FROM imagenes img WHERE img.inmueble_id = i.id ORDER BY img.orden ASC LIMIT 1) AS imagen_url,
-      (
-        SELECT json_agg(json_build_object('nombre', c2.nombre, 'valor', ci.valor, 'unidad_medicion', c2.unidad_medicion))
-        FROM (
-          SELECT ci2.caracteristica_id, ci2.valor
-          FROM caracteristica_inmueble ci2
-          WHERE ci2.inmueble_id = i.id
-          ORDER BY ci2.caracteristica_id ASC
-          LIMIT 4
-        ) ci
-        JOIN caracteristicas c2 ON c2.id = ci.caracteristica_id
-      ) AS caracteristicas
-      ${ESTATUS_SELECT}
-      ${VACACIONAL_SELECT}
-    FROM inmuebles i
-    LEFT JOIN tipos_inmueble ti ON ti.id = i.tipo_inmueble_id
-    LEFT JOIN ciudades c ON c.id = i.ciudad_id
-    LEFT JOIN estados e ON e.id = c.estado_id
-    JOIN corredores co ON co.id = i.corredor_id AND co.usuario_id = $1
-    ORDER BY i.id DESC;
+    SELECT * FROM (
+      SELECT
+        i.*,
+        i.estado_inmueble AS estado_raw,
+        INITCAP(REPLACE(i.estado_inmueble, '_', ' ')) AS estado_inmueble,
+        ti.nombre AS tipo_inmueble,
+        c.nombre  AS ciudad,
+        e.nombre  AS estado,
+        (SELECT img.url FROM imagenes img WHERE img.inmueble_id = i.id ORDER BY img.orden ASC LIMIT 1) AS imagen_url,
+        (
+          SELECT json_agg(json_build_object('nombre', c2.nombre, 'valor', ci.valor, 'unidad_medicion', c2.unidad_medicion))
+          FROM (
+            SELECT ci2.caracteristica_id, ci2.valor
+            FROM caracteristica_inmueble ci2
+            WHERE ci2.inmueble_id = i.id
+            ORDER BY ci2.caracteristica_id ASC
+          ) ci
+          JOIN caracteristicas c2 ON c2.id = ci.caracteristica_id
+        ) AS caracteristicas
+        ${ESTATUS_SELECT}
+        ${VACACIONAL_SELECT}
+      FROM inmuebles i
+      LEFT JOIN tipos_inmueble ti ON ti.id = i.tipo_inmueble_id
+      LEFT JOIN ciudades c ON c.id = i.ciudad_id
+      LEFT JOIN estados e ON e.id = c.estado_id
+      JOIN corredores co ON co.id = i.corredor_id AND co.usuario_id = $1
+    ) sub
+    WHERE sub.estatus = 'disponible'
+       OR (sub.estado_raw = 'vacacional' AND sub.estatus <> 'vendido')
+    ORDER BY sub.id DESC;
   `;
 
   const { rows } = await pool.query(sql, [usuarioId]);
@@ -234,6 +237,7 @@ exports.getInmuebleById = async (id) => {
       c.nombre  AS ciudad,
       e.nombre  AS estado,
       u.nombre  AS corredor_nombre,
+      u.foto_url AS corredor_foto,
       co.usuario_id AS corredor_usuario_id,
       ug.latitud,
       ug.longitud,
@@ -269,7 +273,7 @@ exports.getInmuebleById = async (id) => {
 
   if (result.estado_inmueble === "vacacional") {
     const { rows: av } = await pool.query(
-      "SELECT id, precio_por_noche, capacidad_personas, noches_minimas, hora_checkin, hora_checkout FROM alquiler_vacacional WHERE inmueble_id = $1",
+      "SELECT id, precio_por_noche, capacidad_personas, noches_minimas, hora_checkin, hora_checkout, permiso_infantes FROM alquiler_vacacional WHERE inmueble_id = $1",
       [id]
     );
     result.alquiler_vacacional = av.length ? av[0] : null;
@@ -283,6 +287,16 @@ exports.getInmuebleById = async (id) => {
         [result.alquiler_vacacional.id]
       );
       result.costos_adicionales = costos;
+
+      const { rows: mascotas } = await pool.query(
+        `SELECT m.id AS mascota_id, m.nombre
+         FROM mascotas_alquiler_vacacional mav
+         JOIN mascotas m ON m.id = mav.mascota_id
+         WHERE mav.alquiler_vacacional_id = $1
+         ORDER BY m.id ASC`,
+        [result.alquiler_vacacional.id]
+      );
+      result.mascotas = mascotas;
     }
   }
 
@@ -310,7 +324,9 @@ exports.createInmueble = async (data, files = [], ctx) => {
     noches_minimas,
     hora_checkin,
     hora_checkout,
+    permiso_infantes,
     costos_adicionales,
+    mascotas,
   } = data;
 
   if (!titulo) throw new AppError("titulo es requerido", 400);
@@ -370,8 +386,8 @@ exports.createInmueble = async (data, files = [], ctx) => {
 
     if (estado_inmueble === "vacacional") {
       const { rows: vacRows } = await client.query(
-        `INSERT INTO alquiler_vacacional (inmueble_id, precio_por_noche, capacidad_personas, noches_minimas, hora_checkin, hora_checkout)
-         VALUES ($1, $2, $3, $4, $5, $6)
+        `INSERT INTO alquiler_vacacional (inmueble_id, precio_por_noche, capacidad_personas, noches_minimas, hora_checkin, hora_checkout, permiso_infantes)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
          RETURNING id;`,
         [
           inmueble.id,
@@ -380,9 +396,22 @@ exports.createInmueble = async (data, files = [], ctx) => {
           noches_minimas ? Number(noches_minimas) : 1,
           hora_checkin || null,
           hora_checkout || null,
+          permiso_infantes === undefined || permiso_infantes === null ? true : Boolean(permiso_infantes),
         ]
       );
       const alquilerVacacionalId = vacRows[0].id;
+
+      if (mascotas && Array.isArray(mascotas)) {
+        for (const m of mascotas) {
+          if (m.mascota_id) {
+            await client.query(
+              `INSERT INTO mascotas_alquiler_vacacional (alquiler_vacacional_id, mascota_id)
+               VALUES ($1, $2);`,
+              [alquilerVacacionalId, Number(m.mascota_id)]
+            );
+          }
+        }
+      }
 
       if (costos_adicionales && Array.isArray(costos_adicionales)) {
         for (const costo of costos_adicionales) {
@@ -414,7 +443,7 @@ exports.createInmueble = async (data, files = [], ctx) => {
 
         const { rows: imgRows } = await client.query(
           `INSERT INTO imagenes (inmueble_id, url, orden, portada, ruta_s3) VALUES ($1, $2, $3, $4, $5) RETURNING id;`,
-          [inmueble.id, "/uploads/" + files[i].filename, orden, portada, "/uploads/" + files[i].filename]
+          [inmueble.id, "/uploads/properties/" + files[i].filename, orden, portada, "/uploads/properties/" + files[i].filename]
         );
 
         const imgId = imgRows[0].id;

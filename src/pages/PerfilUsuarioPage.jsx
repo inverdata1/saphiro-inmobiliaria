@@ -1,9 +1,10 @@
 import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { apiGet } from "../api";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import PropertyCard from "../components/PropertyCard";
 import ShareModal from "../components/ShareModal";
+import SocialIcon from "../utils/socialIcons.jsx";
 
 export default function PerfilUsuarioPage() {
   const { id } = useParams();
@@ -13,6 +14,7 @@ export default function PerfilUsuarioPage() {
   const [usuario, setUsuario] = useState(null);
   const [corredorInfo, setCorredorInfo] = useState(null);
   const [inmuebles, setInmuebles] = useState([]);
+  const [redesSociales, setRedesSociales] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtroTipo, setFiltroTipo] = useState("todos");
   const [busqueda, setBusqueda] = useState("");
@@ -57,10 +59,20 @@ export default function PerfilUsuarioPage() {
           inmueblesData = [];
         }
 
+        // 4. Obtener redes sociales del corredor (público)
+        let redesData = [];
+        try {
+          const redesRes = await apiGet(`/corredores/${id}/redes-sociales`);
+          redesData = Array.isArray(redesRes?.data) ? redesRes.data : Array.isArray(redesRes) ? redesRes : [];
+        } catch {
+          redesData = [];
+        }
+
         if (isMounted) {
           setUsuario(userData);
           setCorredorInfo(corrData);
           setInmuebles(inmueblesData);
+          setRedesSociales(redesData);
         }
       } catch (error) {
         console.error("Error al cargar perfil de usuario:", error);
@@ -189,78 +201,149 @@ export default function PerfilUsuarioPage() {
                 
                 {/* Avatar circular */}
                 <div className="relative">
-                  <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-full overflow-hidden bg-gradient-to-br from-[#470A68] to-[#5a0e82] text-white flex items-center justify-center text-3xl sm:text-4xl font-black shadow-xl border-4 border-white dark:border-[#141417]">
-                    {usuario?.foto_perfil || usuario?.avatar ? (
-                      <img
-                        src={usuario.foto_perfil || usuario.avatar}
-                        alt={nombreCompleto}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <span>{initials}</span>
-                    )}
-                  </div>
-
+                  {loading ? (
+                    <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-full bg-slate-200 dark:bg-slate-700/60 animate-pulse border-4 border-white dark:border-[#141417]" />
+                  ) : (
+                    <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-full overflow-hidden bg-gradient-to-br from-[#470A68] to-[#5a0e82] text-white flex items-center justify-center text-3xl sm:text-4xl font-black shadow-xl border-4 border-white dark:border-[#141417]">
+                      {usuario?.foto_perfil || usuario?.foto_url || usuario?.avatar ? (
+                        <img
+                          src={usuario.foto_perfil || usuario.foto_url || usuario.avatar}
+                          alt={nombreCompleto}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span>{initials}</span>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Datos del usuario */}
-                <div className="space-y-1.5 pb-1">
-                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                    <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-                      {nombreCompleto}
-                    </h1>
-                    {corredorInfo?.licencia_nro && (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-extrabold bg-purple-100 text-purple-900 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
-                        Lic. {corredorInfo.licencia_nro}
-                      </span>
-                    )}
+                {loading ? (
+                  <div className="space-y-2.5 pb-1">
+                    <div className="h-8 w-48 bg-slate-200 dark:bg-slate-700/60 rounded-lg animate-pulse" />
+                    <div className="h-4 w-36 bg-slate-200 dark:bg-slate-700/60 rounded-lg animate-pulse" />
                   </div>
+                ) : (
+                  <div className="space-y-1.5 pb-1">
+                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                      <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                        {nombreCompleto}
+                      </h1>
+                      {corredorInfo?.licencia_nro && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-extrabold bg-purple-100 text-purple-900 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                          Lic. {corredorInfo.licencia_nro}
+                        </span>
+                      )}
+                    </div>
 
-                  <p className="text-sm font-semibold text-purple-900 dark:text-purple-400">
-                    {esCorredor ? "Corredor Inmobiliario Autorizado" : usuario?.rol === "admin" ? "Administrador del Sistema" : "Cliente de Saphiro Inmobiliaria"}
-                  </p>
-
-                </div>
+                    <p className="text-sm font-semibold text-purple-900 dark:text-purple-400">
+                      {esCorredor ? "Corredor Inmobiliario Autorizado" : usuario?.rol === "admin" ? "Administrador del Sistema" : "Cliente de Saphiro Inmobiliaria"}
+                    </p>
+                  </div>
+                )}
               </div>
 
             </div>
 
             {/* Fila informativa de contacto (Teléfono y Correo) */}
             <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800/80 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              
-              {/* Tarjeta Correo */}
-              <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-slate-50 dark:bg-[#18181c] border border-slate-100 dark:border-slate-800/60">
-                <div className="p-2.5 rounded-xl bg-purple-100 dark:bg-purple-950/60 text-[#470A68] dark:text-purple-300">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                  </svg>
-                </div>
-                <div className="min-w-0">
-                  <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Correo Electrónico</div>
-                  <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-white truncate block">
-                    {usuario?.email || "No especificado"}
-                  </span>
-                </div>
-              </div>
+              {loading ? (
+                <>
+                  {/* Skeleton Correo */}
+                  <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-slate-50 dark:bg-[#18181c] border border-slate-100 dark:border-slate-800/60">
+                    <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-700/60 animate-pulse shrink-0" />
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <div className="h-3 w-28 bg-slate-200 dark:bg-slate-700/60 rounded animate-pulse" />
+                      <div className="h-4 w-48 bg-slate-200 dark:bg-slate-700/60 rounded animate-pulse" />
+                    </div>
+                  </div>
 
-              {/* Tarjeta Teléfono */}
-              <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-slate-50 dark:bg-[#18181c] border border-slate-100 dark:border-slate-800/60">
-                <div className="p-2.5 rounded-xl bg-purple-100 dark:bg-purple-950/60 text-[#470A68] dark:text-purple-300">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                  </svg>
-                </div>
-                <div className="min-w-0">
-                  <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Teléfono de Contacto</div>
-                  <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-white truncate block">
-                    {telefono}
-                  </span>
-                </div>
-              </div>
+                  {/* Skeleton Teléfono */}
+                  <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-slate-50 dark:bg-[#18181c] border border-slate-100 dark:border-slate-800/60">
+                    <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-700/60 animate-pulse shrink-0" />
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <div className="h-3 w-24 bg-slate-200 dark:bg-slate-700/60 rounded animate-pulse" />
+                      <div className="h-4 w-36 bg-slate-200 dark:bg-slate-700/60 rounded animate-pulse" />
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>              
+                  {/* Tarjeta Correo */}
+                  <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-slate-50 dark:bg-[#18181c] border border-slate-100 dark:border-slate-800/60">
+                    <div className="p-2.5 rounded-xl bg-purple-100 dark:bg-purple-950/60 text-[#470A68] dark:text-purple-300">
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                      </svg>
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Correo Electrónico</div>
+                      <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-white truncate block">
+                        {usuario?.email || "No especificado"}
+                      </span>
+                    </div>
+                  </div>
 
-
-
+                  {/* Tarjeta Teléfono */}
+                  <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-slate-50 dark:bg-[#18181c] border border-slate-100 dark:border-slate-800/60">
+                    <div className="p-2.5 rounded-xl bg-purple-100 dark:bg-purple-950/60 text-[#470A68] dark:text-purple-300">
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                      </svg>
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Teléfono de Contacto</div>
+                      <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-white truncate block">
+                        {telefono}
+                      </span>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
+
+            {/* Redes Sociales del Corredor */}
+            {loading && esCorredor ? (
+              <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800/80">
+                <div className="h-3 w-28 bg-slate-200 dark:bg-slate-700/60 rounded animate-pulse mb-3" />
+                <div className="flex flex-wrap gap-2.5">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-10 w-24 bg-slate-200 dark:bg-slate-800/60 rounded-xl animate-pulse" />
+                  ))}
+                </div>
+              </div>
+            ) : (
+              esCorredor && redesSociales.length > 0 && (
+                <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800/80">
+                  <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">
+                    Redes Sociales
+                  </div>
+                  <div className="flex flex-wrap gap-2.5">
+                    {redesSociales.map((rs) => (
+                      <a
+                        key={rs.id}
+                        href={rs.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={`${rs.nombre}: ${rs.url}`}
+                        className="inline-flex items-center gap-2.5 px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#18181c] border border-slate-100 dark:border-slate-800/60 hover:border-purple-300 dark:hover:border-purple-700 transition-colors group"
+                      >
+                        <span
+                          className="w-8 h-8 rounded-lg flex items-center justify-center text-white shrink-0"
+                          style={{ backgroundColor: "#5a0e82" }}
+                        >
+                          <SocialIcon name={rs.name_icon} size={16} />
+                        </span>
+                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                          {rs.nombre}
+                        </span>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )
+            )}
 
           </div>
         </div>
@@ -268,102 +351,122 @@ export default function PerfilUsuarioPage() {
         {/* Sección de Inmuebles Asociados al Corredor */}
         <div className="space-y-6">
           
-          {/* Cabecera de Inmuebles + Filtros y Buscador */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
-                <span>Inmuebles Asociados</span>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-purple-100 dark:bg-purple-950/80 text-[#470A68] dark:text-purple-300">
-                  {inmueblesFiltrados.length}
-                </span>
-              </h2>
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-                Explora las propiedades gestionadas por {nombreCompleto}.
-              </p>
-            </div>
-
-            {/* Filtros de Tipo */}
-            <div className="flex flex-wrap items-center gap-2">
-              {[
-                { id: "todos", label: `Todos (${inmuebles.length})` },
-                { id: "venta", label: `Venta (${conteoVenta})` },
-                { id: "alquiler", label: `Alquiler (${conteoAlquiler})` },
-                { id: "vacacional", label: `Vacacional (${conteoVacacional})` },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setFiltroTipo(tab.id)}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                    filtroTipo === tab.id
-                      ? "bg-[#470A68] text-white shadow-xs"
-                      : "bg-white dark:bg-[#18181c] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800 hover:border-purple-300"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Buscador local */}
-          {inmuebles.length > 3 && (
-            <div className="relative max-w-md">
-              <input
-                type="text"
-                value={busqueda}
-                onChange={(e) => setBusqueda(e.target.value)}
-                placeholder="Buscar inmueble por título, ciudad o tipo..."
-                className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#141417] text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-600/30 focus:border-purple-600 transition"
-              />
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-            </div>
-          )}
-
-          {/* Grid de Inmuebles */}
           {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="animate-pulse rounded-2xl h-80 bg-slate-200 dark:bg-slate-800/60" />
-              ))}
-            </div>
-          ) : inmueblesFiltrados.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {inmueblesFiltrados.map((inm) => (
-                <div key={inm.id} className="h-full">
-                  <PropertyCard property={inm} />
+            <>
+              {/* Skeleton cabecera + filtros */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="space-y-2">
+                  <div className="h-8 w-52 bg-slate-200 dark:bg-slate-700/60 rounded-lg animate-pulse" />
+                  <div className="h-4 w-72 bg-slate-200 dark:bg-slate-700/60 rounded animate-pulse" />
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#141417] p-10 text-center space-y-3">
-              <div className="w-14 h-14 mx-auto rounded-2xl bg-purple-50 dark:bg-purple-950/40 text-[#470A68] dark:text-purple-400 flex items-center justify-center">
-                <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
+                <div className="flex flex-wrap gap-2">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="h-8 w-24 bg-slate-200 dark:bg-slate-800/60 rounded-xl animate-pulse" />
+                  ))}
+                </div>
               </div>
-              <h3 className="text-base font-bold text-slate-800 dark:text-white">
-                {inmuebles.length === 0
-                  ? "Este corredor aún no tiene inmuebles asociados"
-                  : "No se encontraron inmuebles con este filtro"}
-              </h3>
-              <p className="text-xs text-slate-400 dark:text-slate-500 max-w-sm mx-auto">
-                {inmuebles.length === 0
-                  ? "Las propiedades que gestione este asesor aparecerán listadas aquí automáticamente."
-                  : "Intenta seleccionar otra categoría o limpiar la barra de búsqueda."}
-              </p>
-              {filtroTipo !== "todos" && (
-                <button
-                  onClick={() => { setFiltroTipo("todos"); setBusqueda(""); }}
-                  className="mt-2 text-xs font-bold text-purple-700 dark:text-purple-400 hover:underline cursor-pointer"
-                >
-                  Ver todos los inmuebles
-                </button>
+
+              {/* Skeleton buscador */}
+              <div className="h-9 w-full max-w-md bg-slate-200 dark:bg-slate-700/60 rounded-xl animate-pulse" />
+
+              {/* Skeleton grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="animate-pulse rounded-2xl h-80 bg-slate-200 dark:bg-slate-800/60" />
+                ))}
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Cabecera de Inmuebles + Filtros y Buscador */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                    Inmuebles Asociados
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+                    Explora las propiedades gestionadas por {nombreCompleto}.
+                  </p>
+                </div>
+
+                {/* Filtros de Tipo */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {[
+                    { id: "todos", label: `Todos (${inmuebles.length})` },
+                    { id: "venta", label: `Venta (${conteoVenta})` },
+                    { id: "alquiler", label: `Alquiler (${conteoAlquiler})` },
+                    { id: "vacacional", label: `Vacacional (${conteoVacacional})` },
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setFiltroTipo(tab.id)}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        filtroTipo === tab.id
+                          ? "bg-[#470A68] text-white shadow-xs"
+                          : "bg-white dark:bg-[#18181c] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800 hover:border-purple-300"
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Buscador local */}
+              {inmuebles.length > 3 && (
+                <div className="relative max-w-md">
+                  <input
+                    type="text"
+                    value={busqueda}
+                    onChange={(e) => setBusqueda(e.target.value)}
+                    placeholder="Buscar inmueble por título, ciudad o tipo..."
+                    className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#141417] text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-600/30 focus:border-purple-600 transition"
+                  />
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                </div>
               )}
-            </div>
+
+              {/* Grid de Inmuebles */}
+              {inmueblesFiltrados.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {inmueblesFiltrados.map((inm) => (
+                    <div key={inm.id} className="h-full">
+                      <PropertyCard property={inm} />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#141417] p-10 text-center space-y-3">
+                  <div className="w-14 h-14 mx-auto rounded-2xl bg-purple-50 dark:bg-purple-950/40 text-[#470A68] dark:text-purple-400 flex items-center justify-center">
+                    <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                  </div>
+                  <h3 className="text-base font-bold text-slate-800 dark:text-white">
+                    {inmuebles.length === 0
+                      ? "Este corredor aún no tiene inmuebles asociados"
+                      : "No se encontraron inmuebles con este filtro"}
+                  </h3>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 max-w-sm mx-auto">
+                    {inmuebles.length === 0
+                      ? "Las propiedades que gestione este asesor aparecerán listadas aquí automáticamente."
+                      : "Intenta seleccionar otra categoría o limpiar la barra de búsqueda."}
+                  </p>
+                  {filtroTipo !== "todos" && (
+                    <button
+                      onClick={() => { setFiltroTipo("todos"); setBusqueda(""); }}
+                      className="mt-2 text-xs font-bold text-purple-700 dark:text-purple-400 hover:underline cursor-pointer"
+                    >
+                      Ver todos los inmuebles
+                    </button>
+                  )}
+                </div>
+              )}
+            </>
           )}
 
         </div>

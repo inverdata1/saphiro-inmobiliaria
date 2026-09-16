@@ -2,6 +2,24 @@ const pool = require("../db/pool");
 const redis = require("./redis.service");
 const AppError = require("../utils/AppError");
 const auditoriaService = require("./auditoria.service");
+const fs = require("fs");
+const path = require("path");
+
+const PROFILE_UPLOADS_DIR = path.join(__dirname, "..", "..", "uploads", "profileIcons");
+const PROFILE_URL_PREFIX = "/uploads/profileIcons/";
+
+function limpiarUrl(fotoUrl) {
+  return fotoUrl ? fotoUrl.split("?")[0] : "";
+}
+
+exports.getProfileUploadsDir = () => PROFILE_UPLOADS_DIR;
+
+function deleteProfileFile(fotoUrl) {
+  const url = limpiarUrl(fotoUrl);
+  if (!url || !url.startsWith(PROFILE_URL_PREFIX)) return;
+  const filePath = path.join(PROFILE_UPLOADS_DIR, path.basename(url));
+  fs.rm(filePath, { force: true }, () => {});
+}
 
 async function deleteUsuarioTokens(usuarioId) {
   const uid = String(usuarioId);
@@ -111,7 +129,7 @@ exports.getUsuarioById = async (id) => {
   if (!Number.isInteger(id) || id <= 0) throw new AppError("id inválido", 400);
 
   const { rows } = await pool.query(
-    `SELECT id, nombre, email, rol, fecha_registro FROM usuarios WHERE id = $1 LIMIT 1;`,
+    `SELECT id, nombre, email, rol, fecha_registro, foto_url FROM usuarios WHERE id = $1 LIMIT 1;`,
     [id]
   );
 
@@ -211,8 +229,107 @@ exports.patchUsuarioNormal = async (userId, body, ctx) => {
   return usuario;
 };
 
-exports.patchUsuario = async (id, body, ctx) => {
+exports.subirFotoPerfil = async (userId, file, ctx) => {
+  if (!Number.isInteger(userId) || userId <= 0) throw new AppError("id inválido", 400);
+  if (!file || !file.filename) throw new AppError("Se requiere la imagen de perfil", 400);
 
+  const nuevaUrl = `${PROFILE_URL_PREFIX}${file.filename}`;
+  const client = await pool.connect();
+  let usuario;
+
+  try {
+    await client.query("BEGIN");
+
+    const { rows } = await client.query(
+      `SELECT id, foto_url FROM usuarios WHERE id = $1 FOR UPDATE;`,
+      [userId]
+    );
+    if (!rows.length) throw new AppError("Usuario no existe", 404);
+
+    const fotoAnterior = rows[0].foto_url;
+
+    const upd = await client.query(
+      `UPDATE usuarios SET foto_url = $1 WHERE id = $2
+       RETURNING id, nombre, email, rol, foto_url;`,
+      [nuevaUrl, userId]
+    );
+    usuario = upd.rows[0];
+
+    if (ctx) {
+      await auditoriaService.registrarUpdate({
+        usuario_id: ctx.usuario_id,
+        tabla_afectada: "usuarios",
+        descripcion: fotoAnterior
+          ? `Actualizada imagen de perfil del usuario ${userId}`
+          : `Agregada imagen de perfil al usuario ${userId}`,
+        ip_address: ctx.ip_address,
+        user_agent: ctx.user_agent,
+      }, client);
+    }
+
+    await client.query("COMMIT");
+
+    if (fotoAnterior) deleteProfileFile(fotoAnterior);
+  } catch (err) {
+    await client.query("ROLLBACK");
+    deleteProfileFile(nuevaUrl);
+    throw err;
+  } finally {
+    client.release();
+  }
+
+  return usuario;
+};
+
+exports.eliminarFotoPerfil = async (userId, ctx) => {
+  if (!Number.isInteger(userId) || userId <= 0) throw new AppError("id inválido", 400);
+
+  const client = await pool.connect();
+  let usuario;
+
+  try {
+    await client.query("BEGIN");
+
+    const { rows } = await client.query(
+      `SELECT id, foto_url FROM usuarios WHERE id = $1 FOR UPDATE;`,
+      [userId]
+    );
+    if (!rows.length) throw new AppError("Usuario no existe", 404);
+
+    const fotoActual = rows[0].foto_url;
+    if (!fotoActual) throw new AppError("El usuario no tiene foto de perfil", 400);
+
+    const upd = await client.query(
+      `UPDATE usuarios SET foto_url = NULL WHERE id = $1
+       RETURNING id, nombre, email, rol, foto_url;`,
+      [userId]
+    );
+    usuario = upd.rows[0];
+
+    if (ctx) {
+      await auditoriaService.registrarUpdate({
+        usuario_id: ctx.usuario_id,
+        tabla_afectada: "usuarios",
+        descripcion: `Eliminada imagen de perfil del usuario ${userId}`,
+        ip_address: ctx.ip_address,
+        user_agent: ctx.user_agent,
+      }, client);
+    }
+
+    await client.query("COMMIT");
+
+    deleteProfileFile(fotoActual);
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+
+  return usuario;
+};
+
+exports.patchUsuario = async (id, body, ctx) => {
   const allowed = new Set(["nombre", "email", "telefono", "estatus"]);
   const keys = Object.keys(body || {}).filter((k) => allowed.has(k));
 

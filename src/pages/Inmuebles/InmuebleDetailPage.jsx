@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useCallback, useRef, lazy, Suspense } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { apiGet, apiPost, apiPut, apiDelete } from "../../api";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/useAuth";
 import ShareModal from "../../components/ShareModal";
 import { formatDate } from "../../utils/date";
 import { formatPrice as fmtPrice } from "../../utils/price";
@@ -577,14 +577,21 @@ export default function InmuebleDetailPage() {
                 {" "}
                 <div className="flex items-center gap-3">
                   {" "}
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#5a0e82] text-sm font-bold text-white shadow-md">
-                    {" "}
-                    {inmueble.corredor_nombre
-                      .split(" ")
-                      .map((w) => w[0])
-                      .slice(0, 2)
-                      .join("")
-                      .toUpperCase()}{" "}
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#5a0e82] text-sm font-bold text-white shadow-md overflow-hidden">
+                    {inmueble.corredor_foto ? (
+                      <img
+                        src={inmueble.corredor_foto}
+                        alt={inmueble.corredor_nombre}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      inmueble.corredor_nombre
+                        .split(" ")
+                        .map((w) => w[0])
+                        .slice(0, 2)
+                        .join("")
+                        .toUpperCase()
+                    )}
                   </div>{" "}
                   <div className="min-w-0">
                     {" "}
@@ -671,16 +678,20 @@ export default function InmuebleDetailPage() {
               )}
             </div>
 
-            {user && user?.rol !== "admin" && user?.id !== inmueble.corredor_usuario_id && inmueble.estatus !== "vendido" && inmueble.estatus !== "alquilado" && (
+            {user?.rol !== "admin" && user?.id !== inmueble.corredor_usuario_id && inmueble.estatus !== "vendido" && inmueble.estatus !== "alquilado" && (
               <button
-                onClick={() =>
+                onClick={() => {
+                  if (!user) {
+                    navigate("/login");
+                    return;
+                  }
                   navigate(
                     inmueble.estado_inmueble === "vacacional"
                       ? `/reservar/${inmueble.id || id}`
                       : `/pagos/${inmueble.id || id}`,
                     { state: { inmueble } }
-                  )
-                }
+                  );
+                }}
                 className="w-full rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-emerald-900/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 {inmueble.estado_inmueble === "vacacional" ? (
@@ -872,6 +883,74 @@ export default function InmuebleDetailPage() {
                       {fmtHora(inmueble.alquiler_vacacional.hora_checkout)}
                     </span>
                   </div>
+                </div>
+              </section>
+            )}
+            {inmueble.estado_inmueble === "vacacional" &&
+              inmueble.alquiler_vacacional &&
+              ( (!inmueble.mascotas || inmueble.mascotas.length === 0) ||
+                inmueble.alquiler_vacacional.permiso_infantes === false ) && (
+              <section className="rounded-xl sm:rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <svg
+                    className="h-5 w-5 text-blue-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                    />
+                  </svg>
+                  Reglas de la estancia
+                </h2>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  Este alquiler vacacional tiene restricciones de acceso.
+                </p>
+                <div className={`mt-4 flex flex-col items-stretch gap-4 sm:flex-row ${(!inmueble.mascotas || inmueble.mascotas.length === 0) && inmueble.alquiler_vacacional.permiso_infantes === false ? "" : "sm:justify-center"}`}>
+                  {(!inmueble.mascotas || inmueble.mascotas.length === 0) && (
+                    <div className={`rounded-xl border border-rose-100 bg-rose-50 p-4 flex flex-col items-center text-center dark:border-rose-500/30 dark:bg-rose-500/10 ${(!inmueble.mascotas || inmueble.mascotas.length === 0) && inmueble.alquiler_vacacional.permiso_infantes === false ? "sm:flex-1" : "sm:w-80"}`}>
+                      <svg
+                        className="h-6 w-6 text-rose-500"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+                        />
+                      </svg>
+                      <span className="mt-2 text-sm font-bold text-rose-600 dark:text-rose-400">
+                        Mascotas no permitidas
+                      </span>
+                    </div>
+                  )}
+                  {inmueble.alquiler_vacacional.permiso_infantes === false && (
+                    <div className={`rounded-xl border border-rose-100 bg-rose-50 p-4 flex flex-col items-center text-center dark:border-rose-500/30 dark:bg-rose-500/10 ${(!inmueble.mascotas || inmueble.mascotas.length === 0) && inmueble.alquiler_vacacional.permiso_infantes === false ? "sm:flex-1" : "sm:w-80"}`}>
+                      <svg
+                        className="h-6 w-6 text-rose-500"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+                        />
+                      </svg>
+                      <span className="mt-2 text-sm font-bold text-rose-600 dark:text-rose-400">
+                        Infantes no permitidos
+                      </span>
+                    </div>
+                  )}
                 </div>
               </section>
             )}

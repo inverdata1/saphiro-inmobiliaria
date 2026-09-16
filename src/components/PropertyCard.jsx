@@ -113,7 +113,7 @@ export default function PropertyCard({ property, className = "", tall = false })
                 <span>{property.area_m2} m²</span>
               </span>
             ) : null}
-            {Array.isArray(property.caracteristicas) && property.caracteristicas.slice(0, 2).map((c, i) => (
+            {Array.isArray(property.caracteristicas) && property.caracteristicas.map((c, i) => (
               <span key={i} className="inline-flex items-center gap-1 rounded-lg border border-slate-100 bg-slate-50/50 px-2 py-1 dark:border-slate-800/60 dark:bg-slate-900/40">
                 {c.valor != null ? `${c.nombre}: ${c.valor}${c.unidad_medicion ? ` ${c.unidad_medicion}` : ""}` : c.nombre}
               </span>

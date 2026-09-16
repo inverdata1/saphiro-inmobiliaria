@@ -4,7 +4,7 @@ const inmueblesService = require("../services/inmuebles.service");
 const corredoresService = require("../services/corredores.service");
 const buildCtx = require("../utils/ctx");
 
-const UPLOADS_DIR = path.join(__dirname, "..", "..", "uploads");
+const UPLOADS_DIR = path.join(__dirname, "..", "..", "uploads", "properties");
 
 function deleteFiles(files) {
   for (const f of files) {

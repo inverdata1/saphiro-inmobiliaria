@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import CardPreview from "../../components/pagos/CardPreview";
 import ComprobantePagoModal from "../../components/pagos/ComprobantePagoModal";
 import { apiGet, apiPost } from "../../api";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/useAuth";
 
 export default function PasarelaPagoPage() {
   const { inmuebleId } = useParams();
@@ -575,13 +575,6 @@ export default function PasarelaPagoPage() {
                       )}
                     </div>
                   </button>
-                </div>
-
-                {/* Footer security badges */}
-                <div className="pt-2 text-center">
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500">
-                    🔒 Transacción 100% cifrada y protegida por los protocolos Visa Secure y Mastercard Identity Check.
-                  </p>
                 </div>
               </form>
             </div>

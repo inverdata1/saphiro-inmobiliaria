@@ -4,7 +4,7 @@ import CardPreview from "../../components/pagos/CardPreview";
 import ComprobantePagoModal from "../../components/pagos/ComprobantePagoModal";
 import { apiGet, apiPost } from "../../api";
 import { formatPrice } from "../../utils/price";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/useAuth";
 import { v4 as uuid } from "uuid";
 
 const DatePickerCalendarModal = lazy(() => import("../../components/pickers/DatePickerCalendarModal"));
@@ -33,6 +33,8 @@ export default function ReservationPage() {
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
   const [huespedes, setHuespedes] = useState(1);
+  const [mascotasSel, setMascotasSel] = useState([]);
+  const [mascotaSeleccion, setMascotaSeleccion] = useState("");
 
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [calendarTarget, setCalendarTarget] = useState(null);
@@ -57,8 +59,8 @@ export default function ReservationPage() {
   const idemKeyRef = useRef(uuid());
   const submittingRef = useRef(false);
 
-  useEffect(() => {
-    if (inmuebleId && !location.state?.inmueble) {
+useEffect(() => {
+    if (inmuebleId && !inmueble) {
       apiGet(`/inmuebles/${inmuebleId}`)
         .then((res) => {
           if (res?.data) setInmueble(res.data);
@@ -67,7 +69,17 @@ export default function ReservationPage() {
         .catch((e) => setLoadError(e.message || "No se pudo cargar el inmueble"))
         .finally(() => setLoading(false));
     }
-  }, [inmuebleId, location.state]);
+  }, [inmuebleId, inmueble]);
+
+  useEffect(() => {
+    if (inmuebleId && inmueble && inmueble.mascotas === undefined) {
+      apiGet(`/inmuebles/${inmuebleId}`)
+        .then((res) => {
+          if (res?.data) setInmueble((prev) => ({ ...prev, ...res.data }));
+        })
+        .catch(() => {});
+    }
+  }, [inmuebleId, inmueble]);
 
   useEffect(() => {
     apiGet("/tasas/actual")
@@ -91,6 +103,7 @@ export default function ReservationPage() {
   }, [inmuebleId]);
 
   const av = inmueble?.alquiler_vacacional || null;
+  const mascotasPermitidas = inmueble?.mascotas || [];
   const moneda = String(inmueble?.moneda || "USD").toUpperCase();
   const esBs = moneda === "BS";
   const esVacacional = inmueble?.estado_inmueble === "vacacional";
@@ -275,6 +288,7 @@ export default function ReservationPage() {
           moneda,
           num_huespedes: huespedes,
           estatus_pago: "pagado",
+          mascotas: mascotasSel.map((id) => ({ mascota_id: id })),
         },
         idemKeyRef.current
       );
@@ -548,6 +562,62 @@ export default function ReservationPage() {
                   Capacidad máxima: {huespedesMax} persona{huespedesMax > 1 ? "s" : ""}
                 </p>
               </div>
+
+              {mascotasPermitidas.length > 0 && (
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                    Mascotas permitidas
+                  </label>
+                  <select
+                    value={mascotaSeleccion}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setMascotaSeleccion("");
+                      if (val) {
+                        setMascotasSel((prev) =>
+                          prev.includes(Number(val)) ? prev : [...prev, Number(val)]
+                        );
+                      }
+                    }}
+                    className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-3 text-slate-800 dark:text-slate-200 font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm cursor-pointer"
+                  >
+                    <option value="">Agregar mascota…</option>
+                    {mascotasPermitidas
+                      .filter((m) => !mascotasSel.includes(m.mascota_id))
+                      .map((m) => (
+                        <option key={m.mascota_id} value={m.mascota_id}>{m.nombre}</option>
+                      ))}
+                  </select>
+
+                  {mascotasSel.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {mascotasSel.filter((id) => mascotasPermitidas.some((m) => String(m.mascota_id) === String(id))).map((mascotaId) => {
+                        const mascota = mascotasPermitidas.find((m) => String(m.mascota_id) === String(mascotaId));
+                        const nombre = mascota?.nombre;
+                        if (!nombre) return null;
+                        return (
+                          <span
+                            key={mascotaId}
+                            className="inline-flex items-center gap-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200"
+                          >
+                            {nombre}
+                            <button
+                              type="button"
+                              onClick={() => setMascotasSel((prev) => prev.filter((id) => id !== mascotaId))}
+                              className="text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
+                              aria-label={`Quitar ${nombre}`}
+                            >
+                              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="card p-4 sm:p-5 space-y-3">
@@ -834,12 +904,6 @@ export default function ReservationPage() {
                       )}
                     </div>
                   </button>
-                </div>
-
-                <div className="pt-1 text-center">
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500">
-                    🔒 Transacción protegida por Visa Secure y Mastercard Identity Check.
-                  </p>
                 </div>
               </form>
             </div>

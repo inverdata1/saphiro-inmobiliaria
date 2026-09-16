@@ -2,7 +2,7 @@ const pool = require("../db/pool");
 const AppError = require("../utils/AppError");
 const path = require("path");
 
-const UPLOADS_DIR = path.join(__dirname, "..", "..", "uploads");
+const UPLOADS_DIR = path.join(__dirname, "..", "..", "uploads", "properties");
 
 exports.getUploadsDir = () => UPLOADS_DIR;
 
@@ -35,7 +35,7 @@ exports.createImages = async (inmuebleId, files) => {
         `INSERT INTO imagenes (inmueble_id, url, orden, portada, ruta_s3)
          VALUES ($1, $2, $3, $4, $5)
          RETURNING id, inmueble_id, url, orden, portada`,
-        [inmuebleId, "/uploads/" + files[i].filename, orden, portada, "/uploads/" + files[i].filename]
+        [inmuebleId, "/uploads/properties/" + files[i].filename, orden, portada, "/uploads/properties/" + files[i].filename]
       );
 
       const imgId = rows[0].id;

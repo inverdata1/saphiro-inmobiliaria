@@ -131,7 +131,6 @@ exports.listGuardadosByUsuario = async (usuario_id) =>{
                   FROM caracteristica_inmueble ci2
                   WHERE ci2.inmueble_id = i.id
                   ORDER BY ci2.caracteristica_id ASC
-                  LIMIT 4
                 ) ci
                 JOIN caracteristicas c2 ON c2.id = ci.caracteristica_id
               ) AS caracteristicas

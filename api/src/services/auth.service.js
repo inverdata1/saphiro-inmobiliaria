@@ -428,7 +428,7 @@ exports.me = async (userId) => {
 
   //Se busca al usuario en la base de datos por medio del id
   const { rows } = await pool.query(
-    "SELECT id, nombre, email, rol, fecha_registro, email_verified FROM usuarios WHERE id = $1 LIMIT 1;",
+    "SELECT id, nombre, email, rol, fecha_registro, email_verified, foto_url FROM usuarios WHERE id = $1 LIMIT 1;",
     [userId]
   );
 
@@ -444,6 +444,7 @@ exports.me = async (userId) => {
     rol: user.rol,
     fecha_registro: user.fecha_registro,
     email_verified: user.email_verified,
+    foto_perfil: user.foto_url || null,
   };
 };
 

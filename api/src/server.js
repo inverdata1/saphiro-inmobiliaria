@@ -27,7 +27,9 @@ const resenasRoutes = require("./routes/resenas.routes");
 const guardadosRoutes = require("./routes/guardados.routes");
 const notificacionesRoutes = require("./routes/notificaciones.routes");
 const costosAdicionalesRoutes = require("./routes/costosAdicionales.routes");
+const redesSocialesRoutes = require("./routes/redesSociales.routes");
 const tasasRoutes = require("./routes/tasasCambio.routes");
+const mascotasRoutes = require("./routes/mascotas.routes");
 const errorHandler = require("./middleware/errorHandler");
 const csrf = require("./middleware/csrf");
 const { initTasasJob } = require("./jobs/tasasCambio.job");
@@ -90,7 +92,9 @@ app.use("/resenas", resenasRoutes);
 app.use("/guardados", guardadosRoutes);
 app.use("/notificaciones", notificacionesRoutes);
 app.use("/costos-adicionales", costosAdicionalesRoutes);
+app.use("/redes-sociales", redesSocialesRoutes);
 app.use("/tasas", tasasRoutes);
+app.use("/mascotas", mascotasRoutes);
 
 app.use(errorHandler);
 

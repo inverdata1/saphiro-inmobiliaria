@@ -1,5 +1,6 @@
 const pool = require("../db/pool");
 const AppError = require("../utils/AppError");
+const auditoriaService = require("./auditoria.service");
 
 exports.listCorredores = async (query) => {
   const { q, limit = 100, offset = 0} = query;
@@ -125,4 +126,178 @@ exports.updateCorredor = async (usuario_id, data) => {
   }
 
   return corredor;
+};
+
+// ------------------- Redes sociales del corredor -------------------
+
+const SOCIAL_SELECT = `
+  SELECT
+    ur.id,
+    ur.red_social_id,
+    ur.usuario_id,
+    ur.url,
+    ur.orden,
+    ur.is_public,
+    rs.nombre,
+    rs.base_url,
+    rs.name_icon
+  FROM usuarios_redes_sociales ur
+  JOIN redes_sociales rs ON rs.id = ur.red_social_id
+`;
+
+exports.listRedesSociales = async (usuario_id) => {
+  const { rows } = await pool.query(
+    `${SOCIAL_SELECT}
+     WHERE ur.usuario_id = $1
+     ORDER BY ur.orden ASC, ur.id ASC;`,
+    [usuario_id]
+  );
+  return rows;
+};
+
+exports.addRedSocial = async (usuario_id, data, ctx) => {
+  const { red_social_id, url, is_public } = data;
+  if (!red_social_id) throw new AppError("Falta red_social_id", 400);
+  const link = String(url || "").trim();
+  if (!link) throw new AppError("Falta la url de la red social", 400);
+
+  const client = await pool.connect();
+  let creada;
+
+  try {
+    await client.query("BEGIN");
+
+    const { rows: cat } = await client.query(
+      `SELECT id, nombre, base_url FROM redes_sociales WHERE id = $1 AND is_active = true;`,
+      [red_social_id]
+    );
+    if (!cat.length) throw new AppError("La red social no existe o está inactiva", 404);
+
+    const baseUrlNorm = (cat[0].base_url || "").trim().toLowerCase();
+    if (!link.toLowerCase().startsWith(baseUrlNorm)) {
+      throw new AppError(
+        `La url debe ser un link de ${cat[0].nombre} (ej: ${cat[0].base_url}tu-usuario)`,
+        400
+      );
+    }
+
+    const { rows: dup } = await client.query(
+      `SELECT id FROM usuarios_redes_sociales WHERE usuario_id = $1 AND red_social_id = $2;`,
+      [usuario_id, red_social_id]
+    );
+    if (dup.length) throw new AppError("Esa red social ya está agregada", 409);
+
+    const { rows: rowOrden } = await client.query(
+      `SELECT COALESCE(MAX(orden), 0) + 1 AS next FROM usuarios_redes_sociales WHERE usuario_id = $1;`,
+      [usuario_id]
+    );
+    const orden = Number(rowOrden[0]?.next) || 1;
+
+    const { rows } = await client.query(
+      `INSERT INTO usuarios_redes_sociales (red_social_id, usuario_id, url, orden, is_public)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, red_social_id, usuario_id, url, orden, is_public;`,
+      [red_social_id, usuario_id, link, orden, is_public ?? true]
+    );
+    creada = rows[0];
+
+    await auditoriaService.registrarInsert({
+      ...ctx,
+      tabla_afectada: "usuarios_redes_sociales",
+      descripcion: `Red social agregada: ${cat[0].nombre}`,
+    }, client);
+
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+
+  return creada;
+};
+
+exports.updateRedSocial = async (usuario_id, id, data, ctx) => {
+  const { url, orden, is_public } = data;
+  if (url !== undefined && !String(url).trim()) {
+    throw new AppError("La url no puede estar vacía", 400);
+  }
+
+  const client = await pool.connect();
+  let actualizada;
+
+  try {
+    await client.query("BEGIN");
+
+    const { rows: existe } = await client.query(
+      `SELECT ur.id, rs.nombre
+       FROM usuarios_redes_sociales ur
+       JOIN redes_sociales rs ON rs.id = ur.red_social_id
+       WHERE ur.id = $1 AND ur.usuario_id = $2;`,
+      [id, usuario_id]
+    );
+    if (!existe.length) throw new AppError("Red social del corredor no encontrada", 404);
+
+    const { rows } = await client.query(
+      `UPDATE usuarios_redes_sociales
+       SET url = COALESCE($3, url),
+           orden = COALESCE($4, orden),
+           is_public = COALESCE($5, is_public)
+       WHERE id = $1 AND usuario_id = $2
+       RETURNING id, red_social_id, usuario_id, url, orden, is_public;`,
+      [id, usuario_id, url !== undefined ? String(url).trim() : null, orden ?? null, is_public ?? null]
+    );
+    actualizada = rows[0];
+
+    await auditoriaService.registrarUpdate({
+      ...ctx,
+      tabla_afectada: "usuarios_redes_sociales",
+      descripcion: `Red social actualizada: ${existe[0].nombre}`,
+    }, client);
+
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+
+  return actualizada;
+};
+
+exports.deleteRedSocial = async (usuario_id, id, ctx) => {
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const { rows: existe } = await client.query(
+      `SELECT ur.id, rs.nombre
+       FROM usuarios_redes_sociales ur
+       JOIN redes_sociales rs ON rs.id = ur.red_social_id
+       WHERE ur.id = $1 AND ur.usuario_id = $2;`,
+      [id, usuario_id]
+    );
+    if (!existe.length) throw new AppError("Red social del corredor no encontrada", 404);
+
+    await client.query(
+      `DELETE FROM usuarios_redes_sociales WHERE id = $1 AND usuario_id = $2;`,
+      [id, usuario_id]
+    );
+
+    await auditoriaService.registrarDelete({
+      ...ctx,
+      tabla_afectada: "usuarios_redes_sociales",
+      descripcion: `Red social eliminada: ${existe[0].nombre}`,
+    }, client);
+
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
 };

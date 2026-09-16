@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/useAuth";
 
 // Datos de ejemplo realistas de transferencias recibidas por el corredor inmobiliario
 const MOCK_TRANSFERENCIAS = [

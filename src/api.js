@@ -2,6 +2,9 @@ const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3001";
 
 let isRefreshing = false;
 let failedQueue = [];
+let refreshPromise = null;
+
+const AUTO_REFRESH_INTERVAL = 14 * 60 * 1000;
 
 function processQueue(error) {
   failedQueue.forEach(({ resolve, reject }) => {
@@ -29,6 +32,40 @@ export class EmailNotVerifiedError extends Error {
   }
 }
 
+export class SessionExpiredError extends Error {
+  constructor(message) {
+    super(message || "Sesión expirada");
+    this.name = "SessionExpiredError";
+    this.isSessionExpired = true;
+  }
+}
+
+function refreshSessionOnce() {
+  return fetch(API_BASE + "/auth/refresh", {
+    method: "POST",
+    headers: { "X-Requested-With": "XMLHttpRequest" },
+    credentials: "include",
+  }).then(async (res) => {
+    if (res.status === 401 || res.status === 403) {
+      throw new SessionExpiredError();
+    }
+    if (!res.ok) {
+      throw new Error(`No se pudo renovar la sesión (HTTP ${res.status})`);
+    }
+    await res.json().catch(() => null);
+    return true;
+  });
+}
+
+export function refreshSession() {
+  if (!refreshPromise) {
+    refreshPromise = refreshSessionOnce().finally(
+      () => { refreshPromise = null; }
+    );
+  }
+  return refreshPromise;
+}
+
 async function parseResponse(res) {
   const data = await res.json().catch(() => null);
   if (!res.ok) {
@@ -48,7 +85,7 @@ async function doFetch(url, init, isRetry = false) {
     res.status === 401 &&
     !url.includes("/auth/refresh") &&
     !url.includes("/auth/login") &&
-    !url.includes("/auth/registro-token/") && !url.includes("/auth/me")
+    !url.includes("/auth/registro-token/")
   ) {
     if (isRetry) return parseResponse(res);
 
@@ -60,30 +97,15 @@ async function doFetch(url, init, isRetry = false) {
 
     isRefreshing = true;
     try {
-      const refreshRes = await fetch(API_BASE + "/auth/refresh", {
-        method: "POST",
-        headers: { "X-Requested-With": "XMLHttpRequest" },
-        credentials: "include",
-      });
-
+      await refreshSession();
       // 401/403 en refresh = token realmente expirado/inválido → sesión muerta
-      if (refreshRes.status === 401 || refreshRes.status === 403) {
-        processQueue(new Error("Sesión expirada"));
-        redirectToLogin();
-        throw new Error("Sesión expirada");
-      }
-
-      // Otro fallo (red, 5xx): no matar la sesión, propagar el error del endpoint original
-      if (!refreshRes.ok) {
-        const e = new Error(`No se pudo renovar la sesión (HTTP ${refreshRes.status})`);
-        processQueue(e);
-        throw e;
-      }
-
       processQueue(null);
       return doFetch(url, init, true);
     } catch (e) {
       processQueue(e);
+      if (e instanceof SessionExpiredError && !url.includes("/auth/me")) {
+        redirectToLogin();
+      }
       throw e;
     } finally {
       isRefreshing = false;

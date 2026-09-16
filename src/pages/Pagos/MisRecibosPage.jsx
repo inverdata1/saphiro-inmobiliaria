@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/useAuth";
 
 // Datos de ejemplo realistas de recibos
 const MOCK_RECIBOS = [

@@ -21,6 +21,16 @@ exports.patchUsuarioNormal = async (req, res) => {
   res.json({ ok: true, data });
 };
 
+exports.subirFotoPerfil = async (req, res) => {
+  const data = await usuariosService.subirFotoPerfil(req.user.id, req.file, buildCtx(req));
+  res.status(201).json({ ok: true, data });
+};
+
+exports.eliminarFotoPerfil = async (req, res) => {
+  const data = await usuariosService.eliminarFotoPerfil(req.user.id, buildCtx(req));
+  res.json({ ok: true, data });
+};
+
 exports.patchUsuario = async (req, res) => {
   const data = await usuariosService.patchUsuario(Number(req.params.id), req.body, buildCtx(req));
   res.json({ ok: true, data });

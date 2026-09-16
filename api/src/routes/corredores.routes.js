@@ -5,6 +5,10 @@ const c = require("../controllers/corredores.controller");
 
 router.get("/", auth, asyncHandler(c.listCorredores));
 router.get("/:usuario_id", auth, asyncHandler(c.getCorredorByUserId));
+router.get("/:usuario_id/redes-sociales", asyncHandler(c.listRedesSociales));
+router.post("/:usuario_id/redes-sociales", auth, asyncHandler(c.addRedSocial));
+router.put("/:usuario_id/redes-sociales/:id", auth, asyncHandler(c.updateRedSocial));
+router.delete("/:usuario_id/redes-sociales/:id", auth, asyncHandler(c.deleteRedSocial));
 router.patch("/:id/toggle-activo", auth, asyncHandler(c.toggleActivo));
 router.put("/:id", auth, asyncHandler(c.updateCorredor));
 router.delete("/:id", auth, asyncHandler(c.remove));

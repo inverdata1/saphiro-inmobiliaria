@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiGet, apiUpload } from "../../api";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/useAuth";
 import ErrorMessage from "../../components/error/ErrorMessage";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -26,6 +26,8 @@ export default function CrearInmueblePage() {
   const [caracteristicasSel, setCaracteristicasSel] = useState({});
   const [costosDisponibles, setCostosDisponibles] = useState([]);
   const [costosSel, setCostosSel] = useState([]);
+  const [mascotasDisponibles, setMascotasDisponibles] = useState([]);
+  const [mascotasSel, setMascotasSel] = useState([]);
   const [form, setForm] = useState({
     titulo: "",
     descripcion: "",
@@ -46,6 +48,8 @@ export default function CrearInmueblePage() {
     noches_minimas: "1",
     hora_checkin: "",
     hora_checkout: "",
+    permite_mascotas: false,
+    permite_infantes: false,
   });
 
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -93,16 +97,18 @@ export default function CrearInmueblePage() {
   useEffect(() => {
     (async () => {
       try {
-        const [t, e, c, ca] = await Promise.all([
+        const [t, e, c, ca, m] = await Promise.all([
           apiGet("/tipos"),
           apiGet("/estados"),
           apiGet("/caracteristicas"),
           apiGet("/costos-adicionales"),
+          apiGet("/mascotas"),
         ]);
         setTipos(t.data || []);
         setEstados(e.data || []);
         setCaracteristicas(c.data || []);
         setCostosDisponibles(ca.data || []);
+        setMascotasDisponibles(m.data || []);
       } catch {}
     })();
   }, []);
@@ -148,6 +154,15 @@ export default function CrearInmueblePage() {
 
   function setCostoField(id, field, value) {
     setCostosSel((prev) => prev.map((c) => c.costo_adicional_id === id ? { ...c, [field]: value } : c));
+  }
+
+  function agregarMascota(id) {
+    if (mascotasSel.includes(Number(id))) return;
+    setMascotasSel((prev) => [...prev, Number(id)]);
+  }
+
+  function quitarMascota(id) {
+    setMascotasSel((prev) => prev.filter((m) => m !== Number(id)));
   }
 
   useEffect(() => {
@@ -279,6 +294,8 @@ export default function CrearInmueblePage() {
           costo_adicional_id: c.costo_adicional_id,
           monto: c.monto ? Number(c.monto) : 0,
         }));
+        payload.mascotas = mascotasSel.map((id) => ({ mascota_id: id }));
+        payload.permiso_infantes = form.permite_infantes;
       }
 
       const fd = new FormData();
@@ -494,6 +511,80 @@ export default function CrearInmueblePage() {
                 <input className={inputCls} type="time" value={form.hora_checkout} onChange={(e) => set("hora_checkout", e.target.value)} />
               </div>
             </div>
+
+            <div className="mt-4">
+              <label className={labelCls}>Reglas</label>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 mt-2">
+                <label className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-4 py-3 cursor-pointer select-none dark:border-slate-700 dark:bg-slate-800">
+                  <input
+                    type="checkbox"
+                    checked={form.permite_mascotas}
+                    onChange={(e) => {
+                      set("permite_mascotas", e.target.checked);
+                      if (!e.target.checked) setMascotasSel([]);
+                    }}
+                    className="h-4 w-4 rounded border-slate-300 text-purple-900 focus:ring-purple-900 accent-purple-900"
+                  />
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    ¿Se permitirán mascotas?
+                  </span>
+                </label>
+                <label className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-4 py-3 cursor-pointer select-none dark:border-slate-700 dark:bg-slate-800">
+                  <input
+                    type="checkbox"
+                    checked={form.permite_infantes}
+                    onChange={(e) => set("permite_infantes", e.target.checked)}
+                    className="h-4 w-4 rounded border-slate-300 text-purple-900 focus:ring-purple-900 accent-purple-900"
+                  />
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    ¿Se permitirán infantes?
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            {form.permite_mascotas && (
+              <div className="mt-4">
+                <label className={labelCls}>Mascotas permitidas</label>
+                <select
+                  className={inputCls + " mt-1"}
+                  value=""
+                  onChange={(e) => {
+                    if (e.target.value) agregarMascota(Number(e.target.value));
+                    e.target.value = "";
+                  }}
+                >
+                  <option value="">Agregar mascota…</option>
+                  {mascotasDisponibles
+                    .filter((m) => !mascotasSel.includes(m.id))
+                    .map((m) => (
+                      <option key={m.id} value={m.id}>{m.nombre}</option>
+                    ))}
+                </select>
+
+                {mascotasSel.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    {mascotasSel.map((mascotaId) => {
+                      const mascota = mascotasDisponibles.find((m) => m.id === mascotaId);
+                      return (
+                        <div key={mascotaId} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
+                          <span className="text-sm font-medium text-slate-700 dark:text-slate-200 flex-1">{mascota?.nombre}</span>
+                          <button
+                            type="button"
+                            onClick={() => quitarMascota(mascotaId)}
+                            className="text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
+                          >
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="mt-4">
               <label className={labelCls}>Costos adicionales</label>
