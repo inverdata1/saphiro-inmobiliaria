@@ -157,9 +157,9 @@ export async function apiPut(path, body = {}, idempotencyKey) {
   });
 }
 
-export async function apiUpload(path, formData) {
+export async function apiUpload(path, formData, method = "POST") {
   return doFetch(API_BASE + path, {
-    method: "POST",
+    method,
     headers: { "X-Requested-With": "XMLHttpRequest" },
     credentials: "include",
     body: formData,

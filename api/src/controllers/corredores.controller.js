@@ -10,6 +10,15 @@ const asegurarAcceso = (req, usuario_id) => {
   }
 };
 
+const asegurarAccesoTelefono = (req, usuario_id) => {
+  const uid = Number(usuario_id);
+  if (req.user?.rol !== "admin" && Number(req.user?.id) !== uid) {
+    const err = new Error("No puedes gestionar los teléfonos de otro corredor");
+    err.statusCode = 403;
+    throw err;
+  }
+};
+
 exports.listCorredores = async (req, res) => {
   const data = await corredoresService.listCorredores(req.query);
   res.json({ ok: true, data });
@@ -71,4 +80,42 @@ exports.deleteRedSocial = async (req, res) => {
     buildCtx(req)
   );
   res.json({ ok: true, message: "Red social eliminada" });
+};
+
+// ------------------- Números de teléfono del corredor -------------------
+
+exports.listTelefonos = async (req, res) => {
+  const data = await corredoresService.listTelefonos(Number(req.params.usuario_id));
+  res.json({ ok: true, data });
+};
+
+exports.addTelefono = async (req, res) => {
+  asegurarAccesoTelefono(req, req.params.usuario_id);
+  const data = await corredoresService.addTelefono(
+    Number(req.params.usuario_id),
+    req.body,
+    buildCtx(req)
+  );
+  res.status(201).json({ ok: true, data });
+};
+
+exports.updateTelefono = async (req, res) => {
+  asegurarAccesoTelefono(req, req.params.usuario_id);
+  const data = await corredoresService.updateTelefono(
+    Number(req.params.usuario_id),
+    Number(req.params.id),
+    req.body,
+    buildCtx(req)
+  );
+  res.json({ ok: true, data });
+};
+
+exports.deleteTelefono = async (req, res) => {
+  asegurarAccesoTelefono(req, req.params.usuario_id);
+  await corredoresService.deleteTelefono(
+    Number(req.params.usuario_id),
+    Number(req.params.id),
+    buildCtx(req)
+  );
+  res.json({ ok: true, message: "Número de teléfono eliminado" });
 };

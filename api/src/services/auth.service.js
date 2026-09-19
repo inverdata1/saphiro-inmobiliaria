@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const pool = require("../db/pool");
 const AppError = require("../utils/AppError");
+const { validarTelefono } = require("../utils/phoneFormats.cjs");
 const { sendEmail } = require("./email.service");
 const redis = require("./redis.service");
 const auditoriaService = require("./auditoria.service");
@@ -478,10 +479,10 @@ exports.validarTokenRegistro = async (token, rol) => {
   return { id: rows[0].id, email: rows[0].email };
 };
 
-//Completa el registro del usuario
+//Completa el registro del Corredor
 //Mediante el token que se le provee al usuario por el enlace del correo electronico, se identifica al usuario
 //Y se procede a guardar los datos faltantes del corredor
-exports.completarRegistro = async ({ token, nombre, telefono, licencia_nro, password }, ctx) => {
+exports.completarRegistro = async ({ token, nombre, telefono, iso2, licencia_nro, password }, ctx) => {
   //Validaciones
   if (!token) {
     throw new AppError("El token es requerido", 400);
@@ -503,6 +504,15 @@ exports.completarRegistro = async ({ token, nombre, telefono, licencia_nro, pass
     throw new AppError("El teléfono es requerido", 400);
   };
 
+  if (!iso2) {
+    throw new AppError("El código de país es requerido", 400);
+  };
+
+  const validacionTel = validarTelefono(iso2, telefono);
+  if (!validacionTel.ok) {
+    throw new AppError(validacionTel.mensaje, 400);
+  }
+
   //Se obtiene el Id del usuario mediante el
   const corredorKeys = await redis.keys(`registro:corredor:*:${token}`);
   let usuarioId = corredorKeys.length ? await redis.get(corredorKeys[0]) : null;
@@ -523,10 +533,26 @@ exports.completarRegistro = async ({ token, nombre, telefono, licencia_nro, pass
       [nombre, password_hash, usuarioId]
     );
 
+    //Teléfono normalizado: código de país + espacio + número nacional
+    const telefonoLimpio = validacionTel.normalizado || null;
+
     await client.query(
-      `UPDATE corredores SET telefono = $1, licencia_nro = $2 WHERE usuario_id = $3;`,
-      [telefono || null, licencia_nro || null, usuarioId]
+      `UPDATE corredores SET licencia_nro = $1 WHERE usuario_id = $2;`,
+      [licencia_nro || null, usuarioId]
     );
+
+    if (telefonoLimpio) {
+      const { rows: corr } = await client.query(
+        `SELECT id FROM corredores WHERE usuario_id = $1 LIMIT 1;`,
+        [usuarioId]
+      );
+      if (corr.length) {
+        await client.query(
+          `INSERT INTO nros_telefono (corredor_id, nro_telefono, codigo_pais) VALUES ($1, $2, $3);`,
+          [corr[0].id, telefonoLimpio, iso2]
+        );
+      }
+    }
 
     await client.query(
       `UPDATE usuarios SET email_verified = true WHERE id = $1;`,

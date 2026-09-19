@@ -270,36 +270,10 @@ exports.procesarPago = async (data, ctx) => {
   const {
     inmueble_id,
     cliente_id,
-    monto,
-    moneda,
-    metodo_pago,
-    codigo_seguridad,
-    numero_tarjeta,
-    marca_tarjeta,
   } = data;
 
   if (!inmueble_id || !cliente_id) {
     throw new AppError("inmueble_id y cliente_id son requeridos", 400);
-  }
-  if (!monto || isNaN(monto) || Number(monto) <= 0) {
-    throw new AppError("monto inválido", 400);
-  }
-  if (!moneda || !["USD", "EUR", "BS"].includes(moneda.toUpperCase())) {
-    throw new AppError("moneda inválida (use: USD|EUR|BS)", 400);
-  }
-  if (!metodo_pago || !["debito", "credito"].includes(metodo_pago)) {
-    throw new AppError("metodo_pago inválido (use: debito|credito)", 400);
-  }
-
-  if (numero_tarjeta) {
-    const tarjetaLimpia = String(numero_tarjeta).replace(/\D/g, "");
-    if (!luhnAlgorithm(tarjetaLimpia)) {
-      throw new AppError("El número de tarjeta es inválido", 400);
-    }
-  }
-
-  if (!codigo_seguridad || !/^\d{3}$/.test(codigo_seguridad)) {
-    throw new AppError("codigo_seguridad debe ser 3 de dígitos", 400);
   }
 
   const cliente = await UsuariosService.getUsuarioById(Number(cliente_id));
@@ -310,6 +284,20 @@ exports.procesarPago = async (data, ctx) => {
   const inmueble = await InmueblesService.getInmuebleById(Number(inmueble_id));
   if (inmueble.corredor_usuario_id === Number(cliente_id)) {
     throw new AppError("No puedes comprar o alquilar tu propio inmueble", 403);
+  }
+
+  if (inmueble.estado_inmueble === "vacacional") {
+    throw new AppError("Los inmuebles vacacionales se pagan mediante reserva", 400);
+  }
+
+  // Precio y moneda SIEMPRE provienen del servidor (el cliente no los envía)
+  const monto = Number(inmueble.precio);
+  if (!monto || isNaN(monto) || monto <= 0) {
+    throw new AppError("El inmueble no tiene un precio válido", 400);
+  }
+  const moneda = String(inmueble.moneda || "USD").toUpperCase();
+  if (!["USD", "EUR", "BS"].includes(moneda)) {
+    throw new AppError("moneda inválida (use: USD|EUR|BS)", 400);
   }
 
   const tipoOperacion = inmueble.estado_inmueble === "venta" ? "venta" : "alquiler";
@@ -339,7 +327,7 @@ exports.procesarPago = async (data, ctx) => {
       await auditoriaService.registrarInsert({
         usuario_id: ctx.usuario_id,
         tabla_afectada: "transacciones",
-        descripcion: `Pago procesado - inmueble ${inmueble_id}, cliente ${cliente_id}, monto ${monto} ${monedaUpper}, método ${metodo_pago}`,
+        descripcion: `Pago procesado - inmueble ${inmueble_id}, cliente ${cliente_id}, monto ${monto} ${monedaUpper}`,
         ip_address: ctx.ip_address,
         user_agent: ctx.user_agent,
       }, client);

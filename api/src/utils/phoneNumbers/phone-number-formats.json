@@ -1,0 +1,1778 @@
+[
+    {
+        "country": "Estados Unidos",
+        "iso2": "US",
+        "country_code": "+1",
+        "format": "+1 (XXX) XXX-XXXX",
+        "example": "+1 (212) 555-0149",
+        "national_length": "10"
+    },
+    {
+        "country": "Canadá",
+        "iso2": "CA",
+        "country_code": "+1",
+        "format": "+1 (XXX) XXX-XXXX",
+        "example": "+1 (416) 555-0149",
+        "national_length": "10"
+    },
+    {
+        "country": "Reino Unido",
+        "iso2": "GB",
+        "country_code": "+44",
+        "format": "+44 XX XXXX XXXX",
+        "example": "+44 20 7946 0958",
+        "national_length": "10"
+    },
+    {
+        "country": "Australia",
+        "iso2": "AU",
+        "country_code": "+61",
+        "format": "+61 X XXXX XXXX",
+        "example": "+61 2 9876 5432",
+        "national_length": "9"
+    },
+    {
+        "country": "Alemania",
+        "iso2": "DE",
+        "country_code": "+49",
+        "format": "+49 XXX XXXXXXX",
+        "example": "+49 30 12345678",
+        "national_length": "10-11"
+    },
+    {
+        "country": "Francia",
+        "iso2": "FR",
+        "country_code": "+33",
+        "format": "+33 X XX XX XX XX",
+        "example": "+33 1 23 45 67 89",
+        "national_length": "9"
+    },
+    {
+        "country": "Italia",
+        "iso2": "IT",
+        "country_code": "+39",
+        "format": "+39 XXX XXX XXXX",
+        "example": "+39 06 1234 5678",
+        "national_length": "9-10"
+    },
+    {
+        "country": "España",
+        "iso2": "ES",
+        "country_code": "+34",
+        "format": "+34 XXX XX XX XX",
+        "example": "+34 612 34 56 78",
+        "national_length": "9"
+    },
+    {
+        "country": "Países Bajos",
+        "iso2": "NL",
+        "country_code": "+31",
+        "format": "+31 X XXXX XXXX",
+        "example": "+31 20 123 4567",
+        "national_length": "9"
+    },
+    {
+        "country": "Bélgica",
+        "iso2": "BE",
+        "country_code": "+32",
+        "format": "+32 X XXX XX XX",
+        "example": "+32 2 123 45 67",
+        "national_length": "9"
+    },
+    {
+        "country": "Suiza",
+        "iso2": "CH",
+        "country_code": "+41",
+        "format": "+41 XX XXX XX XX",
+        "example": "+41 44 123 45 67",
+        "national_length": "9"
+    },
+    {
+        "country": "Austria",
+        "iso2": "AT",
+        "country_code": "+43",
+        "format": "+43 X XXX XXXX",
+        "example": "+43 1 234 5678",
+        "national_length": "10-13"
+    },
+    {
+        "country": "Suecia",
+        "iso2": "SE",
+        "country_code": "+46",
+        "format": "+46 X XXX XX XX",
+        "example": "+46 8 123 456 78",
+        "national_length": "9"
+    },
+    {
+        "country": "Noruega",
+        "iso2": "NO",
+        "country_code": "+47",
+        "format": "+47 XXX XX XXX",
+        "example": "+47 22 12 34 56",
+        "national_length": "8"
+    },
+    {
+        "country": "Dinamarca",
+        "iso2": "DK",
+        "country_code": "+45",
+        "format": "+45 XX XX XX XX",
+        "example": "+45 12 34 56 78",
+        "national_length": "8"
+    },
+    {
+        "country": "Finlandia",
+        "iso2": "FI",
+        "country_code": "+358",
+        "format": "+358 XX XXX XXXX",
+        "example": "+358 9 123 4567",
+        "national_length": "8-9"
+    },
+    {
+        "country": "Irlanda",
+        "iso2": "IE",
+        "country_code": "+353",
+        "format": "+353 X XXX XXXX",
+        "example": "+353 1 234 5678",
+        "national_length": "8"
+    },
+    {
+        "country": "Portugal",
+        "iso2": "PT",
+        "country_code": "+351",
+        "format": "+351 XXX XXX XXX",
+        "example": "+351 21 123 4567",
+        "national_length": "9"
+    },
+    {
+        "country": "Polonia",
+        "iso2": "PL",
+        "country_code": "+48",
+        "format": "+48 XXX XXX XXX",
+        "example": "+48 22 123 45 67",
+        "national_length": "9"
+    },
+    {
+        "country": "Rusia",
+        "iso2": "RU",
+        "country_code": "+7",
+        "format": "+7 (XXX) XXX-XXXX",
+        "example": "+7 (495) 123-4567",
+        "national_length": "10"
+    },
+    {
+        "country": "Ucrania",
+        "iso2": "UA",
+        "country_code": "+380",
+        "format": "+380 XX XXX XXXX",
+        "example": "+380 44 123 4567",
+        "national_length": "9"
+    },
+    {
+        "country": "Turquía",
+        "iso2": "TR",
+        "country_code": "+90",
+        "format": "+90 XXX XXX XXXX",
+        "example": "+90 212 123 4567",
+        "national_length": "10"
+    },
+    {
+        "country": "Grecia",
+        "iso2": "GR",
+        "country_code": "+30",
+        "format": "+30 XXX XXX XXXX",
+        "example": "+30 21 1234 5678",
+        "national_length": "10"
+    },
+    {
+        "country": "República Checa",
+        "iso2": "CZ",
+        "country_code": "+420",
+        "format": "+420 XXX XXX XXX",
+        "example": "+420 123 456 789",
+        "national_length": "9"
+    },
+    {
+        "country": "Eslovaquia",
+        "iso2": "SK",
+        "country_code": "+421",
+        "format": "+421 XXX XXX XXX",
+        "example": "+421 901 123 456",
+        "national_length": "9"
+    },
+    {
+        "country": "Hungría",
+        "iso2": "HU",
+        "country_code": "+36",
+        "format": "+36 XX XXX XXXX",
+        "example": "+36 1 234 5678",
+        "national_length": "9"
+    },
+    {
+        "country": "Rumanía",
+        "iso2": "RO",
+        "country_code": "+40",
+        "format": "+40 XXX XXX XXX",
+        "example": "+40 21 123 4567",
+        "national_length": "9"
+    },
+    {
+        "country": "Bulgaria",
+        "iso2": "BG",
+        "country_code": "+359",
+        "format": "+359 X XXX XXXX",
+        "example": "+359 2 123 4567",
+        "national_length": "8-9"
+    },
+    {
+        "country": "Croacia",
+        "iso2": "HR",
+        "country_code": "+385",
+        "format": "+385 X XXX XXXX",
+        "example": "+385 1 234 5678",
+        "national_length": "8-9"
+    },
+    {
+        "country": "Eslovenia",
+        "iso2": "SI",
+        "country_code": "+386",
+        "format": "+386 X XXX XXXX",
+        "example": "+386 1 234 5678",
+        "national_length": "8"
+    },
+    {
+        "country": "Serbia",
+        "iso2": "RS",
+        "country_code": "+381",
+        "format": "+381 XX XXX XXXX",
+        "example": "+381 11 123 4567",
+        "national_length": "8-9"
+    },
+    {
+        "country": "Lituania",
+        "iso2": "LT",
+        "country_code": "+370",
+        "format": "+370 XXX XXXXX",
+        "example": "+370 5 234 5678",
+        "national_length": "8"
+    },
+    {
+        "country": "Letonia",
+        "iso2": "LV",
+        "country_code": "+371",
+        "format": "+371 XX XXX XXX",
+        "example": "+371 1 234 5678",
+        "national_length": "8"
+    },
+    {
+        "country": "Estonia",
+        "iso2": "EE",
+        "country_code": "+372",
+        "format": "+372 XXX XXXX",
+        "example": "+372 5 234 5678",
+        "national_length": "7-8"
+    },
+    {
+        "country": "Islandia",
+        "iso2": "IS",
+        "country_code": "+354",
+        "format": "+354 XXX XXXX",
+        "example": "+354 412 3456",
+        "national_length": "7"
+    },
+    {
+        "country": "Luxemburgo",
+        "iso2": "LU",
+        "country_code": "+352",
+        "format": "+352 XX XX XX XX",
+        "example": "+352 23 45 67 89",
+        "national_length": "4-11"
+    },
+    {
+        "country": "México",
+        "iso2": "MX",
+        "country_code": "+52",
+        "format": "+52 XX XXXX XXXX",
+        "example": "+52 55 1234 5678",
+        "national_length": "10"
+    },
+    {
+        "country": "Brasil",
+        "iso2": "BR",
+        "country_code": "+55",
+        "format": "+55 XX XXXXX XXXX",
+        "example": "+55 11 91234 5678",
+        "national_length": "10-11"
+    },
+    {
+        "country": "Argentina",
+        "iso2": "AR",
+        "country_code": "+54",
+        "format": "+54 XX XXXX XXXX",
+        "example": "+54 11 1234 5678",
+        "national_length": "10"
+    },
+    {
+        "country": "Chile",
+        "iso2": "CL",
+        "country_code": "+56",
+        "format": "+56 X XXXX XXXX",
+        "example": "+56 2 2345 6789",
+        "national_length": "9"
+    },
+    {
+        "country": "Colombia",
+        "iso2": "CO",
+        "country_code": "+57",
+        "format": "+57 XXX XXX XXXX",
+        "example": "+57 1 234 5678",
+        "national_length": "10"
+    },
+    {
+        "country": "Perú",
+        "iso2": "PE",
+        "country_code": "+51",
+        "format": "+51 XXX XXX XXX",
+        "example": "+51 1 234 5678",
+        "national_length": "9"
+    },
+    {
+        "country": "Venezuela",
+        "iso2": "VE",
+        "country_code": "+58",
+        "format": "+58 XXX XXX XXXX",
+        "example": "+58 212 123 4567",
+        "national_length": "10"
+    },
+    {
+        "country": "Ecuador",
+        "iso2": "EC",
+        "country_code": "+593",
+        "format": "+593 XX XXX XXXX",
+        "example": "+593 2 234 5678",
+        "national_length": "9"
+    },
+    {
+        "country": "Bolivia",
+        "iso2": "BO",
+        "country_code": "+591",
+        "format": "+591 X XXX XXXX",
+        "example": "+591 2 234 5678",
+        "national_length": "8"
+    },
+    {
+        "country": "Paraguay",
+        "iso2": "PY",
+        "country_code": "+595",
+        "format": "+595 XXX XXX XXX",
+        "example": "+595 21 123 456",
+        "national_length": "9"
+    },
+    {
+        "country": "Uruguay",
+        "iso2": "UY",
+        "country_code": "+598",
+        "format": "+598 X XXX XXXX",
+        "example": "+598 2 712 3456",
+        "national_length": "8"
+    },
+    {
+        "country": "Cuba",
+        "iso2": "CU",
+        "country_code": "+53",
+        "format": "+53 X XXX XXXX",
+        "example": "+53 7 123 4567",
+        "national_length": "8"
+    },
+    {
+        "country": "República Dominicana",
+        "iso2": "DO",
+        "country_code": "+1",
+        "format": "+1 (8XX) XXX-XXXX",
+        "example": "+1 (809) 234-5678",
+        "national_length": "10"
+    },
+    {
+        "country": "Puerto Rico",
+        "iso2": "PR",
+        "country_code": "+1",
+        "format": "+1 (7XX) XXX-XXXX",
+        "example": "+1 (787) 234-5678",
+        "national_length": "10"
+    },
+    {
+        "country": "Jamaica",
+        "iso2": "JM",
+        "country_code": "+1",
+        "format": "+1 (876) XXX-XXXX",
+        "example": "+1 (876) 234-5678",
+        "national_length": "10"
+    },
+    {
+        "country": "Trinidad y Tobago",
+        "iso2": "TT",
+        "country_code": "+1",
+        "format": "+1 (868) XXX-XXXX",
+        "example": "+1 (868) 234-5678",
+        "national_length": "10"
+    },
+    {
+        "country": "Costa Rica",
+        "iso2": "CR",
+        "country_code": "+506",
+        "format": "+506 XXXX XXXX",
+        "example": "+506 2234 5678",
+        "national_length": "8"
+    },
+    {
+        "country": "Panamá",
+        "iso2": "PA",
+        "country_code": "+507",
+        "format": "+507 XXXX XXXX",
+        "example": "+507 234 5678",
+        "national_length": "7-8"
+    },
+    {
+        "country": "Guatemala",
+        "iso2": "GT",
+        "country_code": "+502",
+        "format": "+502 XXXX XXXX",
+        "example": "+502 2234 5678",
+        "national_length": "8"
+    },
+    {
+        "country": "Honduras",
+        "iso2": "HN",
+        "country_code": "+504",
+        "format": "+504 XXXX XXXX",
+        "example": "+504 2234 5678",
+        "national_length": "8"
+    },
+    {
+        "country": "El Salvador",
+        "iso2": "SV",
+        "country_code": "+503",
+        "format": "+503 XXXX XXXX",
+        "example": "+503 2234 5678",
+        "national_length": "8"
+    },
+    {
+        "country": "Nicaragua",
+        "iso2": "NI",
+        "country_code": "+505",
+        "format": "+505 XXXX XXXX",
+        "example": "+505 2234 5678",
+        "national_length": "8"
+    },
+    {
+        "country": "Belice",
+        "iso2": "BZ",
+        "country_code": "+501",
+        "format": "+501 XXX XXXX",
+        "example": "+501 222 1234",
+        "national_length": "7"
+    },
+    {
+        "country": "China",
+        "iso2": "CN",
+        "country_code": "+86",
+        "format": "+86 XXX XXXX XXXX",
+        "example": "+86 10 1234 5678",
+        "national_length": "10-11"
+    },
+    {
+        "country": "Japón",
+        "iso2": "JP",
+        "country_code": "+81",
+        "format": "+81 XX XXXX XXXX",
+        "example": "+81 3 1234 5678",
+        "national_length": "9-10"
+    },
+    {
+        "country": "Corea del Sur",
+        "iso2": "KR",
+        "country_code": "+82",
+        "format": "+82 XX XXX XXXX",
+        "example": "+82 2 123 4567",
+        "national_length": "8-10"
+    },
+    {
+        "country": "Corea del Norte",
+        "iso2": "KP",
+        "country_code": "+850",
+        "format": "+850 XXX XXXX XXX",
+        "example": "+850 2 381 8111",
+        "national_length": "7-13"
+    },
+    {
+        "country": "Taiwán",
+        "iso2": "TW",
+        "country_code": "+886",
+        "format": "+886 X XXXX XXXX",
+        "example": "+886 2 2345 6789",
+        "national_length": "9"
+    },
+    {
+        "country": "Hong Kong",
+        "iso2": "HK",
+        "country_code": "+852",
+        "format": "+852 XXXX XXXX",
+        "example": "+852 1234 5678",
+        "national_length": "8"
+    },
+    {
+        "country": "Macao",
+        "iso2": "MO",
+        "country_code": "+853",
+        "format": "+853 XXXX XXXX",
+        "example": "+853 1234 5678",
+        "national_length": "8"
+    },
+    {
+        "country": "Singapur",
+        "iso2": "SG",
+        "country_code": "+65",
+        "format": "+65 XXXX XXXX",
+        "example": "+65 6123 4567",
+        "national_length": "8"
+    },
+    {
+        "country": "Malasia",
+        "iso2": "MY",
+        "country_code": "+60",
+        "format": "+60 X XXXX XXXX",
+        "example": "+60 3 1234 5678",
+        "national_length": "7-9"
+    },
+    {
+        "country": "Tailandia",
+        "iso2": "TH",
+        "country_code": "+66",
+        "format": "+66 X XXXX XXXX",
+        "example": "+66 2 123 4567",
+        "national_length": "8-9"
+    },
+    {
+        "country": "Vietnam",
+        "iso2": "VN",
+        "country_code": "+84",
+        "format": "+84 XX XXX XXXX",
+        "example": "+84 24 1234 5678",
+        "national_length": "9-10"
+    },
+    {
+        "country": "Filipinas",
+        "iso2": "PH",
+        "country_code": "+63",
+        "format": "+63 XXX XXX XXXX",
+        "example": "+63 2 1234 5678",
+        "national_length": "10"
+    },
+    {
+        "country": "Indonesia",
+        "iso2": "ID",
+        "country_code": "+62",
+        "format": "+62 XX XXXX XXXX",
+        "example": "+62 21 1234 5678",
+        "national_length": "9-11"
+    },
+    {
+        "country": "Camboya",
+        "iso2": "KH",
+        "country_code": "+855",
+        "format": "+855 XX XXX XXX",
+        "example": "+855 23 123 456",
+        "national_length": "8-9"
+    },
+    {
+        "country": "Laos",
+        "iso2": "LA",
+        "country_code": "+856",
+        "format": "+856 XX XX XXX XXX",
+        "example": "+856 21 222 345",
+        "national_length": "8-10"
+    },
+    {
+        "country": "Birmania",
+        "iso2": "MM",
+        "country_code": "+95",
+        "format": "+95 XX XXX XXXX",
+        "example": "+95 1 234 5678",
+        "national_length": "7-10"
+    },
+    {
+        "country": "Brunéi",
+        "iso2": "BN",
+        "country_code": "+673",
+        "format": "+673 XXX XXXX",
+        "example": "+673 222 5678",
+        "national_length": "7"
+    },
+    {
+        "country": "India",
+        "iso2": "IN",
+        "country_code": "+91",
+        "format": "+91 XXXXX XXXXX",
+        "example": "+91 98765 43210",
+        "national_length": "10"
+    },
+    {
+        "country": "Pakistán",
+        "iso2": "PK",
+        "country_code": "+92",
+        "format": "+92 XXX XXX XXXX",
+        "example": "+92 21 1234 5678",
+        "national_length": "10"
+    },
+    {
+        "country": "Bangladés",
+        "iso2": "BD",
+        "country_code": "+880",
+        "format": "+880 XXXX XXXXXX",
+        "example": "+880 1812 345678",
+        "national_length": "10"
+    },
+    {
+        "country": "Sri Lanka",
+        "iso2": "LK",
+        "country_code": "+94",
+        "format": "+94 XX XXX XXXX",
+        "example": "+94 11 234 5678",
+        "national_length": "9"
+    },
+    {
+        "country": "Nepal",
+        "iso2": "NP",
+        "country_code": "+977",
+        "format": "+977 X XXX XXXX",
+        "example": "+977 1 234 5678",
+        "national_length": "9-10"
+    },
+    {
+        "country": "Bután",
+        "iso2": "BT",
+        "country_code": "+975",
+        "format": "+975 X XXX XXX",
+        "example": "+975 17 123 456",
+        "national_length": "7-8"
+    },
+    {
+        "country": "Maldivas",
+        "iso2": "MV",
+        "country_code": "+960",
+        "format": "+960 XXX XXXX",
+        "example": "+960 777 1234",
+        "national_length": "7"
+    },
+    {
+        "country": "Afganistán",
+        "iso2": "AF",
+        "country_code": "+93",
+        "format": "+93 XX XXX XXXX",
+        "example": "+93 70 123 4567",
+        "national_length": "9"
+    },
+    {
+        "country": "Irán",
+        "iso2": "IR",
+        "country_code": "+98",
+        "format": "+98 XXX XXX XXXX",
+        "example": "+98 21 1234 5678",
+        "national_length": "10"
+    },
+    {
+        "country": "Irak",
+        "iso2": "IQ",
+        "country_code": "+964",
+        "format": "+964 XXX XXX XXXX",
+        "example": "+964 1 234 5678",
+        "national_length": "9-10"
+    },
+    {
+        "country": "Arabia Saudita",
+        "iso2": "SA",
+        "country_code": "+966",
+        "format": "+966 X XXX XXXX",
+        "example": "+966 11 234 5678",
+        "national_length": "8-9"
+    },
+    {
+        "country": "Emiratos Árabes Unidos",
+        "iso2": "AE",
+        "country_code": "+971",
+        "format": "+971 X XXX XXXX",
+        "example": "+971 4 234 5678",
+        "national_length": "8-9"
+    },
+    {
+        "country": "Catar",
+        "iso2": "QA",
+        "country_code": "+974",
+        "format": "+974 XXXX XXXX",
+        "example": "+974 4412 3456",
+        "national_length": "8"
+    },
+    {
+        "country": "Kuwait",
+        "iso2": "KW",
+        "country_code": "+965",
+        "format": "+965 XXXX XXXX",
+        "example": "+965 2234 5678",
+        "national_length": "8"
+    },
+    {
+        "country": "Baréin",
+        "iso2": "BH",
+        "country_code": "+973",
+        "format": "+973 XXXX XXXX",
+        "example": "+973 1700 1234",
+        "national_length": "8"
+    },
+    {
+        "country": "Omán",
+        "iso2": "OM",
+        "country_code": "+968",
+        "format": "+968 XXXX XXXX",
+        "example": "+968 2234 5678",
+        "national_length": "8"
+    },
+    {
+        "country": "Yemen",
+        "iso2": "YE",
+        "country_code": "+967",
+        "format": "+967 X XXX XXX",
+        "example": "+967 1 234 567",
+        "national_length": "7-9"
+    },
+    {
+        "country": "Jordania",
+        "iso2": "JO",
+        "country_code": "+962",
+        "format": "+962 X XXX XXXX",
+        "example": "+962 6 234 5678",
+        "national_length": "8-9"
+    },
+    {
+        "country": "Líbano",
+        "iso2": "LB",
+        "country_code": "+961",
+        "format": "+961 X XXX XXX",
+        "example": "+961 1 234 567",
+        "national_length": "7-8"
+    },
+    {
+        "country": "Siria",
+        "iso2": "SY",
+        "country_code": "+963",
+        "format": "+963 XX XXX XXXX",
+        "example": "+963 11 234 5678",
+        "national_length": "8-9"
+    },
+    {
+        "country": "Israel",
+        "iso2": "IL",
+        "country_code": "+972",
+        "format": "+972 X XXX XXXX",
+        "example": "+972 2 123 4567",
+        "national_length": "8-9"
+    },
+    {
+        "country": "Palestina",
+        "iso2": "PS",
+        "country_code": "+970",
+        "format": "+970 X XXX XXXX",
+        "example": "+970 2 234 5678",
+        "national_length": "8-9"
+    },
+    {
+        "country": "Sudáfrica",
+        "iso2": "ZA",
+        "country_code": "+27",
+        "format": "+27 XX XXX XXXX",
+        "example": "+27 11 234 5678",
+        "national_length": "9"
+    },
+    {
+        "country": "Egipto",
+        "iso2": "EG",
+        "country_code": "+20",
+        "format": "+20 XX XXXX XXXX",
+        "example": "+20 2 1234 5678",
+        "national_length": "8-10"
+    },
+    {
+        "country": "Marruecos",
+        "iso2": "MA",
+        "country_code": "+212",
+        "format": "+212 XXX XXX XXX",
+        "example": "+212 522 123 456",
+        "national_length": "9"
+    },
+    {
+        "country": "Argelia",
+        "iso2": "DZ",
+        "country_code": "+213",
+        "format": "+213 XX XXX XXXX",
+        "example": "+213 21 123 4567",
+        "national_length": "8-9"
+    },
+    {
+        "country": "Túnez",
+        "iso2": "TN",
+        "country_code": "+216",
+        "format": "+216 XX XXX XXX",
+        "example": "+216 71 123 456",
+        "national_length": "8"
+    },
+    {
+        "country": "Libia",
+        "iso2": "LY",
+        "country_code": "+218",
+        "format": "+218 XX XXX XXXX",
+        "example": "+218 21 123 4567",
+        "national_length": "8-9"
+    },
+    {
+        "country": "Sudán",
+        "iso2": "SD",
+        "country_code": "+249",
+        "format": "+249 XX XXX XXXX",
+        "example": "+249 11 234 5678",
+        "national_length": "9"
+    },
+    {
+        "country": "Etiopía",
+        "iso2": "ET",
+        "country_code": "+251",
+        "format": "+251 X XXX XXXX",
+        "example": "+251 11 234 5678",
+        "national_length": "9"
+    },
+    {
+        "country": "Kenia",
+        "iso2": "KE",
+        "country_code": "+254",
+        "format": "+254 XXX XXX XXX",
+        "example": "+254 20 234 5678",
+        "national_length": "9"
+    },
+    {
+        "country": "Uganda",
+        "iso2": "UG",
+        "country_code": "+256",
+        "format": "+256 XX XXX XXXX",
+        "example": "+256 41 234 5678",
+        "national_length": "9"
+    },
+    {
+        "country": "Tanzania",
+        "iso2": "TZ",
+        "country_code": "+255",
+        "format": "+255 XX XXX XXXX",
+        "example": "+255 22 123 4567",
+        "national_length": "9"
+    },
+    {
+        "country": "Ruanda",
+        "iso2": "RW",
+        "country_code": "+250",
+        "format": "+250 XXX XXX XXX",
+        "example": "+250 252 123 456",
+        "national_length": "9"
+    },
+    {
+        "country": "Burundi",
+        "iso2": "BI",
+        "country_code": "+257",
+        "format": "+257 XX XX XX XX",
+        "example": "+257 22 12 34 56",
+        "national_length": "8"
+    },
+    {
+        "country": "Somalia",
+        "iso2": "SO",
+        "country_code": "+252",
+        "format": "+252 X XXX XXXX",
+        "example": "+252 1 234 5678",
+        "national_length": "7-8"
+    },
+    {
+        "country": "Yibuti",
+        "iso2": "DJ",
+        "country_code": "+253",
+        "format": "+253 XX XX XX XX",
+        "example": "+253 21 35 36 37",
+        "national_length": "8"
+    },
+    {
+        "country": "Eritrea",
+        "iso2": "ER",
+        "country_code": "+291",
+        "format": "+291 X XXX XXX",
+        "example": "+291 1 120 549",
+        "national_length": "7"
+    },
+    {
+        "country": "Nigeria",
+        "iso2": "NG",
+        "country_code": "+234",
+        "format": "+234 XXX XXX XXXX",
+        "example": "+234 1 234 5678",
+        "national_length": "10"
+    },
+    {
+        "country": "Ghana",
+        "iso2": "GH",
+        "country_code": "+233",
+        "format": "+233 XX XXX XXXX",
+        "example": "+233 30 123 4567",
+        "national_length": "9"
+    },
+    {
+        "country": "Senegal",
+        "iso2": "SN",
+        "country_code": "+221",
+        "format": "+221 XX XXX XX XX",
+        "example": "+221 33 123 45 67",
+        "national_length": "9"
+    },
+    {
+        "country": "Costa de Marfil",
+        "iso2": "CI",
+        "country_code": "+225",
+        "format": "+225 XX XX XXX XXX",
+        "example": "+225 27 22 12 34 56",
+        "national_length": "10"
+    },
+    {
+        "country": "Camerún",
+        "iso2": "CM",
+        "country_code": "+237",
+        "format": "+237 X XX XX XX XX",
+        "example": "+237 2 22 12 34 56",
+        "national_length": "8-9"
+    },
+    {
+        "country": "Malí",
+        "iso2": "ML",
+        "country_code": "+223",
+        "format": "+223 XXXX XXXX",
+        "example": "+223 2021 2345",
+        "national_length": "8"
+    },
+    {
+        "country": "Burkina Faso",
+        "iso2": "BF",
+        "country_code": "+226",
+        "format": "+226 XX XX XX XX",
+        "example": "+226 50 12 34 56",
+        "national_length": "8"
+    },
+    {
+        "country": "Níger",
+        "iso2": "NE",
+        "country_code": "+227",
+        "format": "+227 XX XX XX XX",
+        "example": "+227 20 12 34 56",
+        "national_length": "8"
+    },
+    {
+        "country": "Chad",
+        "iso2": "TD",
+        "country_code": "+235",
+        "format": "+235 XX XX XX XX",
+        "example": "+235 22 12 34 56",
+        "national_length": "8"
+    },
+    {
+        "country": "Madagascar",
+        "iso2": "MG",
+        "country_code": "+261",
+        "format": "+261 XX XX XXX XX",
+        "example": "+261 20 12 345 67",
+        "national_length": "9"
+    },
+    {
+        "country": "Mauricio",
+        "iso2": "MU",
+        "country_code": "+230",
+        "format": "+230 XXX XXXX",
+        "example": "+230 212 3456",
+        "national_length": "7-8"
+    },
+    {
+        "country": "Seychelles",
+        "iso2": "SC",
+        "country_code": "+248",
+        "format": "+248 X XXX XXX",
+        "example": "+248 4 123 456",
+        "national_length": "7"
+    },
+    {
+        "country": "Zimbabue",
+        "iso2": "ZW",
+        "country_code": "+263",
+        "format": "+263 XX XXX XXXX",
+        "example": "+263 4 123 4567",
+        "national_length": "9"
+    },
+    {
+        "country": "Zambia",
+        "iso2": "ZM",
+        "country_code": "+260",
+        "format": "+260 XXX XXX XXX",
+        "example": "+260 211 123 456",
+        "national_length": "9"
+    },
+    {
+        "country": "Botsuana",
+        "iso2": "BW",
+        "country_code": "+267",
+        "format": "+267 XX XXX XXX",
+        "example": "+267 31 234 567",
+        "national_length": "7-8"
+    },
+    {
+        "country": "Namibia",
+        "iso2": "NA",
+        "country_code": "+264",
+        "format": "+264 XX XXX XXXX",
+        "example": "+264 61 234 5678",
+        "national_length": "7-10"
+    },
+    {
+        "country": "Angola",
+        "iso2": "AO",
+        "country_code": "+244",
+        "format": "+244 XXX XXX XXX",
+        "example": "+244 222 123 456",
+        "national_length": "9"
+    },
+    {
+        "country": "Mozambique",
+        "iso2": "MZ",
+        "country_code": "+258",
+        "format": "+258 XX XXX XXXX",
+        "example": "+258 21 234 567",
+        "national_length": "8-9"
+    },
+    {
+        "country": "Malaui",
+        "iso2": "MW",
+        "country_code": "+265",
+        "format": "+265 X XXX XXXX",
+        "example": "+265 1 234 5678",
+        "national_length": "7-9"
+    },
+    {
+        "country": "República del Congo",
+        "iso2": "CG",
+        "country_code": "+242",
+        "format": "+242 XX XXX XXXX",
+        "example": "+242 22 123 4567",
+        "national_length": "9"
+    },
+    {
+        "country": "República Democrática del Congo",
+        "iso2": "CD",
+        "country_code": "+243",
+        "format": "+243 XX XXX XXXX",
+        "example": "+243 81 234 5678",
+        "national_length": "9"
+    },
+    {
+        "country": "Gabón",
+        "iso2": "GA",
+        "country_code": "+241",
+        "format": "+241 X XX XX XX",
+        "example": "+241 1 23 45 67",
+        "national_length": "6-8"
+    },
+    {
+        "country": "Guinea Ecuatorial",
+        "iso2": "GQ",
+        "country_code": "+240",
+        "format": "+240 XXX XXX XXX",
+        "example": "+240 222 123 456",
+        "national_length": "9"
+    },
+    {
+        "country": "Lesoto",
+        "iso2": "LS",
+        "country_code": "+266",
+        "format": "+266 XXXX XXXX",
+        "example": "+266 2231 2345",
+        "national_length": "8"
+    },
+    {
+        "country": "Eswatini",
+        "iso2": "SZ",
+        "country_code": "+268",
+        "format": "+268 XXXX XXXX",
+        "example": "+268 2404 3456",
+        "national_length": "8"
+    },
+    {
+        "country": "Nueva Zelanda",
+        "iso2": "NZ",
+        "country_code": "+64",
+        "format": "+64 X XXX XXXX",
+        "example": "+64 9 123 4567",
+        "national_length": "8-9"
+    },
+    {
+        "country": "Fiyi",
+        "iso2": "FJ",
+        "country_code": "+679",
+        "format": "+679 XXX XXXX",
+        "example": "+679 331 2345",
+        "national_length": "7"
+    },
+    {
+        "country": "Samoa",
+        "iso2": "WS",
+        "country_code": "+685",
+        "format": "+685 XXXXX",
+        "example": "+685 22345",
+        "national_length": "5"
+    },
+    {
+        "country": "Tonga",
+        "iso2": "TO",
+        "country_code": "+676",
+        "format": "+676 XXXXX",
+        "example": "+676 12345",
+        "national_length": "5-7"
+    },
+    {
+        "country": "Islas Salomón",
+        "iso2": "SB",
+        "country_code": "+677",
+        "format": "+677 XXXXX",
+        "example": "+677 12345",
+        "national_length": "5-7"
+    },
+    {
+        "country": "Vanuatu",
+        "iso2": "VU",
+        "country_code": "+678",
+        "format": "+678 XXXXX",
+        "example": "+678 22123",
+        "national_length": "5-7"
+    },
+    {
+        "country": "Papúa Nueva Guinea",
+        "iso2": "PG",
+        "country_code": "+675",
+        "format": "+675 XXX XXXX",
+        "example": "+675 123 4567",
+        "national_length": "7-8"
+    },
+    {
+        "country": "Chipre",
+        "iso2": "CY",
+        "country_code": "+357",
+        "format": "+357 XX XXX XXX",
+        "example": "+357 22 123 456",
+        "national_length": "8"
+    },
+    {
+        "country": "Malta",
+        "iso2": "MT",
+        "country_code": "+356",
+        "format": "+356 XX XX XX XX",
+        "example": "+356 21 23 45 67",
+        "national_length": "8"
+    },
+    {
+        "country": "Albania",
+        "iso2": "AL",
+        "country_code": "+355",
+        "format": "+355 XX XXX XXXX",
+        "example": "+355 4 123 4567",
+        "national_length": "8-9"
+    },
+    {
+        "country": "Macedonia del Norte",
+        "iso2": "MK",
+        "country_code": "+389",
+        "format": "+389 XX XXX XXX",
+        "example": "+389 2 123 456",
+        "national_length": "8"
+    },
+    {
+        "country": "Moldavia",
+        "iso2": "MD",
+        "country_code": "+373",
+        "format": "+373 XX XXX XXX",
+        "example": "+373 22 123 456",
+        "national_length": "8"
+    },
+    {
+        "country": "Bielorrusia",
+        "iso2": "BY",
+        "country_code": "+375",
+        "format": "+375 XX XXX XXXX",
+        "example": "+375 17 123 4567",
+        "national_length": "9"
+    },
+    {
+        "country": "Andorra",
+        "iso2": "AD",
+        "country_code": "+376",
+        "format": "+376 XXX XXX",
+        "example": "+376 712 345",
+        "national_length": "6"
+    },
+    {
+        "country": "Mónaco",
+        "iso2": "MC",
+        "country_code": "+377",
+        "format": "+377 XX XX XX XX",
+        "example": "+377 99 12 34 56",
+        "national_length": "8"
+    },
+    {
+        "country": "San Marino",
+        "iso2": "SM",
+        "country_code": "+378",
+        "format": "+378 XXXX XXXXXX",
+        "example": "+378 0549 123456",
+        "national_length": "6-10"
+    },
+    {
+        "country": "Ciudad del Vaticano",
+        "iso2": "VA",
+        "country_code": "+379",
+        "format": "+379 XX XXXX",
+        "example": "+379 06 698",
+        "national_length": "4-6"
+    },
+    {
+        "country": "Liechtenstein",
+        "iso2": "LI",
+        "country_code": "+423",
+        "format": "+423 XXX XXXX",
+        "example": "+423 232 1234",
+        "national_length": "7"
+    },
+    {
+        "country": "Kazajistán",
+        "iso2": "KZ",
+        "country_code": "+7",
+        "format": "+7 XXX XXX XXXX",
+        "example": "+7 727 123 4567",
+        "national_length": "10"
+    },
+    {
+        "country": "Uzbekistán",
+        "iso2": "UZ",
+        "country_code": "+998",
+        "format": "+998 XX XXX XXXX",
+        "example": "+998 71 123 4567",
+        "national_length": "9"
+    },
+    {
+        "country": "Tayikistán",
+        "iso2": "TJ",
+        "country_code": "+992",
+        "format": "+992 XX XXX XXXX",
+        "example": "+992 37 123 4567",
+        "national_length": "9"
+    },
+    {
+        "country": "Kirguistán",
+        "iso2": "KG",
+        "country_code": "+996",
+        "format": "+996 XXX XXX XXX",
+        "example": "+996 312 123 456",
+        "national_length": "9"
+    },
+    {
+        "country": "Turkmenistán",
+        "iso2": "TM",
+        "country_code": "+993",
+        "format": "+993 XX XXXXXX",
+        "example": "+993 12 345 678",
+        "national_length": "8"
+    },
+    {
+        "country": "Mongolia",
+        "iso2": "MN",
+        "country_code": "+976",
+        "format": "+976 XX XX XXXX",
+        "example": "+976 11 21 1234",
+        "national_length": "7-8"
+    },
+    {
+        "country": "Georgia",
+        "iso2": "GE",
+        "country_code": "+995",
+        "format": "+995 XXX XXX XXX",
+        "example": "+995 32 234 5678",
+        "national_length": "9"
+    },
+    {
+        "country": "Armenia",
+        "iso2": "AM",
+        "country_code": "+374",
+        "format": "+374 XX XXX XXX",
+        "example": "+374 10 123 456",
+        "national_length": "8"
+    },
+    {
+        "country": "Azerbaiyán",
+        "iso2": "AZ",
+        "country_code": "+994",
+        "format": "+994 XX XXX XX XX",
+        "example": "+994 12 345 67 89",
+        "national_length": "9"
+    },
+    {
+        "country": "Bosnia y Herzegovina",
+        "iso2": "BA",
+        "country_code": "+387",
+        "format": "+387 XX XXX XXX",
+        "example": "+387 33 123 456",
+        "national_length": "8"
+    },
+    {
+        "country": "Montenegro",
+        "iso2": "ME",
+        "country_code": "+382",
+        "format": "+382 XX XXX XXX",
+        "example": "+382 20 123 456",
+        "national_length": "8"
+    },
+    {
+        "country": "Kosovo",
+        "iso2": "XK",
+        "country_code": "+383",
+        "format": "+383 XX XXX XXX",
+        "example": "+383 38 123 456",
+        "national_length": "8"
+    },
+    {
+        "country": "Bahamas",
+        "iso2": "BS",
+        "country_code": "+1",
+        "format": "+1 (242) XXX XXXX",
+        "example": "+1 (242) 502 1234",
+        "national_length": "10"
+    },
+    {
+        "country": "Barbados",
+        "iso2": "BB",
+        "country_code": "+1",
+        "format": "+1 (246) XXX XXXX",
+        "example": "+1 (246) 123 4567",
+        "national_length": "10"
+    },
+    {
+        "country": "Bermudas",
+        "iso2": "BM",
+        "country_code": "+1",
+        "format": "+1 (441) XXX XXXX",
+        "example": "+1 (441) 234 5678",
+        "national_length": "10"
+    },
+    {
+        "country": "Islas Caimán",
+        "iso2": "KY",
+        "country_code": "+1",
+        "format": "+1 (345) XXX XXXX",
+        "example": "+1 (345) 234 5678",
+        "national_length": "10"
+    },
+    {
+        "country": "Groenlandia",
+        "iso2": "GL",
+        "country_code": "+299",
+        "format": "+299 XXXXXX",
+        "example": "+299 123456",
+        "national_length": "6"
+    },
+    {
+        "country": "Islas Feroe",
+        "iso2": "FO",
+        "country_code": "+298",
+        "format": "+298 XXXXXX",
+        "example": "+298 211234",
+        "national_length": "6"
+    },
+    {
+        "country": "Gibraltar",
+        "iso2": "GI",
+        "country_code": "+350",
+        "format": "+350 XXX XXXXX",
+        "example": "+350 200 12345",
+        "national_length": "8"
+    },
+    {
+        "country": "Aruba",
+        "iso2": "AW",
+        "country_code": "+297",
+        "format": "+297 XXX XXXX",
+        "example": "+297 521 2345",
+        "national_length": "7"
+    },
+    {
+        "country": "Curazao",
+        "iso2": "CW",
+        "country_code": "+599",
+        "format": "+599 X XXX XXXX",
+        "example": "+599 9 461 2345",
+        "national_length": "7-8"
+    },
+    {
+        "country": "Santa Lucía",
+        "iso2": "LC",
+        "country_code": "+1",
+        "format": "+1 (758) XXX XXXX",
+        "example": "+1 (758) 234 5678",
+        "national_length": "10"
+    },
+    {
+        "country": "San Vicente y las Granadinas",
+        "iso2": "VC",
+        "country_code": "+1",
+        "format": "+1 (784) XXX XXXX",
+        "example": "+1 (784) 234 5678",
+        "national_length": "10"
+    },
+    {
+        "country": "Granada",
+        "iso2": "GD",
+        "country_code": "+1",
+        "format": "+1 (473) XXX XXXX",
+        "example": "+1 (473) 234 5678",
+        "national_length": "10"
+    },
+    {
+        "country": "Antigua y Barbuda",
+        "iso2": "AG",
+        "country_code": "+1",
+        "format": "+1 (268) XXX XXXX",
+        "example": "+1 (268) 234 5678",
+        "national_length": "10"
+    },
+    {
+        "country": "Dominica",
+        "iso2": "DM",
+        "country_code": "+1",
+        "format": "+1 (767) XXX XXXX",
+        "example": "+1 (767) 234 5678",
+        "national_length": "10"
+    },
+    {
+        "country": "San Cristóbal y Nieves",
+        "iso2": "KN",
+        "country_code": "+1",
+        "format": "+1 (869) XXX XXXX",
+        "example": "+1 (869) 234 5678",
+        "national_length": "10"
+    },
+    {
+        "country": "Polinesia Francesa",
+        "iso2": "PF",
+        "country_code": "+689",
+        "format": "+689 XX XX XX XX",
+        "example": "+689 40 12 34 56",
+        "national_length": "8"
+    },
+    {
+        "country": "Nueva Caledonia",
+        "iso2": "NC",
+        "country_code": "+687",
+        "format": "+687 XX XX XX",
+        "example": "+687 22 33 44",
+        "national_length": "6"
+    },
+    {
+        "country": "Guayana Francesa",
+        "iso2": "GF",
+        "country_code": "+594",
+        "format": "+594 XXX XX XX XX",
+        "example": "+594 594 12 34 56",
+        "national_length": "9"
+    },
+    {
+        "country": "Guadalupe",
+        "iso2": "GP",
+        "country_code": "+590",
+        "format": "+590 XXX XX XX XX",
+        "example": "+590 590 12 34 56",
+        "national_length": "9"
+    },
+    {
+        "country": "Martinica",
+        "iso2": "MQ",
+        "country_code": "+596",
+        "format": "+596 XXX XX XX XX",
+        "example": "+596 596 12 34 56",
+        "national_length": "9"
+    },
+    {
+        "country": "Reunión",
+        "iso2": "RE",
+        "country_code": "+262",
+        "format": "+262 XXX XX XX XX",
+        "example": "+262 262 12 34 56",
+        "national_length": "9"
+    },
+    {
+        "country": "Mayotte",
+        "iso2": "YT",
+        "country_code": "+262",
+        "format": "+262 XXX XX XX XX",
+        "example": "+262 269 12 34 56",
+        "national_length": "9"
+    },
+    {
+        "country": "Cabo Verde",
+        "iso2": "CV",
+        "country_code": "+238",
+        "format": "+238 XXX XXXX",
+        "example": "+238 261 1234",
+        "national_length": "7"
+    },
+    {
+        "country": "Santo Tomé y Príncipe",
+        "iso2": "ST",
+        "country_code": "+239",
+        "format": "+239 XX XXXXX",
+        "example": "+239 22 12345",
+        "national_length": "7"
+    },
+    {
+        "country": "Liberia",
+        "iso2": "LR",
+        "country_code": "+231",
+        "format": "+231 XX XXX XXXX",
+        "example": "+231 77 123 4567",
+        "national_length": "8-9"
+    },
+    {
+        "country": "Sierra Leona",
+        "iso2": "SL",
+        "country_code": "+232",
+        "format": "+232 XX XXX XXX",
+        "example": "+232 22 123 456",
+        "national_length": "8"
+    },
+    {
+        "country": "Gambia",
+        "iso2": "GM",
+        "country_code": "+220",
+        "format": "+220 XXX XXXX",
+        "example": "+220 422 1234",
+        "national_length": "7"
+    },
+    {
+        "country": "Guinea",
+        "iso2": "GN",
+        "country_code": "+224",
+        "format": "+224 XXX XXX XXX",
+        "example": "+224 30 71 12 34",
+        "national_length": "8-9"
+    },
+    {
+        "country": "Guinea-Bisáu",
+        "iso2": "GW",
+        "country_code": "+245",
+        "format": "+245 X XXXXXX",
+        "example": "+245 320 1234",
+        "national_length": "7"
+    },
+    {
+        "country": "Mauritania",
+        "iso2": "MR",
+        "country_code": "+222",
+        "format": "+222 XXXX XXXX",
+        "example": "+222 4525 1234",
+        "national_length": "8"
+    },
+    {
+        "country": "Sáhara Occidental",
+        "iso2": "EH",
+        "country_code": "+212",
+        "format": "+212 XXX XXX XXX",
+        "example": "+212 528 12 34 56",
+        "national_length": "9"
+    },
+    {
+        "country": "Sudán del Sur",
+        "iso2": "SS",
+        "country_code": "+211",
+        "format": "+211 XX XXX XXXX",
+        "example": "+211 18 123 4567",
+        "national_length": "9"
+    },
+    {
+        "country": "República Centroafricana",
+        "iso2": "CF",
+        "country_code": "+236",
+        "format": "+236 XX XX XX XX",
+        "example": "+236 21 61 23 45",
+        "national_length": "8"
+    },
+    {
+        "country": "Comoras",
+        "iso2": "KM",
+        "country_code": "+269",
+        "format": "+269 XXX XX XX",
+        "example": "+269 333 12 34",
+        "national_length": "7"
+    },
+    {
+        "country": "Tuvalu",
+        "iso2": "TV",
+        "country_code": "+688",
+        "format": "+688 XXXX",
+        "example": "+688 1234",
+        "national_length": "5-6"
+    },
+    {
+        "country": "Kiribati",
+        "iso2": "KI",
+        "country_code": "+686",
+        "format": "+686 XXXXX",
+        "example": "+686 12345",
+        "national_length": "5-8"
+    },
+    {
+        "country": "Nauru",
+        "iso2": "NR",
+        "country_code": "+674",
+        "format": "+674 XXX XXXX",
+        "example": "+674 555 1234",
+        "national_length": "7"
+    },
+    {
+        "country": "Islas Marshall",
+        "iso2": "MH",
+        "country_code": "+692",
+        "format": "+692 XXX XXXX",
+        "example": "+692 247 1234",
+        "national_length": "7"
+    },
+    {
+        "country": "Micronesia",
+        "iso2": "FM",
+        "country_code": "+691",
+        "format": "+691 XXX XXXX",
+        "example": "+691 320 2345",
+        "national_length": "7"
+    },
+    {
+        "country": "Palaos",
+        "iso2": "PW",
+        "country_code": "+680",
+        "format": "+680 XXX XXXX",
+        "example": "+680 488 1234",
+        "national_length": "7"
+    },
+    {
+        "country": "Samoa Americana",
+        "iso2": "AS",
+        "country_code": "+1",
+        "format": "+1 (684) XXX XXXX",
+        "example": "+1 (684) 234 5678",
+        "national_length": "10"
+    },
+    {
+        "country": "Guam",
+        "iso2": "GU",
+        "country_code": "+1",
+        "format": "+1 (671) XXX XXXX",
+        "example": "+1 (671) 234 5678",
+        "national_length": "10"
+    },
+    {
+        "country": "Islas Marianas del Norte",
+        "iso2": "MP",
+        "country_code": "+1",
+        "format": "+1 (670) XXX XXXX",
+        "example": "+1 (670) 234 5678",
+        "national_length": "10"
+    },
+    {
+        "country": "Islas Vírgenes de EE. UU.",
+        "iso2": "VI",
+        "country_code": "+1",
+        "format": "+1 (340) XXX XXXX",
+        "example": "+1 (340) 234 5678",
+        "national_length": "10"
+    },
+    {
+        "country": "Islas Vírgenes Británicas",
+        "iso2": "VG",
+        "country_code": "+1",
+        "format": "+1 (284) XXX XXXX",
+        "example": "+1 (284) 234 5678",
+        "national_length": "10"
+    },
+    {
+        "country": "Anguila",
+        "iso2": "AI",
+        "country_code": "+1",
+        "format": "+1 (264) XXX XXXX",
+        "example": "+1 (264) 234 5678",
+        "national_length": "10"
+    },
+    {
+        "country": "Montserrat",
+        "iso2": "MS",
+        "country_code": "+1",
+        "format": "+1 (664) XXX XXXX",
+        "example": "+1 (664) 234 5678",
+        "national_length": "10"
+    },
+    {
+        "country": "Islas Turcas y Caicos",
+        "iso2": "TC",
+        "country_code": "+1",
+        "format": "+1 (649) XXX XXXX",
+        "example": "+1 (649) 234 5678",
+        "national_length": "10"
+    },
+    {
+        "country": "San Martín (parte neerlandesa)",
+        "iso2": "SX",
+        "country_code": "+1",
+        "format": "+1 (721) XXX XXXX",
+        "example": "+1 (721) 234 5678",
+        "national_length": "10"
+    },
+    {
+        "country": "Haití",
+        "iso2": "HT",
+        "country_code": "+509",
+        "format": "+509 XX XX XXXX",
+        "example": "+509 22 12 3456",
+        "national_length": "8"
+    },
+    {
+        "country": "Surinam",
+        "iso2": "SR",
+        "country_code": "+597",
+        "format": "+597 XXX XXXX",
+        "example": "+597 521 2345",
+        "national_length": "6-7"
+    },
+    {
+        "country": "Guyana",
+        "iso2": "GY",
+        "country_code": "+592",
+        "format": "+592 XXX XXXX",
+        "example": "+592 226 2345",
+        "national_length": "7"
+    },
+    {
+        "country": "Islas Malvinas",
+        "iso2": "FK",
+        "country_code": "+500",
+        "format": "+500 XXXXX",
+        "example": "+500 12345",
+        "national_length": "5"
+    }
+]

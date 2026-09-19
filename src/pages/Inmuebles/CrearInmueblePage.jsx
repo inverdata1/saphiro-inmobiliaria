@@ -60,6 +60,8 @@ export default function CrearInmueblePage() {
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
   const markerRef = useRef(null);
+  const mapWrapRef = useRef(null);
+  const [mapActivo, setMapActivo] = useState(true);
 
   useEffect(() => {
     return () => previews.forEach((u) => URL.revokeObjectURL(u.url));
@@ -171,6 +173,14 @@ export default function CrearInmueblePage() {
       .then((r) => setCiudades(r.data || []))
       .catch(() => setCiudades([]));
   }, [form.estado_id]);
+
+  useEffect(() => {
+    const onMouseDown = (e) => {
+      if (mapWrapRef.current && !mapWrapRef.current.contains(e.target)) setMapActivo(false);
+    };
+    document.addEventListener("mousedown", onMouseDown);
+    return () => document.removeEventListener("mousedown", onMouseDown);
+  }, []);
 
   /* ─── Map ─── */
   useEffect(() => {
@@ -672,8 +682,20 @@ export default function CrearInmueblePage() {
           <div className="mt-4">
             <label className={labelCls}>Ubicación en el mapa</label>
             <p className="text-xs text-slate-400 mt-0.5 mb-2">Haz clic en el mapa o arrastra el marcador para señalar la ubicación exacta.</p>
-            <div className="h-64 sm:h-72 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-600" style={{ isolation: "isolate" }}>
+            <div ref={mapWrapRef} className="relative h-64 sm:h-72 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-600" style={{ isolation: "isolate" }}>
               <div ref={mapRef} className="h-full w-full" />
+              {!mapActivo && (
+                <button
+                  type="button"
+                  onClick={() => setMapActivo(true)}
+                  title="Haz clic para activar el mapa"
+                  className="absolute inset-0 z-[1001] flex items-end justify-center bg-transparent pb-3 cursor-pointer"
+                >
+                  <span className="rounded-full bg-black/70 px-3 py-1 text-xs font-medium text-white shadow-lg">
+                    Haz clic para activar el mapa…
+                  </span>
+                </button>
+              )}
             </div>
             <div className="mt-2 flex gap-4 text-xs text-slate-500 dark:text-slate-400">
               <span>Latitud: {form.latitud || "-"}</span>

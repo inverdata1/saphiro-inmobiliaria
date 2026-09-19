@@ -140,6 +140,8 @@ exports.listInmuebles = async (filters) => {
     whereClauses.push(`(i.titulo ILIKE $${values.length} OR i.descripcion ILIKE $${values.length})`);
   }
 
+  whereClauses.push(`i.deleted_at IS NULL`);
+
   const where = whereClauses.length ? `WHERE ${whereClauses.join(" AND ")}` : "";
 
   const lim = clampInt(limit, { min: 1, max: 500, def: 100 });
@@ -217,6 +219,7 @@ exports.listInmueblesByCorredor = async (usuarioId) => {
       LEFT JOIN ciudades c ON c.id = i.ciudad_id
       LEFT JOIN estados e ON e.id = c.estado_id
       JOIN corredores co ON co.id = i.corredor_id AND co.usuario_id = $1
+      WHERE i.deleted_at IS NULL
     ) sub
     WHERE sub.estatus = 'disponible'
        OR (sub.estado_raw = 'vacacional' AND sub.estatus <> 'vendido')
@@ -548,6 +551,239 @@ exports.patchInmueble = async (id, body, ctx) => {
   return inmueble;
 };
 
+exports.updateInmueble = async (id, data = {}, files = [], ctx) => {
+  if (!id) throw new AppError("id inválido", 400);
+
+  const {
+    titulo,
+    descripcion,
+    tipo_inmueble_id,
+    estado_inmueble,
+    precio,
+    moneda,
+    ciudad_id,
+    direccion_exacta,
+    area_m2,
+    punto_referencia,
+    latitud,
+    longitud,
+    caracteristicas,
+    precio_por_noche,
+    capacidad_personas,
+    noches_minimas,
+    hora_checkin,
+    hora_checkout,
+    permiso_infantes,
+    costos_adicionales,
+    mascotas,
+    borrar_imagenes,
+  } = data;
+
+  if (!titulo) throw new AppError("titulo es requerido", 400);
+  if (!estado_inmueble) throw new AppError("estado_inmueble es requerido", 400);
+  if (precio === undefined || precio === null || precio === "") {
+    if (estado_inmueble !== "vacacional") throw new AppError("precio es requerido", 400);
+  }
+  if (estado_inmueble === "vacacional") {
+    if (precio_por_noche === undefined || precio_por_noche === null || precio_por_noche === "" || Number(precio_por_noche) <= 0) {
+      throw new AppError("precio_por_noche es requerido", 400);
+    }
+    if (capacidad_personas === undefined || capacidad_personas === null || capacidad_personas === "" || Number(capacidad_personas) <= 0) {
+      throw new AppError("capacidad_personas es requerido", 400);
+    }
+  }
+
+  const client = await pool.connect();
+
+  const rawQuery = client.query.bind(client);
+  client.query = async (sql, params) => {
+    try {
+      return await rawQuery(sql, params);
+    } catch (err) {
+      err.sql = typeof sql === "string" ? sql : JSON.stringify(sql);
+      throw err;
+    }
+  };
+
+  try {
+    await client.query("BEGIN");
+
+    const { rows } = await client.query(
+      `UPDATE inmuebles SET
+        titulo = $1,
+        descripcion = $2,
+        tipo_inmueble_id = $3,
+        estado_inmueble = $4,
+        precio = $5,
+        moneda = $6,
+        ciudad_id = $7,
+        direccion_exacta = $8,
+        area_m2 = $9,
+        corredor_id = $10,
+        punto_referencia = $11,
+        updated_at = NOW()
+      WHERE id = $12 AND deleted_at IS NULL
+      RETURNING *;`,
+      [
+        titulo,
+        descripcion || null,
+        tipo_inmueble_id ? Number(tipo_inmueble_id) : null,
+        estado_inmueble,
+        estado_inmueble === "vacacional"
+          ? (precio === undefined || precio === null || precio === "" ? 0 : Number(precio))
+          : Number(precio),
+        moneda || "USD",
+        ciudad_id ? Number(ciudad_id) : null,
+        direccion_exacta || null,
+        area_m2 ?? null,
+        data.corredor_id ? Number(data.corredor_id) : null,
+        punto_referencia || null,
+        id
+      ]
+    );
+    if (!rows.length) throw new AppError("Inmueble no existe", 404);
+    const inmueble = rows[0];
+
+    /* GPS: reemplazar ubicación */
+    await client.query("DELETE FROM ubicaciones_gps WHERE inmueble_id = $1;", [id]);
+    if (latitud && longitud) {
+      const google_maps_url = `https://maps.google.com/?q=${latitud},${longitud}`;
+      await client.query(
+        `INSERT INTO ubicaciones_gps (inmueble_id, latitud, longitud, google_maps_url) VALUES ($1, $2, $3, $4);`,
+        [id, Number(latitud), Number(longitud), google_maps_url]
+      );
+    }
+
+    /* Características: reemplazar set completo */
+    await client.query("DELETE FROM caracteristica_inmueble WHERE inmueble_id = $1;", [id]);
+    if (caracteristicas && Array.isArray(caracteristicas)) {
+      for (const c of caracteristicas) {
+        if (c.caracteristica_id) {
+          await client.query(
+            `INSERT INTO caracteristica_inmueble (caracteristica_id, inmueble_id, valor) VALUES ($1, $2, $3);`,
+            [Number(c.caracteristica_id), id, c.valor]
+          );
+        }
+      }
+    }
+
+    /* Bloque vacacional: eliminado y recreado (o limpio si ya no es vacacional) */
+    await client.query("DELETE FROM alquiler_vacacional WHERE inmueble_id = $1;", [id]);
+    if (estado_inmueble === "vacacional") {
+      const { rows: vacRows } = await client.query(
+        `INSERT INTO alquiler_vacacional (inmueble_id, precio_por_noche, capacidad_personas, noches_minimas, hora_checkin, hora_checkout, permiso_infantes)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         RETURNING id;`,
+        [
+          id,
+          Number(precio_por_noche),
+          Number(capacidad_personas),
+          noches_minimas ? Number(noches_minimas) : 1,
+          hora_checkin || null,
+          hora_checkout || null,
+          permiso_infantes === undefined || permiso_infantes === null ? true : Boolean(permiso_infantes),
+        ]
+      );
+      const alquilerVacacionalId = vacRows[0].id;
+
+      if (mascotas && Array.isArray(mascotas)) {
+        for (const m of mascotas) {
+          if (m.mascota_id) {
+            await client.query(
+              `INSERT INTO mascotas_alquiler_vacacional (alquiler_vacacional_id, mascota_id)
+               VALUES ($1, $2);`,
+              [alquilerVacacionalId, Number(m.mascota_id)]
+            );
+          }
+        }
+      }
+
+      if (costos_adicionales && Array.isArray(costos_adicionales)) {
+        for (const costo of costos_adicionales) {
+          if (costo.costo_adicional_id) {
+            await client.query(
+              `INSERT INTO alquiler_vacacional_costos_adicionales (alquiler_vacacional_id, costo_adicional_id, monto)
+               VALUES ($1, $2, $3);`,
+              [
+                alquilerVacacionalId,
+                Number(costo.costo_adicional_id),
+                Number(costo.monto),
+              ]
+            );
+          }
+        }
+      }
+    }
+
+    /* Imágenes: borrar marcadas + agregar nuevas */
+    if (borrar_imagenes && Array.isArray(borrar_imagenes)) {
+      const ids = borrar_imagenes.filter((x) => Number.isFinite(Number(x))).map(Number);
+      if (ids.length) {
+        await client.query(
+          `DELETE FROM imagenes WHERE inmueble_id = $1 AND id = ANY($2);`,
+          [id, ids]
+        );
+      }
+    }
+
+    if (files.length) {
+      const existing = await client.query(
+        "SELECT COALESCE(MAX(orden), 0) AS max_orden FROM imagenes WHERE inmueble_id = $1",
+        [id]
+      );
+      let nextOrden = existing.rows[0].max_orden + 1;
+
+      for (let i = 0; i < files.length; i++) {
+        const orden = nextOrden + i;
+
+        const { rows: imgRows } = await client.query(
+          `INSERT INTO imagenes (inmueble_id, url, orden, portada, ruta_s3) VALUES ($1, $2, $3, $4, $5) RETURNING id;`,
+          [id, "/uploads/properties/" + files[i].filename, orden, false, "/uploads/properties/" + files[i].filename]
+        );
+
+        const imgId = imgRows[0].id;
+        const url = `/imagenes/file/${imgId}`;
+
+        await client.query(
+          `UPDATE imagenes SET url = $1 WHERE id = $2;`,
+          [url, imgId]
+        );
+      }
+    }
+
+    /* Recalcular portada: sin portadas marcadas, la de menor orden es la portada */
+    await client.query(
+      `UPDATE imagenes SET portada = false WHERE inmueble_id = $1;`,
+      [id]
+    );
+    await client.query(
+      `UPDATE imagenes SET portada = true WHERE id = (
+        SELECT id FROM imagenes WHERE inmueble_id = $1 ORDER BY orden ASC LIMIT 1
+      );`,
+      [id]
+    );
+
+    if (ctx) {
+      await auditoriaService.registrarUpdate({
+        usuario_id: ctx.usuario_id,
+        tabla_afectada: "inmuebles",
+        descripcion: `Actualización completa de inmueble ${id} ("${titulo}")`,
+        ip_address: ctx.ip_address,
+        user_agent: ctx.user_agent,
+      }, client);
+    }
+
+    await client.query("COMMIT");
+
+    return inmueble;
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+};
+
 exports.listDisponiblesPorCiudad = async (ciudadId, q) => {
   if (!ciudadId) throw new AppError("ciudad_id requerido", 400);
 
@@ -640,4 +876,46 @@ exports.listReservasByInmueble = async (inmuebleId) => {
   );
 
   return rows;
+};
+
+exports.deleteInmueble = async (id, ctx) => {
+  if (!id) throw new AppError("id inválido", 400);
+
+  const client = await pool.connect();
+  let eliminado;
+
+  try {
+    await client.query("BEGIN");
+
+    const { rows } = await client.query(
+      `UPDATE inmuebles
+       SET deleted_at = NOW()
+       WHERE id = $1
+         AND deleted_at IS NULL
+       RETURNING id, titulo;`,
+      [id]
+    );
+    if (!rows.length) throw new AppError("Inmueble no existe", 404);
+
+    if (ctx) {
+      await auditoriaService.registrarDelete({
+        usuario_id: ctx.usuario_id,
+        tabla_afectada: "inmuebles",
+        descripcion: `Eliminado inmueble ${id}: ${rows[0].titulo}`,
+        ip_address: ctx.ip_address,
+        user_agent: ctx.user_agent,
+      }, client);
+    }
+
+    eliminado = rows[0];
+
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+
+  return eliminado;
 };

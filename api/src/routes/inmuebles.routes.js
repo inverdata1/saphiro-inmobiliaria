@@ -34,5 +34,7 @@ router.get("/:id/reservas", asyncHandler(c.listReservas));
 router.get("/:id", asyncHandler(c.getInmuebleById));
 router.post("/", auth, requireEmailVerified, upload.array("imagenes", 20), asyncHandler(c.createInmueble));
 router.patch("/:id", auth, requireEmailVerified, asyncHandler(c.patchInmueble));
+router.put("/:id", auth, requireEmailVerified, upload.array("imagenes", 20), asyncHandler(c.updateInmueble));
+router.delete("/:id", auth, requireEmailVerified, asyncHandler(c.deleteInmueble));
 
 module.exports = router;

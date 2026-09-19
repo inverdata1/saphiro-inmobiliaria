@@ -46,6 +46,24 @@ exports.patchInmueble = async (req, res) => {
   res.json({ ok: true, data });
 };
 
+exports.updateInmueble = async (req, res, next) => {
+  try {
+    const body = typeof req.body.data === "string" ? JSON.parse(req.body.data) : req.body;
+    const corredor = await corredoresService.getCorredorByUserId(body.usuario_id);
+    body.corredor_id = corredor.id;
+    const data = await inmueblesService.updateInmueble(Number(req.params.id), body, req.files || [], buildCtx(req));
+    res.json({ ok: true, data });
+  } catch (err) {
+    if (req.files?.length) deleteFiles(req.files);
+    next(err);
+  }
+};
+
+exports.deleteInmueble = async (req, res) => {
+  const data = await inmueblesService.deleteInmueble(Number(req.params.id), buildCtx(req));
+  res.json({ ok: true, data });
+};
+
 exports.listDisponiblesPorCiudad = async (req, res) => {
   const data = await inmueblesService.listDisponiblesPorCiudad(Number(req.query.ciudad_id), req.query.q);
   res.json({ ok: true, data });

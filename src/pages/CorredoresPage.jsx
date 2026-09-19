@@ -35,7 +35,7 @@ export default function CorredoresPage() {
         id: item.id,
         nombre: item.corredor_nombre || "-",
         email: item.corredor_email,
-        telefono: item.telefono || "-",
+        telefonos: item.telefonos || [],
         licencia: item.licencia_nro || "-",
         comisionBase: item.comision_base,
         activo: item.active,
@@ -184,7 +184,7 @@ export default function CorredoresPage() {
               key: "nombre",
               header: "Nombre",
               render: (r) =>
-                r.nombre !== "-" && r.telefono !== "-" ? (
+                r.nombre !== "-" && r.telefonos?.length ? (
                   <Link
                     to={`/perfil/${r.id}`}
                     className="font-bold text-slate-800 dark:text-slate-100 hover:text-purple-750 dark:hover:text-purple-400 transition hover:underline"
@@ -197,7 +197,7 @@ export default function CorredoresPage() {
                 ),
             },
             { key: "email", header: "Email" },
-            { key: "telefono", header: "Teléfono" },
+            { key: "telefono", header: "Teléfono", render: (r) => r.telefonos?.length ? r.telefonos.map((t, i) => <div key={i}>{t}</div>) : "-" },
             { key: "comisionBase", header: "Comisión base", render: (r) => r.comisionBase != null ? `${r.comisionBase}%` : "-" },
             {
               key: "activo",
@@ -219,7 +219,7 @@ export default function CorredoresPage() {
               header: "Acciones",
               render: (r) => (
                 <div className="flex items-center justify-center gap-1">
-                  {r.nombre !== "-" && r.telefono !== "-" && (
+                  {r.nombre !== "-" && r.telefonos?.length && (
                     <Link
                       to={`/perfil/${r.id}`}
                       className="rounded-lg bg-purple-50 p-2 text-[#470A68] hover:bg-purple-100 dark:bg-purple-950/40 dark:text-purple-300 cursor-pointer"
@@ -410,7 +410,7 @@ export default function CorredoresPage() {
             ["ID", showView?.id],
             ["Nombre", showView?.nombre],
             ["Email", showView?.email],
-            ["Teléfono", showView?.telefono || "-"],
+            ["Teléfono(s)", showView?.telefonos?.length ? showView.telefonos.map((t, i) => <div key={i}>{t}</div>) : "-"],
             ["Licencia", showView?.licencia],
             ["Comisión base", showView?.comisionBase != null ? `${showView.comisionBase}%` : "-"],
             ["Estado", showView?.activo ? "Activo" : "Inactivo"],

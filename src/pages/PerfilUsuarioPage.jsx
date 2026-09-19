@@ -15,6 +15,7 @@ export default function PerfilUsuarioPage() {
   const [corredorInfo, setCorredorInfo] = useState(null);
   const [inmuebles, setInmuebles] = useState([]);
   const [redesSociales, setRedesSociales] = useState([]);
+  const [telefonosData, setTelefonosData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtroTipo, setFiltroTipo] = useState("todos");
   const [busqueda, setBusqueda] = useState("");
@@ -68,11 +69,21 @@ export default function PerfilUsuarioPage() {
           redesData = [];
         }
 
+        // 5. Obtener teléfonos del corredor (público)
+        let telefonosRes = [];
+        try {
+          const telRes = await apiGet(`/corredores/${id}/telefonos`);
+          telefonosRes = Array.isArray(telRes?.data) ? telRes.data : Array.isArray(telRes) ? telRes : [];
+        } catch {
+          telefonosRes = [];
+        }
+
         if (isMounted) {
           setUsuario(userData);
           setCorredorInfo(corrData);
           setInmuebles(inmueblesData);
           setRedesSociales(redesData);
+          setTelefonosData(telefonosRes);
         }
       } catch (error) {
         console.error("Error al cargar perfil de usuario:", error);
@@ -106,8 +117,15 @@ export default function PerfilUsuarioPage() {
   const esCorredor = usuario?.rol === "corredor" || !!corredorInfo;
   const esMiPropioPerfil = currentUser && Number(currentUser.id) === Number(id);
 
-  // Teléfono formateado
-  const telefono = corredorInfo?.telefono || usuario?.telefono || "+58 412 514 8799";
+  // Teléfonos del corredor (todos)
+  const telefonos = useMemo(() => {
+    if (Array.isArray(telefonosData) && telefonosData.length) {
+      return telefonosData.map((t) => t.nro_telefono).filter(Boolean);
+    }
+    if (Array.isArray(corredorInfo?.telefonos)) return corredorInfo.telefonos.filter(Boolean);
+    if (usuario?.telefono) return [usuario.telefono];
+    return [];
+  }, [telefonosData, corredorInfo, usuario]);
 
   // Filtrado de inmuebles
   const inmueblesFiltrados = useMemo(() => {
@@ -285,20 +303,32 @@ export default function PerfilUsuarioPage() {
                     </div>
                   </div>
 
-                  {/* Tarjeta Teléfono */}
-                  <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-slate-50 dark:bg-[#18181c] border border-slate-100 dark:border-slate-800/60">
-                    <div className="p-2.5 rounded-xl bg-purple-100 dark:bg-purple-950/60 text-[#470A68] dark:text-purple-300">
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                      </svg>
+                  {/* Tarjeta Teléfono (solo corredores) */}
+                  {esCorredor && (
+                    <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-slate-50 dark:bg-[#18181c] border border-slate-100 dark:border-slate-800/60">
+                      <div className="p-2.5 rounded-xl bg-purple-100 dark:bg-purple-950/60 text-[#470A68] dark:text-purple-300">
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                        </svg>
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Teléfonos de Contacto</div>
+                        {telefonos.length > 0 ? (
+                          <div className="space-y-0.5">
+                            {telefonos.map((t, i) => (
+                              <span key={i} className="text-xs sm:text-sm font-bold text-slate-800 dark:text-white truncate block">
+                                {t}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-xs sm:text-sm font-bold text-slate-400 dark:text-slate-500 truncate block">
+                            No especificado
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Teléfono de Contacto</div>
-                      <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-white truncate block">
-                        {telefono}
-                      </span>
-                    </div>
-                  </div>
+                  )}
                 </>
               )}
             </div>
@@ -323,7 +353,7 @@ export default function PerfilUsuarioPage() {
                     {redesSociales.map((rs) => (
                       <a
                         key={rs.id}
-                        href={rs.url}
+                        href={/^https?:\/\//i.test(rs.url) ? rs.url : `https://${rs.url}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         title={`${rs.nombre}: ${rs.url}`}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import phoneFormats, { phoneFormatsByIso2, validacionesTelefono, validarNumeroTelefono, limitarNumero } from "../../utils/phoneNumbers/phoneFormats";
 import { apiGet, apiPost } from "../../api";
 
 export default function RegistroCorredorPage() {
@@ -10,10 +11,21 @@ export default function RegistroCorredorPage() {
   const [form, setForm] = useState({
     nombre: "",
     numero_licencia: "",
-    telefono: "",
     password: "",
     confirmPassword: "",
   });
+  const [phone, setPhone] = useState({
+    iso2: (phoneFormatsByIso2.get("DO") || { iso2: phoneFormats[0].iso2 }).iso2,
+    numero: "",
+  });
+  const paisSeleccionado = phoneFormatsByIso2.get(phone.iso2);
+  const maxDigitos = validacionesTelefono.get(phone.iso2)?.max;
+  const codigoDigitos = (paisSeleccionado?.country_code || "").replace(/\D/g, "");
+  const maxDigitosTotales = maxDigitos ? maxDigitos + codigoDigitos.length : undefined;
+  const numeroNacional = (() => {
+    const d = (phone.numero || "").replace(/\D/g, "");
+    return codigoDigitos && d.startsWith(codigoDigitos) ? d.slice(codigoDigitos.length) : d;
+  })();
   const [loading, setLoading] = useState(false);
   const [validating, setValidating] = useState(true);
   const [tokenValido, setTokenValido] = useState(false);
@@ -51,12 +63,19 @@ export default function RegistroCorredorPage() {
       return;
     }
 
+    const validacion = validarNumeroTelefono(phone.iso2, numeroNacional);
+    if (!validacion.ok) {
+      setErr(validacion.mensaje);
+      return;
+    }
+
     setLoading(true);
     try {
-      await apiPost("/auth/completar-registro", {
+await apiPost("/auth/completar-registro", {
         token,
         nombre: form.nombre,
-        telefono: form.telefono,
+        telefono: `${paisSeleccionado?.country_code || ""} ${numeroNacional}`.trim(),
+        iso2: phone.iso2,
         licencia_nro: form.numero_licencia,
         password: form.password,
       });
@@ -145,15 +164,46 @@ export default function RegistroCorredorPage() {
             <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
               Teléfono
             </label>
-            <input
-              type="tel"
-              name="telefono"
-              autoComplete="tel"
-              value={form.telefono}
-              onChange={handleChange}
-              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900"
-              placeholder="809-555-0100"
-            />
+            <div className="mt-1 flex gap-2">
+              <select
+                value={phone.iso2}
+                onChange={(e) => {
+                  const newIso2 = e.target.value;
+                  const conf = validacionesTelefono.get(newIso2);
+                  const nuevoCodigo = (phoneFormatsByIso2.get(newIso2)?.country_code || "").replace(/\D/g, "");
+                  setPhone((prev) => ({
+                    iso2: newIso2,
+                    numero: limitarNumero(prev.numero, conf?.max ? conf.max + nuevoCodigo.length : undefined),
+                  }));
+                }}
+                className="w-40 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900"
+              >
+                {phoneFormats.map((c) => (
+                  <option key={c.iso2} value={c.iso2}>
+                    {`(${c.country_code}) ${c.country}`}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="tel"
+                name="numeroTelefono"
+                autoComplete="tel"
+                value={phone.numero}
+                maxLength={maxDigitosTotales ? maxDigitosTotales + 2 : undefined}
+                onChange={(e) => setPhone((prev) => ({ ...prev, numero: limitarNumero(e.target.value, maxDigitosTotales) }))}
+                onPaste={(e) => {
+                  e.preventDefault();
+                  setPhone((prev) => ({ ...prev, numero: limitarNumero(prev.numero + e.clipboardData.getData("text"), maxDigitosTotales) }));
+                }}
+                className="flex-1 min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900"
+                placeholder={paisSeleccionado?.example?.split(" ").slice(1).join("").replace(/-/g, "") || "Número"}
+              />
+              {maxDigitos ? (
+                <span className="self-center text-xs text-slate-400">
+                  {numeroNacional.length}/{maxDigitos}
+                </span>
+              ) : null}
+            </div>
           </div>
 
           <div>

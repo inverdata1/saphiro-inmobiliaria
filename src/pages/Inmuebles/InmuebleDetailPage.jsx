@@ -3,6 +3,8 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { apiGet, apiPost, apiPut, apiDelete } from "../../api";
 import { useAuth } from "../../context/useAuth";
 import ShareModal from "../../components/ShareModal";
+import Modal from "../../components/Modal";
+import EditarInmuebleModal from "../../components/EditarInmuebleModal";
 import { formatDate } from "../../utils/date";
 import { formatPrice as fmtPrice } from "../../utils/price";
 
@@ -130,6 +132,10 @@ export default function InmuebleDetailPage() {
   const [imgLoaded, setImgLoaded] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [calOpen, setCalOpen] = useState(false);
+  const [eliminarOpen, setEliminarOpen] = useState(false);
+  const [eliminando, setEliminando] = useState(false);
+  const [eliminarError, setEliminarError] = useState("");
+  const [editarOpen, setEditarOpen] = useState(false);
   const [miResena, setMiResena] = useState(null);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [editandoResena, setEditandoResena] = useState(null);
@@ -174,28 +180,36 @@ export default function InmuebleDetailPage() {
     setActiveImg(i);
   };
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      try {
-        const r = await apiGet(`/inmuebles/${id}`);
-        setInmueble(r?.data ?? r);
-      } catch (e) {
-        console.error("Error al cargar inmueble:", e);
-        setInmueble(MOCK_INMUEBLE);
-      } finally {
-        setLoading(false);
-      }
-    })();
-    (async () => {
-      try {
-        const rc = await apiGet(`/caracteristicas/inmueble/${id}`);
-        setInmuebleCaracteristicas(Array.isArray(rc?.data) ? rc.data : []);
-      } catch (e) {
-        console.error("Error al cargar características:", e);
-      }
-    })();
+  const esDueno = user && inmueble && Number(user.id) === Number(inmueble.corredor_usuario_id);
+  const cargarInmueble = useCallback(async (silencioso = false) => {
+    if (!silencioso) setLoading(true);
+    try {
+      const r = await apiGet(`/inmuebles/${id}`);
+      setInmueble(r?.data ?? r);
+    } catch (e) {
+      console.error("Error al cargar inmueble:", e);
+      setInmueble(MOCK_INMUEBLE);
+    } finally {
+      if (!silencioso) setLoading(false);
+    }
   }, [id]);
+  const cargarCaracteristicas = useCallback(async () => {
+    try {
+      const rc = await apiGet(`/caracteristicas/inmueble/${id}`);
+      setInmuebleCaracteristicas(Array.isArray(rc?.data) ? rc.data : []);
+    } catch (e) {
+      console.error("Error al cargar características:", e);
+    }
+  }, [id]);
+  useEffect(() => {
+    cargarInmueble();
+    cargarCaracteristicas();
+  }, [cargarInmueble, cargarCaracteristicas]);
+  const handleGuardarInmueble = async () => {
+    await cargarInmueble(true);
+    cargarCaracteristicas();
+    setEditarOpen(false);
+  };
   /* ─── fetch todas las reseñas ─── */
   const fetchResenas = useCallback(async () => {
     try {
@@ -289,6 +303,22 @@ export default function InmuebleDetailPage() {
   };
   const handleOpenShare = () => setShareOpen(true);
   const handleCloseShare = () => setShareOpen(false);
+
+  const handleConfirmarEliminar = async () => {
+    if (eliminando) return;
+    setEliminando(true);
+    setEliminarError("");
+    try {
+      await apiDelete(`/inmuebles/${id}`);
+      setEliminarOpen(false);
+      navigate("/inmuebles", { replace: true });
+    } catch (e) {
+      setEliminarError(e?.message || "Error al eliminar el inmueble.");
+      console.error("Error al eliminar inmueble:", e);
+    } finally {
+      setEliminando(false);
+    }
+  };
   const handleOpenReview = () => setReviewOpen(true);
   const handleCloseReview = () => {
     setReviewOpen(false);
@@ -675,6 +705,29 @@ export default function InmuebleDetailPage() {
                   </svg>
                   {calOpen ? "Cerrar calendario" : "Ver calendario"}
                 </button>
+              )}
+
+              {esDueno && (
+                <>
+                  <button
+                    onClick={() => setEditarOpen(true)}
+                    className="btn-secondary flex items-center gap-1.5 sm:gap-2 text-xs flex-1 justify-center"
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                    </svg>
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => setEliminarOpen(true)}
+                    className="btn-secondary flex items-center gap-1.5 sm:gap-2 text-xs flex-1 justify-center text-red-600 dark:text-red-400 border-red-200 dark:border-red-900/60 hover:bg-red-50 dark:hover:bg-red-950/40 hover:border-red-300 dark:hover:border-red-800"
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                    </svg>
+                    Eliminar
+                  </button>
+                </>
               )}
             </div>
 
@@ -1381,6 +1434,49 @@ export default function InmuebleDetailPage() {
       {/* ── Share Modal ──
        */}
       <ShareModal open={shareOpen} onClose={handleCloseShare} url={shareUrl} title="Compartir propiedad" description="Copia el enlace para compartir:"/>{" "}
+      {/* ── Confirmar Eliminar Modal ── */}
+      <Modal
+        open={eliminarOpen}
+        onClose={() => {
+          if (!eliminando) setEliminarOpen(false);
+        }}
+        className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg dark:bg-slate-800 dark:border dark:border-slate-700"
+      >
+        <div className="text-lg font-extrabold dark:text-slate-100">¿Eliminar inmueble?</div>
+        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+          Esta acción no se puede deshacer. Se eliminará a{" "}
+          <strong>{inmueble?.titulo || "este inmueble"}</strong> del sistema.
+        </p>
+        {eliminarError && (
+          <div className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-300">
+            {eliminarError}
+          </div>
+        )}
+        <div className="mt-5 flex justify-end gap-2">
+          <button
+            type="button"
+            className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+            disabled={eliminando}
+            onClick={() => setEliminarOpen(false)}
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60 cursor-pointer"
+            disabled={eliminando}
+            onClick={handleConfirmarEliminar}
+          >
+            {eliminando && (
+              <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            )}
+            {eliminando ? "Eliminando..." : "Eliminar"}
+          </button>
+        </div>
+      </Modal>
       <Suspense fallback={null}>
         <VacacionalCalendarModal
           open={calOpen}
@@ -1389,6 +1485,15 @@ export default function InmuebleDetailPage() {
           reservas={reservas}
         />
       </Suspense>
+      {/* ── Editar Inmueble Modal ── */}
+      <EditarInmuebleModal
+        open={editarOpen}
+        onClose={() => setEditarOpen(false)}
+        inmueble={inmueble}
+        caracteristicasIniciales={inmuebleCaracteristicas}
+        usuarioId={user?.id}
+        onSaved={handleGuardarInmueble}
+      />
     </div>
   );
 }

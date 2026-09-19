@@ -10,7 +10,7 @@ export default function ComprobantePagoModal({
   if (!isOpen || !pagoData) return null;
 
   const moneda = String(pagoData?.moneda || "USD").toUpperCase();
-  const esBs = moneda === "BS";
+  const esBs = moneda === "BS" || moneda === "VES";
   const montoPrincipal = Number(
     pagoData.montoPrincipal ?? pagoData.montoUsd ?? 0
   );
@@ -25,7 +25,18 @@ export default function ComprobantePagoModal({
     timeStyle: "short",
   });
 
-  const cardBrand = (pagoData.brand || "visa").toLowerCase();
+  const metodoRaw = (pagoData?.metodo || "tarjeta").toLowerCase();
+  const cardBrand = (pagoData?.brand || "visa").toLowerCase();
+  const numReferencia = pagoData?.referenciaMetodo || pagoData?.referencia || "AUTH-OK";
+
+  // Label for method
+  let metodoLabel = "Tarjeta de Crédito / Débito";
+  if (metodoRaw === "pagomovil") metodoLabel = "Pago Móvil (Venezuela)";
+  else if (metodoRaw === "zelle") metodoLabel = "Zelle (USD)";
+  else if (metodoRaw === "binance") metodoLabel = "Binance Pay (Cripto/USDT)";
+  else if (metodoRaw === "paypal") metodoLabel = "PayPal";
+  else if (metodoRaw === "debito") metodoLabel = "Tarjeta de Débito";
+  else if (metodoRaw === "credito") metodoLabel = "Tarjeta de Crédito";
 
   const handlePrint = () => {
     window.print();
@@ -63,19 +74,52 @@ export default function ComprobantePagoModal({
           className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full max-h-[92dvh] overflow-y-auto p-6 sm:p-7 shadow-2xl border border-slate-200 dark:border-slate-800 relative overflow-x-hidden text-slate-900 dark:text-white"
         >
           {/* Top Decorative Gradient Accent */}
-          <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-blue-600 via-indigo-600 to-amber-500" />
+          <div
+            className={`absolute top-0 left-0 right-0 h-2 bg-gradient-to-r ${
+              metodoRaw === "pagomovil"
+                ? "from-emerald-500 via-teal-500 to-emerald-700"
+                : metodoRaw === "zelle"
+                ? "from-purple-500 via-violet-500 to-purple-700"
+                : metodoRaw === "binance"
+                ? "from-amber-400 via-yellow-500 to-amber-600"
+                : metodoRaw === "paypal"
+                ? "from-sky-500 via-blue-600 to-indigo-600"
+                : "from-blue-600 via-indigo-600 to-amber-500"
+            }`}
+          />
 
           {/* Network Badges Header */}
           <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-black italic tracking-wider text-blue-700 dark:text-blue-400">
-                VISA
-              </span>
+              {metodoRaw === "tarjeta" || metodoRaw === "credito" || metodoRaw === "debito" ? (
+                <>
+                  <span className="text-sm font-black italic tracking-wider text-blue-700 dark:text-blue-400">
+                    VISA
+                  </span>
+                  <span className="text-slate-300 dark:text-slate-700 font-light">|</span>
+                  <div className="flex items-center -space-x-1.5">
+                    <div className="w-3.5 h-3.5 rounded-full bg-[#EB001B]" />
+                    <div className="w-3.5 h-3.5 rounded-full bg-[#F79E1B]" />
+                  </div>
+                </>
+              ) : metodoRaw === "pagomovil" ? (
+                <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+                  Pago Móvil VE
+                </span>
+              ) : metodoRaw === "zelle" ? (
+                <span className="text-xs font-black text-purple-600 dark:text-purple-400 uppercase tracking-wider">
+                  Zelle USD
+                </span>
+              ) : metodoRaw === "binance" ? (
+                <span className="text-xs font-black text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                  Binance Pay
+                </span>
+              ) : (
+                <span className="text-xs font-black text-sky-600 dark:text-sky-400 uppercase tracking-wider">
+                  PayPal Direct
+                </span>
+              )}
               <span className="text-slate-300 dark:text-slate-700 font-light">|</span>
-              <div className="flex items-center -space-x-1.5">
-                <div className="w-3.5 h-3.5 rounded-full bg-[#EB001B]" />
-                <div className="w-3.5 h-3.5 rounded-full bg-[#F79E1B]" />
-              </div>
               <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
                 Secure Pay
               </span>
@@ -97,10 +141,10 @@ export default function ComprobantePagoModal({
 
           <div className="text-center mb-5">
             <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
-              Pago Exitoso
+              Pago Registrado Exitosamente
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Transacción autorizada por la red {cardBrand === "visa" ? "Visa" : cardBrand === "mastercard" ? "Mastercard" : "Visa / Mastercard"}
+              Procesado mediante {metodoLabel}
             </p>
           </div>
 
@@ -117,37 +161,32 @@ export default function ComprobantePagoModal({
 
             <div className="flex justify-between items-center gap-3 pb-2 border-b border-slate-200 dark:border-slate-700/60">
               <span className="text-slate-500 dark:text-slate-400 font-medium">
-                Referencia:
+                N° de Referencia:
               </span>
               <span className="font-mono font-semibold text-slate-800 dark:text-slate-200">
-                {pagoData.referencia || "008492014"}
+                {numReferencia}
               </span>
             </div>
 
             <div className="flex justify-between items-center gap-3 pb-2 border-b border-slate-200 dark:border-slate-700/60">
               <span className="text-slate-500 dark:text-slate-400 font-medium">
-                Método de Pago:
+                Método Seleccionado:
               </span>
-              <span className="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                {cardBrand === "visa" ? (
-                  <span className="italic font-black text-blue-600 dark:text-blue-400">VISA</span>
-                ) : cardBrand === "mastercard" ? (
-                  <span className="font-bold text-amber-500">Mastercard</span>
-                ) : (
-                  <span>Tarjeta</span>
-                )}
-                <span>({pagoData.metodo === "debito" ? "Débito" : "Crédito"})</span>
+              <span className="font-semibold text-slate-800 dark:text-slate-200">
+                {metodoLabel}
               </span>
             </div>
 
-            <div className="flex justify-between items-center gap-3 pb-2 border-b border-slate-200 dark:border-slate-700/60">
-              <span className="text-slate-500 dark:text-slate-400 font-medium">
-                Tarjeta:
-              </span>
-              <span className="font-mono font-medium text-slate-800 dark:text-slate-200">
-                •••• •••• •••• {pagoData.ultimosDigitos || "4589"}
-              </span>
-            </div>
+            {(metodoRaw === "tarjeta" || metodoRaw === "credito" || metodoRaw === "debito") && (
+              <div className="flex justify-between items-center gap-3 pb-2 border-b border-slate-200 dark:border-slate-700/60">
+                <span className="text-slate-500 dark:text-slate-400 font-medium">
+                  Tarjeta:
+                </span>
+                <span className="font-mono font-medium text-slate-800 dark:text-slate-200">
+                  •••• •••• •••• {pagoData.ultimosDigitos || "4589"}
+                </span>
+              </div>
+            )}
 
             <div className="flex justify-between items-center gap-3 pb-2 border-b border-slate-200 dark:border-slate-700/60">
               <span className="text-slate-500 dark:text-slate-400 font-medium">
@@ -170,16 +209,16 @@ export default function ComprobantePagoModal({
             {/* Total Amount Box */}
             <div className="pt-2 flex justify-between items-center gap-3">
               <span className="text-sm font-black text-slate-900 dark:text-white">
-                Total Pagado:
+                Total Procesado:
               </span>
               <div className="text-right">
                 <span className="block text-lg font-black text-emerald-600 dark:text-emerald-400">
                   {montoPrincipalLabel}
                 </span>
-                {!esBs && (
+                {!esBs && pagoData.montoBs > 0 && (
                   <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
-                    Bs. {Number(pagoData.montoBs || 0).toLocaleString("es-VE", { minimumFractionDigits: 2 })}
-                    {pagoData.tasa ? ` (Tasa: ${Number(pagoData.tasa).toFixed(2)})` : ""}
+                    Bs. {Number(pagoData.montoBs).toLocaleString("es-VE", { minimumFractionDigits: 2 })}
+                    {pagoData.tasa ? ` (Tasa BCV: ${Number(pagoData.tasa).toFixed(2)})` : ""}
                   </span>
                 )}
               </div>
@@ -192,10 +231,10 @@ export default function ComprobantePagoModal({
               <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
-              <span>PCI-DSS 256-bit SSL</span>
+              <span>Encriptación SSL 256-Bit</span>
             </div>
             <span className="font-mono text-[10px] tracking-wider uppercase font-bold text-slate-500">
-              3D SECURE 2.0
+              SEGURIDAD GARANTIZADA
             </span>
           </div>
 

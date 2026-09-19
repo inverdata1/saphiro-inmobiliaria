@@ -1,6 +1,7 @@
 const pool = require("../db/pool");
 const AppError = require("../utils/AppError");
 const auditoriaService = require("./auditoria.service");
+const { validarTelefono } = require("../utils/phoneFormats.cjs");
 
 exports.listCorredores = async (query) => {
   const { q, limit = 100, offset = 0} = query;
@@ -30,11 +31,21 @@ exports.listCorredores = async (query) => {
       u.id,
       c.id AS corredor_id,
       c.licencia_nro,
-      c.telefono,
       c.comision_base,
       u.nombre AS corredor_nombre,
       u.email  AS corredor_email,
-      u.active AS active
+      u.active AS active,
+      COALESCE(
+        (SELECT ARRAY_AGG(nro_telefono)
+         FROM (
+           SELECT nro_telefono
+           FROM nros_telefono
+           WHERE corredor_id = c.id
+           ORDER BY id ASC
+           LIMIT 3
+         ) t),
+        ARRAY[]::TEXT[]
+      ) AS telefonos
     FROM corredores c
     JOIN usuarios u
     ON u.id = c.usuario_id
@@ -44,6 +55,9 @@ exports.listCorredores = async (query) => {
     `,
     values
   );
+
+  console.log(rows);
+  
   return rows;
 };
 
@@ -77,9 +91,15 @@ exports.getCorredorByUserId = async (usuario_id) => {
   const { rows } = await pool.query(
     `
     SELECT
-    *
-    FROM corredores
-    WHERE usuario_id = $1 LIMIT 1;
+      c.*,
+      COALESCE(
+        (SELECT ARRAY_AGG(json_build_object('id', nt.id, 'nro_telefono', nt.nro_telefono, 'codigo_pais', nt.codigo_pais) ORDER BY nt.id ASC)
+         FROM nros_telefono nt
+         WHERE nt.corredor_id = c.id),
+        ARRAY[]::JSON[]
+      ) AS telefonos
+    FROM corredores c
+    WHERE c.usuario_id = $1 LIMIT 1;
     `,
     [usuario_id]
   );
@@ -300,4 +320,178 @@ exports.deleteRedSocial = async (usuario_id, id, ctx) => {
   } finally {
     client.release();
   }
+};
+
+// ------------------- Números de teléfono del corredor -------------------
+
+const MAX_TELEFONOS = 3;
+
+exports.listTelefonos = async (usuario_id) => {
+  const { rows } = await pool.query(
+    `SELECT nt.id, nt.nro_telefono, nt.codigo_pais
+     FROM nros_telefono nt
+     JOIN corredores c ON c.id = nt.corredor_id
+     WHERE c.usuario_id = $1
+     ORDER BY nt.id ASC;`,
+    [usuario_id]
+  );
+  return rows;
+};
+
+const validarTelefonoBody = (data) => {
+  const { iso2, telefono } = data;
+  if (!iso2 || !telefono) throw new AppError("iso2 y telefono son requeridos", 400);
+  const val = validarTelefono(iso2, telefono);
+  if (!val.ok) throw new AppError(val.mensaje, 400);
+  return val.normalizado;
+};
+
+exports.addTelefono = async (usuario_id, data, ctx) => {
+  const normalizado = validarTelefonoBody(data);
+  const {iso2} = data;
+
+  const client = await pool.connect();
+  let creado;
+
+  try {
+    await client.query("BEGIN");
+
+    const { rows: corr } = await client.query(
+      `SELECT id FROM corredores WHERE usuario_id = $1 LIMIT 1;`,
+      [usuario_id]
+    );
+    if (!corr.length) throw new AppError("El usuario no es un corredor", 404);
+    const corredor_id = corr[0].id;
+
+    const { rows: count } = await client.query(
+      `SELECT COUNT(*)::int AS n FROM nros_telefono WHERE corredor_id = $1;`,
+      [corredor_id]
+    );
+    if (Number(count[0]?.n) >= MAX_TELEFONOS) {
+      throw new AppError(`El corredor solo puede tener ${MAX_TELEFONOS} números de teléfono`, 400);
+    }
+
+    const { rows: dup } = await client.query(
+      `      SELECT id FROM nros_telefono WHERE corredor_id = $1 AND nro_telefono = $2 AND codigo_pais = $3;`,
+      [corredor_id, normalizado, iso2]
+    );
+
+    if (dup.length) throw new AppError("Ese número de teléfono ya está registrado", 409);
+
+    const { rows } = await client.query(
+      `INSERT INTO nros_telefono (corredor_id, nro_telefono, codigo_pais)
+       VALUES ($1, $2, $3)
+       RETURNING id, corredor_id, nro_telefono, codigo_pais;`,
+      [corredor_id, normalizado, iso2]
+    );
+    creado = rows[0];
+
+    await auditoriaService.registrarInsert({
+      ...ctx,
+      tabla_afectada: "nros_telefono",
+      descripcion: `Teléfono agregado: ${normalizado}`,
+    }, client);
+
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+
+  return creado;
+};
+
+exports.updateTelefono = async (usuario_id, id, data, ctx) => {
+  const normalizado = validarTelefonoBody(data);
+  const {iso2} = data;
+  const client = await pool.connect();
+  let actualizado;
+
+  try {
+    await client.query("BEGIN");
+
+    const { rows: existe } = await client.query(
+      `SELECT nt.id, nt.nro_telefono
+       FROM nros_telefono nt
+       JOIN corredores c ON c.id = nt.corredor_id
+       WHERE nt.id = $1 AND c.usuario_id = $2;`,
+      [id, usuario_id]
+    );
+    
+    if (!existe.length) throw new AppError("Número de teléfono del corredor no encontrado", 404);
+
+    if (existe[0].nro_telefono !== normalizado) {
+      const { rows: dup } = await client.query(
+      `SELECT nt.id FROM nros_telefono nt
+       WHERE nt.corredor_id = (SELECT corredor_id FROM nros_telefono WHERE id = $1)
+         AND nt.nro_telefono = $2 AND nt.codigo_pais = $3 AND nt.id <> $1;`,
+      [id, normalizado, iso2]
+      );
+      if (dup.length) throw new AppError("Ese número de teléfono ya está registrado", 409);
+    }
+
+    const { rows } = await client.query(
+      `UPDATE nros_telefono
+       SET nro_telefono = $2, codigo_pais = $3
+       WHERE id = $1
+       RETURNING id, corredor_id, nro_telefono, codigo_pais;`,
+      [id, normalizado, iso2]
+    );
+    if (!rows.length) throw new AppError("Número de teléfono del corredor no encontrado", 404);
+    actualizado = rows[0];
+
+    await auditoriaService.registrarUpdate({
+      ...ctx,
+      tabla_afectada: "nros_telefono",
+      descripcion: `Teléfono actualizado: ${existe[0].nro_telefono} → ${normalizado}`,
+    }, client);
+
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+
+  return actualizado;
+};
+
+exports.deleteTelefono = async (usuario_id, id, ctx) => {
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const { rows: existe } = await client.query(
+      `SELECT nt.id, nt.nro_telefono
+       FROM nros_telefono nt
+       JOIN corredores c ON c.id = nt.corredor_id
+       WHERE nt.id = $1 AND c.usuario_id = $2;`,
+      [id, usuario_id]
+    );
+    if (!existe.length) throw new AppError("Número de teléfono del corredor no encontrado", 404);
+
+    await client.query(
+      `DELETE FROM nros_telefono WHERE id = $1;`,
+      [id]
+    );
+
+    await auditoriaService.registrarDelete({
+      ...ctx,
+      tabla_afectada: "nros_telefono",
+      descripcion: `Teléfono eliminado: ${existe[0].nro_telefono}`,
+    }, client);
+
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+
+  return { message: "Número de teléfono eliminado" };
 };

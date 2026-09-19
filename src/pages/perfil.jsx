@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
-import { apiGet, apiPatch, apiUpload, apiDelete } from "../api";
+import { apiGet, apiPost, apiPatch, apiPut, apiUpload, apiDelete } from "../api";
 import SocialLinksEditor from "../components/social/SocialLinksEditor";
+import phoneFormats, { phoneFormatsByIso2, validacionesTelefono } from "../utils/phoneNumbers/phoneFormats";
 
 export default function Perfil() {
   const { user, updateUser } = useAuth();
@@ -21,6 +22,18 @@ export default function Perfil() {
   const [mensajeExito, setMensajeExito] = useState("");
   const [mensajeError, setMensajeError] = useState("");
   const [subiendoFoto, setSubiendoFoto] = useState(false);
+  const [telefonos, setTelefonos] = useState([]);
+  const [editandoTelefonos, setEditandoTelefonos] = useState(false);
+  const [telefonoEnEdicionId, setTelefonoEnEdicionId] = useState(null);
+  const [errorTelefonos, setErrorTelefonos] = useState("");
+  const [telefonoEditandoId, setTelefonoEditandoId] = useState(null);
+  const [agregandoTelefono, setAgregandoTelefono] = useState(false);
+  const [nuevoTelefono, setNuevoTelefono] = useState({
+    iso2: (phoneFormatsByIso2.get("VE") || { iso2: phoneFormats[0].iso2 }).iso2,
+    numero: "",
+  });
+  const [telefonoEditandoForm, setTelefonoEditandoForm] = useState(null);
+  const [telefonoOriginalEdicion, setTelefonoOriginalEdicion] = useState(null);
 
   // Cargar nombre y foto del servidor
   useEffect(() => {
@@ -64,6 +77,30 @@ export default function Perfil() {
     };
   }, [user]);
 
+  // Cargar teléfonos del corredor (solo si es corredor)
+  useEffect(() => {
+    let isMounted = true;
+
+    if (user?.rol !== "corredor" || !user?.id) {
+      setTelefonos([]);
+      return () => { isMounted = false; };
+    }
+
+    (async () => {
+      try {
+        const res = await apiGet(`/corredores/${user.id}/telefonos`);
+        const data = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+        if (isMounted) setTelefonos(data.filter((t) => t && t.nro_telefono));
+      } catch {
+        if (isMounted) setTelefonos([]);
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user]);
+
   // Generar iniciales para el avatar de respaldo
   const initials = nombreCompleto
     .split(" ")
@@ -72,6 +109,238 @@ export default function Perfil() {
     .slice(0, 2)
     .join("")
     .toUpperCase() || "US";
+
+  // Editor visual de teléfonos (sin persistencia, solo UI)
+  const MAX_TELEFONOS = 3;
+
+  const iso2Actual = phoneFormatsByIso2.has(nuevoTelefono?.iso2)
+    ? nuevoTelefono.iso2
+    : (phoneFormatsByIso2.get("VE") || { iso2: phoneFormats[0].iso2 }).iso2;
+  const numeroActual = typeof nuevoTelefono?.numero === "string" ? nuevoTelefono.numero : "";
+  const paisSeleccionado = phoneFormatsByIso2.get(iso2Actual);
+  const maxDigitos = validacionesTelefono.get(iso2Actual)?.max;
+  const codigoDigitos = (paisSeleccionado?.country_code || "").replace(/\D/g, "");
+  const numeroNacional = (() => {
+    const d = (numeroActual || "").replace(/\D/g, "");
+    return codigoDigitos && d.startsWith(codigoDigitos) ? d.slice(codigoDigitos.length) : d;
+  })();
+
+  const detectarIso2 = (nro) => {
+    const d = String(nro || "").replace(/\D/g, "");
+    if (!d) return iso2Actual;
+    if (d.startsWith("011")) return "US";
+    let mejor = null;
+    let mejorLen = 0;
+    for (const c of phoneFormats) {
+      const cc = (c.country_code || "").replace(/\D/g, "");
+      if (!cc || !d.startsWith(cc)) continue;
+      const l = cc.length + (String(c.format || "").replace(/\D/g, "").slice(cc.length).match(/^\d+/)?.[0]?.length || 0);
+      const pre = d.slice(0, l);
+      const f = (String(c.format || "").replace(/\D/g, "").slice(cc.length).match(/^\d+/) || [""])[0];
+      if (pre.startsWith(cc + f) && l > mejorLen) {
+        mejor = c;
+        mejorLen = l;
+      }
+    }
+    return mejor?.iso2 || (phoneFormats.find((c) => d.startsWith((c.country_code || "").replace(/\D/g, "")))?.iso2) || iso2Actual;
+  };
+
+  const limpiarNacional = (valor) => {
+    const s = String(valor || "");
+    const d = s.replace(/\D/g, "");
+    const sinCodigo = codigoDigitos && d.startsWith(codigoDigitos) ? d.slice(codigoDigitos.length) : d;
+    const limitado = !maxDigitos ? sinCodigo : sinCodigo.slice(0, maxDigitos);
+    let usados = 0;
+    let res = "";
+    let parenAbierto = false;
+    for (const ch of s) {
+      const esDigito = ch >= "0" && ch <= "9";
+      if (esDigito && usados < limitado.length) {
+        res += limitado[usados];
+        usados++;
+      } else if (ch === "(" && !parenAbierto) {
+        res += ch;
+        parenAbierto = true;
+      } else if (ch === ")" && parenAbierto) {
+        res += ch;
+        parenAbierto = false;
+      } else if (ch === "-" || ch === " ") {
+        res += ch;
+      }
+    }
+    return res;
+  };
+
+  const validarEntradaTelefono = (actual, inicio, fin, data) => {
+    const prox = actual.slice(0, inicio) + data + actual.slice(fin);
+    if (/[^0-9()\- ]/.test(prox)) return false;
+    let abierto = false;
+    for (const ch of prox) {
+      if (ch === "(") {
+        if (abierto) return false;
+        abierto = true;
+      } else if (ch === ")" && !abierto) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  // ===== EDICIÓN: form y derivados independientes (NO pisan el form de agregar) =====
+  const iso2Editando = phoneFormatsByIso2.has(telefonoEditandoForm?.iso2)
+    ? telefonoEditandoForm.iso2
+    : (phoneFormatsByIso2.get("VE") || { iso2: phoneFormats[0].iso2 }).iso2;
+  const numeroEditandoActual = typeof telefonoEditandoForm?.numero === "string" ? telefonoEditandoForm.numero : "";
+  const paisEditandoSeleccionado = phoneFormatsByIso2.get(iso2Editando);
+  const maxDigitosEditando = validacionesTelefono.get(iso2Editando)?.max;
+  const codigoEditandoDigitos = (paisEditandoSeleccionado?.country_code || "").replace(/\D/g, "");
+  const numeroNacionalEditando = (() => {
+    const d = (numeroEditandoActual || "").replace(/\D/g, "");
+    return codigoEditandoDigitos && d.startsWith(codigoEditandoDigitos) ? d.slice(codigoEditandoDigitos.length) : d;
+  })();
+
+  const limpiarNacionalEditando = (valor) => {
+    const s = String(valor || "");
+    const d = s.replace(/\D/g, "");
+    const sinCodigo = codigoEditandoDigitos && d.startsWith(codigoEditandoDigitos) ? d.slice(codigoEditandoDigitos.length) : d;
+    const limitado = !maxDigitosEditando ? sinCodigo : sinCodigo.slice(0, maxDigitosEditando);
+    let usados = 0;
+    let res = "";
+    let parenAbierto = false;
+    for (const ch of s) {
+      const esDigito = ch >= "0" && ch <= "9";
+      if (esDigito && usados < limitado.length) {
+        res += limitado[usados];
+        usados++;
+      } else if (ch === "(" && !parenAbierto) {
+        res += ch;
+        parenAbierto = true;
+      } else if (ch === ")" && parenAbierto) {
+        res += ch;
+        parenAbierto = false;
+      } else if (ch === "-" || ch === " ") {
+        res += ch;
+      }
+    }
+    return res;
+  };
+
+  const cambiarPaisTelefono = (newIso2) => {
+    const conf = validacionesTelefono.get(newIso2);
+    const nuevoCodigo = (phoneFormatsByIso2.get(newIso2)?.country_code || "").replace(/\D/g, "");
+    const d = String(typeof nuevoTelefono?.numero === "string" ? nuevoTelefono.numero : "").replace(/\D/g, "");
+    const sinCodigo = nuevoCodigo && d.startsWith(nuevoCodigo) ? d.slice(nuevoCodigo.length) : d;
+    setNuevoTelefono({
+      iso2: newIso2,
+      numero: conf?.max ? sinCodigo.slice(0, conf.max) : sinCodigo,
+    });
+  };
+
+  const cambiarPaisEditando = (newIso2) => {
+    const conf = validacionesTelefono.get(newIso2);
+    const nuevoCodigo = (phoneFormatsByIso2.get(newIso2)?.country_code || "").replace(/\D/g, "");
+    const d = String(typeof telefonoEditandoForm?.numero === "string" ? telefonoEditandoForm.numero : "").replace(/\D/g, "");
+    const sinCodigo = nuevoCodigo && d.startsWith(nuevoCodigo) ? d.slice(nuevoCodigo.length) : d;
+    setTelefonoEditandoForm((prev) => ({
+      iso2: newIso2,
+      numero: conf?.max ? sinCodigo.slice(0, conf.max) : sinCodigo,
+    }));
+  };
+
+  const cancelarEdicionTelefono = () => {
+    setTelefonoEditandoForm(null);
+    setTelefonoOriginalEdicion(null);
+    setTelefonoEditandoId(null);
+    setErrorTelefonos("");
+  };
+
+  const entrarEditarTelefonos = () => {
+    setEditandoTelefonos(true);
+    setAgregandoTelefono(false);
+    setErrorTelefonos("");
+    setNuevoTelefono((prev) => ({ iso2: iso2Actual, numero: typeof prev?.numero === "string" ? prev.numero : "" }));
+  };
+
+  const listoTelefonos = () => {
+    setEditandoTelefonos(false);
+    setAgregandoTelefono(false);
+    setErrorTelefonos("");
+    setNuevoTelefono((prev) => ({ iso2: iso2Actual, numero: typeof prev?.numero === "string" ? prev.numero : "" }));
+  };
+
+  const agregarTelefono = async () => {
+    if (!numeroNacional || telefonos.length >= MAX_TELEFONOS) return;
+    setErrorTelefonos("");
+    try {
+      const res = await apiPost(`/corredores/${user.id}/telefonos`, {
+        iso2: iso2Actual,
+        telefono: `${paisSeleccionado?.country_code || ""} ${numeroNacional}`.trim(),
+      });
+      const data = res?.data || res;
+      setTelefonos((prev) => [
+        ...prev,
+        { id: data.id, nro_telefono: data.nro_telefono || `${paisSeleccionado?.country_code || ""} ${numeroNacional}`.trim(), codigo_pais: data.codigo_pais || iso2Actual },
+      ]);
+      setNuevoTelefono({ iso2: iso2Actual, numero: "" });
+      setAgregandoTelefono(false);
+    } catch (e) {
+      setErrorTelefonos(e?.message || "Error al agregar el teléfono.");
+    }
+  };
+
+  const entrarEditarTelefono = (t) => {
+    if (!t) return;
+    setErrorTelefonos("");
+    const numeroDigitos = (t?.nro_telefono || "").replace(/\D/g, "");
+    const iso2DeT = t?.codigo_pais || detectarIso2(t?.nro_telefono);
+    const codigoPais = (phoneFormatsByIso2.get(iso2DeT)?.country_code || "").replace(/\D/g, "");
+    const nacionalDigitos = codigoPais && numeroDigitos.startsWith(codigoPais) ? numeroDigitos.slice(codigoPais.length) : numeroDigitos;
+    setTelefonoEditandoId(t.id);
+    setTelefonoEditandoForm({
+      iso2: iso2DeT,
+      numero: nacionalDigitos,
+    });
+    setTelefonoOriginalEdicion({
+      iso2: iso2DeT,
+      numero: nacionalDigitos,
+    });
+  };
+
+  const guardarTelefonoEditado = async () => {
+    if (!telefonoEditandoId || !numeroNacionalEditando) return;
+    setErrorTelefonos("");
+    try {
+      const res = await apiPut(`/corredores/${user.id}/telefonos/${telefonoEditandoId}`, {
+        iso2: iso2Editando,
+        telefono: `${paisEditandoSeleccionado?.country_code || ""} ${numeroNacionalEditando}`.trim(),
+      });
+      const data = res?.data || res;
+      setTelefonos((prev) =>
+        prev.map((t) =>
+          t.id === telefonoEditandoId
+            ? { ...t, nro_telefono: data.nro_telefono || `${paisEditandoSeleccionado?.country_code || ""} ${numeroNacionalEditando}`.trim(), codigo_pais: data.codigo_pais || iso2Editando }
+            : t
+        )
+      );
+      setTelefonoEditandoForm(null);
+      setTelefonoOriginalEdicion(null);
+      setTelefonoEditandoId(null);
+      setAgregandoTelefono(false);
+    } catch (e) {
+      setErrorTelefonos(e?.message || "Error al actualizar el teléfono.");
+    }
+  };
+
+  const eliminarTelefono = async (id) => {
+    if (!id) return;
+    setErrorTelefonos("");
+    try {
+      await apiDelete(`/corredores/${user.id}/telefonos/${id}`);
+      setTelefonos((prev) => prev.filter((t) => t.id !== id));
+    } catch (e) {
+      setErrorTelefonos(e?.message || "Error al eliminar el teléfono.");
+    }
+  };
 
   // Procesar archivo de imagen seleccionado
   const handleFileChange = async (file) => {
@@ -209,7 +478,7 @@ export default function Perfil() {
   const rolInfo = roleBadgeConfig[user?.rol] || roleBadgeConfig.cliente;
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-slate-50/70 dark:bg-[#0c0c0e] py-8 px-4 sm:px-6 lg:px-8 transition-colors">
+    <div className="min-h-[calc(100vh-4rem)] bg-blue-50/45 dark:bg-slate-900 py-8 px-4 sm:px-6 lg:px-8 transition-colors">
       <div className="max-w-4xl mx-auto space-y-6">
         
         {/* Barra superior con navegación hacia atrás */}
@@ -531,6 +800,302 @@ export default function Perfil() {
                 </div>
               </form>
             </div>
+
+            {user?.rol === "corredor" && (
+              <>
+                {errorTelefonos && (
+                  <div className="mt-6 flex items-center gap-3 p-4 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 text-red-800 dark:text-red-300 text-sm font-semibold">
+                    <svg className="w-5 h-5 shrink-0 text-red-650 dark:text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                    </svg>
+                    <span className="flex-1">{errorTelefonos}</span>
+                    <button
+                      onClick={() => setErrorTelefonos("")}
+                      className="text-red-650 hover:text-red-800 dark:text-red-400 text-xs font-bold cursor-pointer"
+                    >
+                      Cerrar
+                    </button>
+                  </div>
+                )}
+
+                <div className="mt-6 bg-white dark:bg-[#141417] rounded-2xl border border-slate-200/80 dark:border-slate-800/80 p-6 sm:p-7 shadow-xs">
+                <div className="flex items-start justify-between gap-3 border-b border-slate-100 dark:border-slate-800/80 pb-4 mb-5">
+                  <div>
+                    <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+                      Teléfonos de Contacto
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      Números asociados a tu perfil de corredor (máximo 3).
+                    </p>
+                  </div>
+
+                  {!editandoTelefonos && (
+                    <button
+                      type="button"
+                      onClick={entrarEditarTelefonos}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold text-purple-700 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40 transition-colors cursor-pointer shrink-0"
+                    >
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                      </svg>
+                      Editar
+                    </button>
+                  )}
+                </div>
+
+                {telefonos.length > 0 ? (
+                  <ul className="space-y-3">
+                    {telefonos.map((t) => (
+                      <li key={t.id} className="flex items-center gap-3">
+                        {telefonoEditandoId === t.id ? (
+                          <div className="flex-1 flex flex-col gap-2 px-3 py-2.5 rounded-xl bg-slate-50/60 dark:bg-slate-900/40 border border-purple-300 dark:border-purple-700">
+                            <div className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                              Editar teléfono
+                            </div>
+                            <div className="flex gap-2">
+                              <select
+                                value={iso2Editando}
+                                onChange={(e) => cambiarPaisEditando(e.target.value)}
+                                className="w-36 shrink-0 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1c1c21] px-2.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-600/30 focus:border-purple-600 transition-all"
+                              >
+                                {phoneFormats.map((c) => (
+                                  <option key={c.iso2} value={c.iso2}>
+                                    {`(${c.country_code}) ${c.country}`}
+                                  </option>
+                                ))}
+                              </select>
+                              <input
+                                type="tel"
+                                autoFocus
+                                value={numeroEditandoActual}
+                                maxLength={maxDigitosEditando ? maxDigitosEditando + 8 : undefined}
+                                onBeforeInput={(e) => {
+                                  const data = e.data;
+                                  if (data == null || data.length !== 1) return;
+                                  if (!validarEntradaTelefono(e.target.value, e.target.selectionStart ?? 0, e.target.selectionEnd ?? e.target.selectionStart ?? 0, data)) e.preventDefault();
+                                }}
+                                onChange={(e) =>
+                                  setTelefonoEditandoForm((prev) => ({
+                                    ...prev,
+                                    numero: limpiarNacionalEditando(e.target.value),
+                                  }))
+                                }
+                                onPaste={(e) => {
+                                  e.preventDefault();
+                                  setTelefonoEditandoForm((prev) => ({
+                                    ...prev,
+                                    numero: limpiarNacionalEditando((typeof prev?.numero === "string" ? prev.numero : "") + e.clipboardData.getData("text")),
+                                  }));
+                                }}
+                                onKeyDown={(e) => e.key === "Enter" && guardarTelefonoEditado()}
+                                placeholder={paisEditandoSeleccionado?.example?.split(" ").slice(1).join("").replace(/-/g, "") || "Número"}
+                                className="flex-1 min-w-0 px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1c1c21] text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-600/30 focus:border-purple-600 transition-all"
+                              />
+                              {maxDigitosEditando ? (
+                                <span className="self-center text-xs text-slate-400 shrink-0">
+                                  {numeroNacionalEditando.length}/{maxDigitosEditando}
+                                </span>
+                              ) : null}
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <button
+                                type="button"
+                                onClick={guardarTelefonoEditado}
+                                disabled={!numeroNacionalEditando || (iso2Editando === telefonoOriginalEdicion?.iso2 && numeroNacionalEditando === telefonoOriginalEdicion?.numero)}
+                                title="Actualizar teléfono"
+                                className="w-8 h-8 rounded-lg inline-flex items-center justify-center text-white transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                                style={{ backgroundColor: "#5a0e82" }}
+                              >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={cancelarEdicionTelefono}
+                                title="Cancelar"
+                                className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-800 inline-flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors cursor-pointer"
+                              >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center bg-purple-100 dark:bg-purple-950/60 text-[#470A68] dark:text-purple-300">
+                              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                              </svg>
+                            </div>
+
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold text-slate-800 dark:text-white truncate">
+                                {t.nro_telefono}
+                              </p>
+                            </div>
+
+                            {editandoTelefonos && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => entrarEditarTelefono(t)}
+                                  title="Editar teléfono"
+                                  className="shrink-0 w-8 h-8 rounded-lg inline-flex items-center justify-center border border-purple-200 dark:border-purple-800/60 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40 hover:border-purple-300 dark:hover:border-purple-800 transition-colors cursor-pointer"
+                                >
+                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                                  </svg>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => eliminarTelefono(t.id)}
+                                  title="Eliminar teléfono"
+                                  className="shrink-0 w-8 h-8 rounded-lg inline-flex items-center justify-center border border-red-200 dark:border-red-900/60 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 hover:border-red-300 dark:hover:border-red-800 transition-colors cursor-pointer"
+                                >
+                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              </>
+                            )}
+                          </>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 py-10 text-center text-sm text-slate-400 dark:text-slate-500">
+                    {editandoTelefonos
+                      ? "Aún no hay teléfonos agregados. Usa el botón de abajo para añadir."
+                      : "No especificado"}
+                  </div>
+                )}
+
+                {editandoTelefonos && (
+                  <div className="mt-5">
+                    {telefonos.length < MAX_TELEFONOS && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAgregandoTelefono((s) => !s);
+                          setNuevoTelefono({ iso2: iso2Actual, numero: "" });
+                        }}
+                        className="w-full py-2.5 px-4 rounded-xl text-xs font-bold border border-dashed border-purple-300 dark:border-purple-800 text-purple-700 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40 transition-colors cursor-pointer inline-flex items-center justify-center gap-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                        Agregar teléfono
+                      </button>
+                    )}
+
+                    {agregandoTelefono && (
+                      <div className="mt-3 flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-50/60 dark:bg-slate-900/40 border border-purple-300 dark:border-purple-700">
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                            Número de teléfono
+                          </div>
+                          <div className="flex gap-2">
+                            <select
+                              value={iso2Actual}
+                              onChange={(e) => cambiarPaisTelefono(e.target.value)}
+                              className="w-36 shrink-0 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1c1c21] px-2.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-600/30 focus:border-purple-600 transition-all"
+                            >
+                              {phoneFormats.map((c) => (
+                                <option key={c.iso2} value={c.iso2}>
+                                  {`(${c.country_code}) ${c.country}`}
+                                </option>
+                              ))}
+                            </select>
+                            <input
+                              type="tel"
+                              autoFocus
+                              value={numeroActual}
+                              maxLength={maxDigitos ? maxDigitos + 8 : undefined}
+                              onBeforeInput={(e) => {
+                                const data = e.data;
+                                if (data == null || data.length !== 1) return;
+                                if (!validarEntradaTelefono(e.target.value, e.target.selectionStart ?? 0, e.target.selectionEnd ?? e.target.selectionStart ?? 0, data)) e.preventDefault();
+                              }}
+                              onChange={(e) =>
+                                setNuevoTelefono((prev) => ({
+                                  ...prev,
+                                  numero: limpiarNacional(e.target.value),
+                                }))
+                              }
+                              onPaste={(e) => {
+                                e.preventDefault();
+                                setNuevoTelefono((prev) => ({
+                                  ...prev,
+                                  numero: limpiarNacional((typeof prev?.numero === "string" ? prev.numero : "") + e.clipboardData.getData("text")),
+                                }));
+                              }}
+                              onKeyDown={(e) => e.key === "Enter" && agregarTelefono()}
+                              placeholder={paisSeleccionado?.example?.split(" ").slice(1).join("").replace(/-/g, "") || "Número"}
+                              className="flex-1 min-w-0 px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1c1c21] text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-600/30 focus:border-purple-600 transition-all"
+                            />
+                            {maxDigitos ? (
+                              <span className="self-center text-xs text-slate-400 shrink-0">
+                                {numeroNacional.length}/{maxDigitos}
+                              </span>
+                            ) : null}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={agregarTelefono}
+                            disabled={!numeroNacional}
+                            title="Guardar teléfono"
+                            className="w-8 h-8 rounded-lg inline-flex items-center justify-center text-white transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                            style={{ backgroundColor: "#5a0e82" }}
+                            onMouseEnter={(e) => numeroNacional && (e.currentTarget.style.backgroundColor = "#470A68")}
+                            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#5a0e82")}
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAgregandoTelefono(false);
+                              setNuevoTelefono({ iso2: iso2Actual, numero: "" });
+                            }}
+                            title="Cancelar"
+                            className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-800 inline-flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors cursor-pointer"
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="pt-4 flex justify-end border-t border-slate-100 dark:border-slate-800/80 mt-5">
+                      <button
+                        type="button"
+                        onClick={listoTelefonos}
+                        className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-white shadow-md transition-all active:scale-95 cursor-pointer"
+                        style={{ backgroundColor: "#5a0e82" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#470A68")}
+                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#5a0e82")}
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                        Listo
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+              </>
+            )}
 
             {user?.rol === "corredor" && (
               <div className="mt-6">
