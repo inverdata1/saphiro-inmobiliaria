@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/nav/Navbar";
 import ScrollToTop from "./components/ScrollToTop";
 import ProtectedRoute from "./components/routes/ProtectedRoute";
@@ -34,7 +34,7 @@ import PerfilUsuarioPage from "./pages/PerfilUsuarioPage";
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <>
       <ScrollToTop />
       <Navbar />
       <VerificarEmailBanner />
@@ -83,6 +83,6 @@ export default function App() {
         {/* ── Catch-all ── */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </BrowserRouter>
+    </>
   );
 }

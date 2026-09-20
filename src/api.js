@@ -18,10 +18,19 @@ function baseHeaders() {
   return { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" };
 }
 
+let onSessionExpired = null;
+
+export function setSessionExpiredHandler(fn) {
+  onSessionExpired = fn;
+}
+
 function redirectToLogin() {
-  if (window.location.pathname !== "/") {
-    window.location.href = "/";
+  try {
+    localStorage.removeItem("user");
+  } catch {
+    // fallo de almacenamiento: ignorar
   }
+  onSessionExpired?.();
 }
 
 export class EmailNotVerifiedError extends Error {

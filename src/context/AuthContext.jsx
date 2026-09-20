@@ -1,18 +1,10 @@
 import { createContext, useEffect, useRef, useState } from "react";
-import { apiGet, apiPost, refreshSession, SessionExpiredError } from "../api";
+import { useNavigate } from "react-router-dom";
+import { apiGet, apiPost, refreshSession, SessionExpiredError, setSessionExpiredHandler } from "../api";
 
 export const AuthContext = createContext(null);
 
 const AUTO_REFRESH_INTERVAL = 14 * 60 * 1000;
-
-function loadUser() {
-  try {
-    const raw = localStorage.getItem("user");
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
 
 function saveUser(u) {
   if (u) localStorage.setItem("user", JSON.stringify(u));
@@ -20,9 +12,10 @@ function saveUser(u) {
 }
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(loadUser);
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const timerRef = useRef(null);
+  const navigate = useNavigate();
 
   function stopAutoRefresh() {
     if (timerRef.current) {
@@ -64,8 +57,15 @@ export function AuthProvider({ children }) {
         if (!cancelled) setLoading(false);
       }
     })();
+    setSessionExpiredHandler(() => {
+      setUser(null);
+      saveUser(null);
+      stopAutoRefresh();
+      navigate("/login", { replace: true });
+    });
     return () => {
       cancelled = true;
+      setSessionExpiredHandler(null);
       stopAutoRefresh();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
