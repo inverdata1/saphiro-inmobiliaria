@@ -13,11 +13,15 @@ import {
 } from "./NavbarOpciones";
 import NotificationDropdown from "../NotificationDropdown";
 import { SidebarOpciones } from "./SidebarOpciones";
+import { LanguageToggle, useT } from "../../lib/i18n";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
+  const tr = useT();
   const navigate = useNavigate();
   const location = useLocation();
+  const isStaff = user?.rol === "admin" || user?.rol === "corredor";
+  const navVariant = isStaff ? "dark" : "light";
   const [open, setOpen] = useState(false);
   const [dark, setDark] = useState(() => document.documentElement.classList.contains("dark"));
   const [searchQuery, setSearchQuery] = useState("");
@@ -71,14 +75,25 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 text-white shadow-md dark:bg-purple-900 border-b border-white/10 dark:border-purple-800/50" style={{ backgroundColor: "#470A68" }}>
+      <header
+        className={
+          isStaff
+            ? "sticky top-0 z-40 text-white shadow-md dark:bg-purple-900 border-b border-white/10 dark:border-purple-800/50"
+            : "sticky top-0 z-40 bg-white text-slate-900 shadow-sm border-b border-slate-100"
+        }
+        style={isStaff ? { backgroundColor: "#470A68" } : undefined}
+      >
         {/* Fila superior: logo + search + acciones */}
         <div className="px-4 py-3 flex items-center justify-between gap-3 max-w-7xl mx-auto">
           {/* Hamburger */}
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="inline-flex items-center justify-center rounded-xl border border-white/20 p-2.5 text-white/85 hover:bg-white/10 active:scale-95 shrink-0 dark:border-white/20 cursor-pointer"
+            className={
+              isStaff
+                ? "inline-flex items-center justify-center rounded-xl border border-white/20 p-2.5 text-white/85 hover:bg-white/10 active:scale-95 shrink-0 dark:border-white/20 cursor-pointer"
+                : "inline-flex items-center justify-center rounded-xl border border-slate-200 p-2.5 text-slate-800 hover:bg-slate-50 active:scale-95 shrink-0 cursor-pointer"
+            }
             aria-label="Abrir menú"
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -91,7 +106,7 @@ export default function Navbar() {
           {/* Logo */}
           <NavLink to="/" className="flex shrink-0 items-center gap-2.5">
             <img src={logo} alt="InmoSoft" className="h-9 w-9 rounded-xl bg-white/15 p-0.5" />
-            <span className="hidden sm:block text-base font-extrabold tracking-tight text-white">Inverdata C.A</span>
+            <span className={`hidden sm:block text-base font-extrabold tracking-tight ${isStaff ? "text-white" : "text-slate-900"}`}>Inverdata C.A</span>
           </NavLink>
 
           {/* Search bar (oculta en página de inicio) */}
@@ -105,10 +120,14 @@ export default function Navbar() {
                   placeholder="Buscar inmuebles..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-white/15 text-white placeholder-white/60 focus:placeholder-white/80 rounded-xl px-4 py-2 pl-10 text-sm focus:outline-none focus:ring-2 focus:ring-white/20 focus:bg-white/25 border border-transparent dark:bg-white/10 dark:focus:bg-white/20"
+                  className={
+                    isStaff
+                      ? "w-full bg-white/15 text-white placeholder-white/60 focus:placeholder-white/80 rounded-xl px-4 py-2 pl-10 text-sm focus:outline-none focus:ring-2 focus:ring-white/20 focus:bg-white/25 border border-transparent dark:bg-white/10 dark:focus:bg-white/20"
+                      : "w-full bg-slate-100 text-slate-800 placeholder-slate-400 rounded-xl px-4 py-2 pl-10 text-sm focus:outline-none focus:ring-2 focus:ring-slate-200 border border-transparent"
+                  }
                 />
                 <div className="absolute left-3.5 flex items-center pointer-events-none">
-                  <svg className="h-4 w-4 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <svg className={`h-4 w-4 ${isStaff ? "text-white/70" : "text-slate-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                 </div>
@@ -118,11 +137,15 @@ export default function Navbar() {
 
           {/* Acciones derecha */}
           <div className="flex items-center gap-2">
-            {/* Dark mode */}
+            <LanguageToggle />
             <button
               type="button"
               onClick={toggleDark}
-              className="relative inline-flex h-9.5 w-9.5 items-center justify-center rounded-xl text-white/85 hover:bg-white/10 transition active:scale-95 cursor-pointer"
+              className={
+                isStaff
+                  ? "relative inline-flex h-9.5 w-9.5 items-center justify-center rounded-xl text-white/85 hover:bg-white/10 transition active:scale-95 cursor-pointer"
+                  : "relative inline-flex h-9.5 w-9.5 items-center justify-center rounded-xl text-slate-700 hover:bg-slate-50 transition active:scale-95 cursor-pointer"
+              }
               aria-label="Cambiar modo oscuro/claro"
             >
               <svg
@@ -146,7 +169,11 @@ export default function Navbar() {
                 <Link
                   to="/perfil"
                   title="Ver mi perfil"
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15 text-white border border-white/25 text-xs font-extrabold overflow-hidden hover:ring-2 hover:ring-white/40 hover:scale-105 transition-all cursor-pointer"
+                  className={
+                    isStaff
+                      ? "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15 text-white border border-white/25 text-xs font-extrabold overflow-hidden hover:ring-2 hover:ring-white/40 hover:scale-105 transition-all cursor-pointer"
+                      : "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-700 border border-slate-200 text-xs font-extrabold overflow-hidden hover:ring-2 hover:ring-slate-300 hover:scale-105 transition-all cursor-pointer"
+                  }
                 >
                   {user.foto_perfil || user.avatar ? (
                     <img
@@ -160,7 +187,11 @@ export default function Navbar() {
                 </Link>
                 <button
                   onClick={() => { logout(); navigate("/"); }}
-                  className="hidden sm:inline-flex whitespace-nowrap items-center justify-center rounded-xl border border-white/25 bg-white/10 px-4 py-2 text-xs font-bold text-white hover:bg-white/20 transition-all cursor-pointer"
+                  className={
+                    isStaff
+                      ? "hidden sm:inline-flex whitespace-nowrap items-center justify-center rounded-xl border border-white/25 bg-white/10 px-4 py-2 text-xs font-bold text-white hover:bg-white/20 transition-all cursor-pointer"
+                      : "hidden sm:inline-flex whitespace-nowrap items-center justify-center rounded-full border border-slate-200 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all cursor-pointer"
+                  }
                 >
                   Salir
                 </button>
@@ -168,18 +199,26 @@ export default function Navbar() {
             ) : (
               <Link
                 to="/login"
-                className="inline-flex whitespace-nowrap items-center justify-center rounded-xl bg-white hover:bg-white/95 px-4 py-2 text-xs font-bold transition active:scale-95 shadow-sm" style={{ color: "#5a0e82" }}
+                className={
+                  isStaff
+                    ? "inline-flex whitespace-nowrap items-center justify-center rounded-xl bg-white hover:bg-white/95 px-4 py-2 text-xs font-bold transition active:scale-95 shadow-sm"
+                    : "inline-flex whitespace-nowrap items-center justify-center rounded-full bg-slate-900 hover:bg-slate-800 px-5 py-2 text-sm font-semibold text-white transition active:scale-95 shadow-sm"
+                }
+                style={isStaff ? { color: "#5a0e82" } : undefined}
               >
-                Iniciar sesión
+                {tr("signIn")}
               </Link>
             )}
           </div>
         </div>
 
         {/* Fila inferior: navegación horizontal (desktop) */}
-        <nav className="hidden md:block border-t border-white/15" style={{ backgroundColor: "#5a0e82" }}>
+        <nav
+          className={`hidden md:block border-t ${isStaff ? "border-white/15" : "border-slate-100 bg-white"}`}
+          style={isStaff ? { backgroundColor: "#5a0e82" } : undefined}
+        >
           <div className="px-4 flex items-center gap-1.5 overflow-x-auto scrollbar-custom py-2 max-w-7xl mx-auto">
-            <NavOpciones user={user} />
+            <NavOpciones user={user} variant={navVariant} />
           </div>
         </nav>
       </header>
