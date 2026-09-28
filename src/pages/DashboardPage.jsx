@@ -1,179 +1,179 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { apiGet } from "../api";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import PropertyCard from "../components/PropertyCard";
-import { useT } from "../lib/i18n";
+import ErrorBanner from "../components/error/ErrorBanner";
 
-const HERO_IMG =
-  "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=1920&q=80";
+function MenuCard({ to, icon, title, subtitle, className = "" }) {
+  return (
+    <Link
+      to={to}
+      className={`group block rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.012)] transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_12px_40px_rgba(0,0,0,0.03)] dark:border-slate-800/60 dark:bg-[#141417] dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)] dark:hover:shadow-[0_12px_40px_rgba(0,0,0,0.5)] ${className}`}
+    >
+      <div className="flex items-center justify-between">
+        <div className="text-base font-bold text-slate-900 dark:text-slate-50">{title}</div>
+        <div className="shrink-0">{icon}</div>
+      </div>
+      <div className="mt-2 text-xs font-semibold text-slate-400 dark:text-slate-500 leading-relaxed">{subtitle}</div>
+      <div className="mt-5 text-xs font-bold text-blue-600 dark:text-blue-400 group-hover:text-blue-700 dark:group-hover:text-blue-300">Ir →</div>
+    </Link>
+  );
+}
 
 const MOCK_LATEST = [
-  { id: 1, titulo: "Ocean Breeze Villa", tipo_inmueble: "Villa", estado_inmueble: "alquiler_fijo", estatus: "disponible", precio: 4500, habitaciones: 3, banos: 2, area_m2: 220, sector: "Ocean Drive", ciudad: "Maracaibo", imagen_url: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80" },
-  { id: 2, titulo: "Jakson House", tipo_inmueble: "Casa", estado_inmueble: "alquiler_fijo", estatus: "disponible", precio: 3200, habitaciones: 3, banos: 2, area_m2: 180, sector: "Baker Street", ciudad: "Maracaibo", imagen_url: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80" },
-  { id: 3, titulo: "Lakeside Cottage", tipo_inmueble: "Casa", estado_inmueble: "alquiler_fijo", estatus: "disponible", precio: 5700, habitaciones: 3, banos: 2, area_m2: 240, sector: "Pinecrest Lane", ciudad: "Maracaibo", imagen_url: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=800&q=80" },
-];
-
-const PRICE_PRESETS = [
-  { value: "", key: "price" },
-  { value: "0-1500", key: "priceTo" },
-  { value: "1500-3500", key: "priceMid" },
-  { value: "3500-7000", key: "priceHigh" },
-  { value: "7000-", key: "priceMore" },
+  { id: 1, titulo: "Penthouse de Lujo en Piantini", tipo_inmueble: "Penthouse", estado_inmueble: "venta", estatus: "disponible", precio: 18500000, habitaciones: 4, banos: 3, area_m2: 320, sector: "Piantini", ciudad: "Santo Domingo", imagen_url: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80" },
+  { id: 2, titulo: "Apartamento en Bella Vista", tipo_inmueble: "Apartamento", estado_inmueble: "alquiler_fijo", estatus: "disponible", precio: 45000, habitaciones: 2, banos: 2, area_m2: 110, sector: "Bella Vista", ciudad: "Santo Domingo", imagen_url: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80" },
+  { id: 3, titulo: "Villa de Playa en Juan Dolio", tipo_inmueble: "Villa", estado_inmueble: "vacacional", estatus: "disponible", precio: 8500, habitaciones: 3, banos: 2, area_m2: 200, sector: "Juan Dolio", ciudad: "San Pedro de Macorís", imagen_url: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=800&q=80" },
 ];
 
 export default function DashboardPage() {
+  useEffect(() => { window.scrollTo(0, 0); }, []);
   const { user } = useAuth();
-  const tr = useT();
-  const navigate = useNavigate();
-  const isStaff = user?.rol === "admin" || user?.rol === "corredor";
-
-  const [latest, setLatest] = useState([]);
-  const [estados, setEstados] = useState([]);
-  const [tipos, setTipos] = useState([]);
-  const [q, setQ] = useState("");
-  const [estadoId, setEstadoId] = useState("");
-  const [tipo, setTipo] = useState("");
-  const [price, setPrice] = useState("");
+  const [latestInmuebles, setLatestInmuebles] = useState([]);
+  const [err, setErr] = useState("");
 
   useEffect(() => {
     (async () => {
       try {
-        const res = await apiGet("/inmuebles", { limit: 6, estatus: "disponible" });
-        const data = res?.data ?? res ?? [];
-        setLatest(Array.isArray(data) && data.length ? data : MOCK_LATEST);
+        const res = await apiGet("/inmuebles", { limit: 3 });
+        const data = res?.data ?? [];
+        setLatestInmuebles(Array.isArray(data) ? data : []);
       } catch {
-        setLatest(MOCK_LATEST);
+        setLatestInmuebles(MOCK_LATEST);
       }
     })();
-    apiGet("/geo/estados").then((r) => setEstados(r?.data || [])).catch(() => setEstados([]));
-    apiGet("/tipos").then((r) => setTipos(r?.data || r || [])).catch(() => setTipos([]));
   }, []);
 
-  function search(e) {
-    e?.preventDefault?.();
-    const params = new URLSearchParams();
-    if (q.trim()) params.set("q", q.trim());
-    if (estadoId) params.set("estado_id", estadoId);
-    if (tipo) {
-      if (String(tipo).startsWith("op:")) params.set("estado_inmueble", tipo.slice(3));
-      else params.set("tipo_inmueble_id", tipo);
-    }
-    if (price) {
-      const [min, max] = price.split("-");
-      if (min) params.set("min", min);
-      if (max) params.set("max", max);
-    }
-    navigate(`/inmuebles?${params.toString()}`);
-  }
-
-  const featured = latest.slice(0, 3);
+  const initials = user
+    ? (user.nombre || user.name || "")
+      .split(" ")
+      .map((p) => p[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase()
+    : "US";
 
   return (
-    <div className="bg-white dark:bg-slate-900">
-      <section className="relative isolate min-h-[72vh] overflow-hidden">
-        <img src={HERO_IMG} alt="" className="absolute inset-0 h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/55 via-slate-950/35 to-slate-950/70" />
-        <div className="relative mx-auto flex min-h-[72vh] max-w-5xl flex-col items-center justify-center px-4 pb-28 pt-16 text-center">
-          <h1 className="max-w-3xl text-4xl font-extrabold tracking-tight text-white sm:text-5xl md:text-6xl">
-            {tr("heroTitle")}
-          </h1>
-          <p className="mt-4 max-w-xl text-base text-white/85 sm:text-lg">
-            {tr("heroSub")}
-          </p>
+    <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
+      {/* Page Header */}
+      <div className="flex flex-col gap-1">
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">Panel de Control</h1>
+        <p className="text-sm font-semibold text-slate-400 dark:text-slate-500">Administra, explora y revisa los últimos inmuebles del sistema.</p>
+      </div>
 
-          <form
-            onSubmit={search}
-            className="absolute bottom-8 left-1/2 z-10 w-[min(100%-2rem,56rem)] -translate-x-1/2"
-          >
-            <div className="flex flex-col overflow-hidden rounded-2xl bg-white shadow-2xl sm:flex-row sm:items-stretch">
-              <label className="flex min-w-0 flex-1 items-center gap-2 border-b border-slate-100 px-4 py-3 sm:border-b-0 sm:border-r">
-                <span className="text-slate-400">📍</span>
-                <input
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  placeholder={tr("cityPh")}
-                  className="w-full bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400"
-                />
-              </label>
-              <label className="flex min-w-[10rem] items-center gap-2 border-b border-slate-100 px-4 py-3 sm:border-b-0 sm:border-r">
-                <span className="text-slate-400">⌂</span>
-                <select
-                  value={tipo}
-                  onChange={(e) => setTipo(e.target.value)}
-                  className="w-full bg-transparent text-sm text-slate-700 outline-none"
-                >
-                  <option value="">{tr("type")}</option>
-                  <option value="op:venta">{tr("sale")}</option>
-                  <option value="op:alquiler_fijo">{tr("rent")}</option>
-                  <option value="op:vacacional">{tr("vacation")}</option>
-                  {tipos.map((t) => (
-                    <option key={t.id} value={t.id}>{t.nombre}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="flex min-w-[9rem] items-center gap-2 px-4 py-3">
-                <select
-                  value={estadoId}
-                  onChange={(e) => setEstadoId(e.target.value)}
-                  className="w-full bg-transparent text-sm text-slate-700 outline-none"
-                >
-                  <option value="">{tr("state")}</option>
-                  {estados.map((e) => (
-                    <option key={e.id} value={e.id}>{e.nombre}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="flex min-w-[9rem] items-center gap-2 border-t border-slate-100 px-4 py-3 sm:border-t-0 sm:border-l">
-                <select
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  className="w-full bg-transparent text-sm text-slate-700 outline-none"
-                >
-                  {PRICE_PRESETS.map((p) => (
-                    <option key={p.value || "any"} value={p.value}>{tr(p.key)}</option>
-                  ))}
-                </select>
-              </label>
-              <button
-                type="submit"
-                className="bg-slate-900 px-8 py-3 text-sm font-semibold text-white hover:bg-slate-800 sm:rounded-none"
-              >
-                {tr("search")}
-              </button>
+      <ErrorBanner message={err} onClose={() => setErr("")} />
+
+      {/* Asymmetric 5-Card Bento Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        {/* Card 1: Inmuebles - Wide Hero Item */}
+        <MenuCard
+          to="/inmuebles"
+          icon={
+            <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-xl">
+              <svg className="h-6 w-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
             </div>
-          </form>
-        </div>
-      </section>
+          }
+          title="Catálogo de Inmuebles"
+          subtitle="Explora, busca y filtra todas las propiedades en venta y alquiler, o registra nuevos inmuebles."
+          className="md:col-span-2"
+        />
 
-      <section className="mx-auto max-w-6xl px-4 py-16">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <h2 className="text-3xl font-bold text-slate-900 dark:text-white">{tr("mostViewed")}</h2>
-            <p className="mt-1 text-sm text-slate-500">{tr("mostViewedSub")}</p>
+        {/* Card 2: Transacciones */}
+        <MenuCard
+          to="/transacciones"
+          icon={
+            <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-xl">
+              <svg className="h-6 w-6 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+          }
+          title="Transacciones"
+          subtitle="Monitorea ventas, cierres y acuerdos del sistema en tiempo real."
+          className="md:col-span-1"
+        />
+
+        {/* Card 3: Comisiones */}
+        <MenuCard
+          to="/comisiones"
+          icon={
+            <div className="p-3 bg-amber-50 dark:bg-amber-950/30 rounded-xl">
+              <svg className="h-6 w-6 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+          }
+          title="Comisiones"
+          subtitle="Consulta los reportes de comisiones generadas por los corredores."
+          className="md:col-span-1"
+        />
+
+        {/* Card 4: Bitácora */}
+        <MenuCard
+          to="/bitacora"
+          icon={
+            <div className="p-3 bg-indigo-50 dark:bg-indigo-950/30 rounded-xl">
+              <svg className="h-6 w-6 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+              </svg>
+            </div>
+          }
+          title="Bitácora"
+          subtitle="Audita los logs y estadísticas de uso del sistema."
+          className="md:col-span-1"
+        />
+
+        {/* Card 5: Tu Perfil (Custom Integrated Bento Card) */}
+        <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.012)] dark:border-slate-800/60 dark:bg-[#141417] dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)] md:col-span-1 flex flex-col justify-between">
+          <div className="space-y-4">
+            <div className="text-base font-bold text-slate-900 dark:text-slate-50">Tu Perfil</div>
+            {user ? (
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-650 text-xs font-bold text-white shadow-md">
+                  {initials}
+                </div>
+                <div className="min-w-0">
+                  <div className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{user.nombre || user.name || "-"}</div>
+                  <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-bold">{user.cargo || "Usuario"}</div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-xs text-slate-400">Sesión no iniciada</div>
+            )}
           </div>
-          <Link to="/inmuebles" className="text-sm font-semibold text-slate-900 underline dark:text-white">
-            {tr("seeAll")}
+          <div className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 pt-4 border-t border-slate-100 dark:border-slate-800/60 mt-4">
+            {user?.email || "-"}
+          </div>
+        </div>
+      </div>
+
+      {/* Latest Properties Section */}
+      <div className="space-y-4 pt-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-lg font-bold text-slate-900 dark:text-slate-50">Últimos Inmuebles</div>
+            <div className="text-xs font-semibold text-slate-400 dark:text-slate-500">Las propiedades más recientes del catálogo.</div>
+          </div>
+          <Link to="/inmuebles" className="text-xs font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400">
+            Ver todos →
           </Link>
         </div>
-        <div className="mt-8 grid grid-cols-1 gap-8 md:grid-cols-3">
-          {featured.map((p) => (
-            <PropertyCard key={p.id || p.inmueble_id} property={p} portal />
-          ))}
-        </div>
-      </section>
 
-      {isStaff ? (
-        <section className="mx-auto max-w-6xl px-4 pb-16">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{tr("staff")}</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Link to="/inmuebles/crear" className="btn-secondary">{tr("createProperty")}</Link>
-            <Link to="/transacciones" className="btn-secondary">{tr("transactions")}</Link>
-            <Link to="/comisiones" className="btn-secondary">{tr("commissions")}</Link>
-            <Link to="/bitacora" className="btn-secondary">{tr("log")}</Link>
+        {latestInmuebles.length ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {latestInmuebles.map((i) => (
+              <PropertyCard key={i.id || i.inmueble_id} property={i} />
+            ))}
           </div>
-        </section>
-      ) : null}
+        ) : (
+          <div className="rounded-2xl border border-slate-100 bg-white p-6 text-sm text-slate-400 dark:border-slate-800 dark:bg-[#141417]">
+            Aún no hay inmuebles registrados.
+          </div>
+        )}
+      </div>
     </div>
   );
 }
