@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "../../context/useAuth";
-import { EmailNotVerifiedError } from "../../api";
+import { useAuth } from "../../context/AuthContext";
+import { useT } from "../../lib/i18n";
 
 export default function LoginPage() {
   const { login } = useAuth();
+  const tr = useT();
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
@@ -21,14 +22,8 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login(form.email, form.password);
-      navigate("/dashboard");
+      navigate("/");
     } catch (e) {
-      if (e instanceof EmailNotVerifiedError || e.isEmailNotVerified) {
-        navigate(
-          `/verificacion-pendiente?email=${encodeURIComponent(form.email)}`
-        );
-        return;
-      }
       setErr(e.message);
     } finally {
       setLoading(false);
@@ -40,10 +35,10 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="text-3xl font-extrabold text-slate-900 dark:text-slate-100">
-            Iniciar sesión
+            {tr("signIn")}
           </div>
           <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Ingresa tus credenciales para acceder al panel
+            {tr("loginSub")}
           </div>
         </div>
 
@@ -59,7 +54,7 @@ export default function LoginPage() {
 
           <div>
             <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-              Correo electrónico
+              {tr("email")}
             </label>
             <input
               type="email"
@@ -75,7 +70,7 @@ export default function LoginPage() {
 
           <div>
             <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-              Contraseña
+              {tr("password")}
             </label>
             <div className="relative mt-1">
               <input
