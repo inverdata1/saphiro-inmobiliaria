@@ -23,3 +23,11 @@ exports.forgotPasswordLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+exports.geocodeLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  message: { ok: false, message: "Demasiadas consultas de geocodificación, intenta más tarde" },
+  standardHeaders: true,
+  legacyHeaders: false,
+});

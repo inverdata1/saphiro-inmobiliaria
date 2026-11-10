@@ -33,6 +33,7 @@ export default function CorredoresPage() {
       const res = await apiGet(`/corredores?${params}`);
       const mapped = (res.data || []).map((item) => ({
         id: item.id,
+        usuario_uuid: item.usuario_uuid,
         nombre: item.corredor_nombre || "-",
         email: item.corredor_email,
         telefonos: item.telefonos || [],
@@ -125,7 +126,7 @@ export default function CorredoresPage() {
     if (!deleteTarget) return;
     setLoading(true);
     try {
-      await apiDelete(`/usuarios/${deleteTarget.id}`);
+      await apiDelete(`/usuarios/${deleteTarget.usuario_uuid}`);
       setRows((prev) => prev.filter((r) => r.id !== deleteTarget.id));
       setDeleteTarget(null);
     } catch (e) {
@@ -186,7 +187,7 @@ export default function CorredoresPage() {
               render: (r) =>
                 r.nombre !== "-" && r.telefonos?.length ? (
                   <Link
-                    to={`/perfil/${r.id}`}
+                    to={`/perfil/${r.usuario_uuid}`}
                     className="font-bold text-slate-800 dark:text-slate-100 hover:text-purple-750 dark:hover:text-purple-400 transition hover:underline"
                     title="Ver perfil completo e inmuebles del corredor"
                   >
@@ -221,7 +222,7 @@ export default function CorredoresPage() {
                 <div className="flex items-center justify-center gap-1">
                   {r.nombre !== "-" && r.telefonos?.length && (
                     <Link
-                      to={`/perfil/${r.id}`}
+                      to={`/perfil/${r.usuario_uuid}`}
                       className="rounded-lg bg-purple-50 p-2 text-[#470A68] hover:bg-purple-100 dark:bg-purple-950/40 dark:text-purple-300 cursor-pointer"
                       title="Ver perfil público e inmuebles"
                     >

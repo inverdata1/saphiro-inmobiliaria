@@ -1,116 +1,167 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useAuth } from "../../context/useAuth";
+import { apiGet } from "../../api";
+import { formatDate } from "../../utils/date";
+import { fmtImporte, fmtTotal } from "../../utils/money";
+import SaphiroDatePicker from "../../components/pickers/SaphiroDatePicker";
+import ErrorBanner from "../../components/error/ErrorBanner";
+import ComprobanteTransaccionModal from "../../components/pagos/ComprobanteTransaccionModal";
 
-// Datos de ejemplo realistas de transferencias recibidas por el corredor inmobiliario
-const MOCK_TRANSFERENCIAS = [
-  {
-    id: "TRF-2026-0412",
-    referenciaBancaria: "74839201",
-    inmueble: "Apartamento de Lujo en Altamira",
-    inmuebleUbicacion: "Altamira, Caracas",
-    inmuebleImagen: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=400&q=80",
-    clienteNombre: "Sofía Rodríguez",
-    clienteEmail: "sofia.rodriguez@email.com",
-    clienteTelefono: "+58 414-1234567",
-    concepto: "Reserva Vacacional (15 Sep - 18 Sep 2026)",
-    fecha: "2026-09-05 14:32",
-    montoBrutoUsd: 450.00,
-    montoBrutoBs: 16425.00,
-    comisionPlataformaUsd: 45.00, // 10%
-    montoNetoUsd: 405.00,
-    montoNetoBs: 14782.50,
-    metodo: "Pago Móvil",
-    bancoEmisor: "Banesco",
-    bancoReceptor: "Mercantil (Cuenta Corredor)",
-    estado: "Aprobada",
-  },
-  {
-    id: "TRF-2026-0398",
-    referenciaBancaria: "ZEL-9921048",
-    inmueble: "Villa Sol & Playa Chichiriviche",
-    inmuebleUbicacion: "Chichiriviche, Falcón",
-    inmuebleImagen: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=400&q=80",
-    clienteNombre: "Alejandro Gómez",
-    clienteEmail: "gomez.alejandro@gmail.com",
-    clienteTelefono: "+58 412-9876543",
-    concepto: "Alquiler temporal semana completa + Depósito",
-    fecha: "2026-08-28 10:15",
-    montoBrutoUsd: 680.00,
-    montoBrutoBs: 24820.00,
-    comisionPlataformaUsd: 68.00,
-    montoNetoUsd: 612.00,
-    montoNetoBs: 22338.00,
-    metodo: "Zelle",
-    bancoEmisor: "Bank of America",
-    bancoReceptor: "Chase Bank (Corredor)",
-    estado: "Aprobada",
-  },
-  {
-    id: "TRF-2026-0355",
-    referenciaBancaria: "0091238471",
-    inmueble: "Townhouse Moderno Las Mercedes",
-    inmuebleUbicacion: "Las Mercedes, Caracas",
-    inmuebleImagen: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=400&q=80",
-    clienteNombre: "María Fernanda López",
-    clienteEmail: "mflopez@empresa.com",
-    clienteTelefono: "+58 424-5551234",
-    concepto: "Canon mensual de arrendamiento (Septiembre 2026)",
-    fecha: "2026-09-01 09:00",
-    montoBrutoUsd: 1200.00,
-    montoBrutoBs: 43800.00,
-    comisionPlataformaUsd: 60.00,
-    montoNetoUsd: 1140.00,
-    montoNetoBs: 41610.00,
-    metodo: "Transferencia",
-    bancoEmisor: "Mercantil",
-    bancoReceptor: "Banesco (Cuenta Corredor)",
-    estado: "Aprobada",
-  },
-  {
-    id: "TRF-2026-0420",
-    referenciaBancaria: "88392019",
-    inmueble: "Penthouse Vista al Ávila",
-    inmuebleUbicacion: "Los Palos Grandes, Caracas",
-    inmuebleImagen: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=400&q=80",
-    clienteNombre: "Roberto Martínez",
-    clienteEmail: "roberto.martinez@email.com",
-    clienteTelefono: "+58 416-3332211",
-    concepto: "Abono inicial apartado de venta",
-    fecha: "2026-09-06 16:45",
-    montoBrutoUsd: 2500.00,
-    montoBrutoBs: 91250.00,
-    comisionPlataformaUsd: 125.00,
-    montoNetoUsd: 2375.00,
-    montoNetoBs: 86687.50,
-    metodo: "Pago Móvil",
-    bancoEmisor: "BBVA Provincial",
-    bancoReceptor: "Mercantil (Cuenta Corredor)",
-    estado: "En Verificación",
-  },
+const METODOS_PAGO = [
+  "Tarjeta de Débito",
+  "Tarjeta de Crédito",
+  "Zelle",
+  "Binance",
+  "PayPal",
 ];
+
+const TIPO_LABEL = {
+  compra: "Compra",
+  venta: "Venta",
+  alquiler: "Alquiler",
+};
+
+const ESTADO_LABEL = {
+  pagado: "Aprobada",
+  pendiente: "En Verificación",
+  cancelado: "Cancelada",
+};
+
+const PLACEHOLDER_IMG =
+  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=400&q=80";
+
+function fechaKey(fechaStr) {
+  return fechaStr ? String(fechaStr).slice(0, 10) : "";
+}
+
+function toYmd(date) {
+  if (!date) return "";
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function mapTransferencia(row) {
+  const num = (v) => Number(v || 0);
+  const moneda = (row.moneda || "USD").toUpperCase();
+  const bruto = num(row.monto_total);
+  const comision = num(row.monto_comision);
+  const neto = bruto - comision;
+  return {
+    id: row.numero_factura || `TRF-${row.transferencia_id}`,
+    referenciaBancaria: row.numero_factura || `#${row.transferencia_id}`,
+    transaccionId: row.transaccion_id,
+    inmueble: row.inmueble_titulo || `Inmueble #${row.inmueble_id}`,
+    inmuebleUbicacion: row.estado_inmueble || "-",
+    inmuebleImagen: row.inmueble_imagen_url || PLACEHOLDER_IMG,
+    clienteNombre: row.cliente_nombre || "Cliente",
+    clienteEmail: row.cliente_email,
+    clienteTelefono: "-",
+    concepto: row.estado_inmueble || TIPO_LABEL[row.tipo_operacion] || row.tipo_operacion || "-",
+    fecha: row.fecha_pago || row.fecha_transaccion,
+    moneda,
+    // Moneda en un solo campo. Los pares {campo}Usd/{campo}Bs se formatiaban en cada
+    // lugar con el mismo ternario, y ademas no cubrian EUR: con moneda EUR entraban por
+    // la rama USD, que lee un 0, y mostraba "$0.00".
+    montoBruto: bruto,
+    comision,
+    montoNeto: neto,
+    porcentajeAplicado: num(row.porcentaje_aplicado),
+    metodo: "-",
+    bancoEmisor: "-",
+    bancoReceptor: "-",
+    estado: ESTADO_LABEL[row.estatus_pago] || "En Verificación",
+    // Lineas de transacciones_detalles. El backend manda [] (nunca null) cuando no hay.
+    detalles: Array.isArray(row.detalles) ? row.detalles : [],
+  };
+}
 
 export default function TransferenciasRecibidasPage() {
   const { user } = useAuth();
   const [search, setSearch] = useState("");
+  const [desde, setDesde] = useState(null);
+  const [hasta, setHasta] = useState(null);
+  const [metodo, setMetodo] = useState("");
   const [selectedTransfer, setSelectedTransfer] = useState(null);
+  const [transferencias, setTransferencias] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingErr, setLoadingErr] = useState("");
+  const [page, setPage] = useState(1);
+
+  const PAGE_SIZE = 8;
+
+  const load = useCallback(async () => {
+    if (!user?.id) return;
+    setLoading(true);
+    setLoadingErr("");
+    try {
+      const r = await apiGet(`/transacciones/corredor/${user.id}`, { limit: 200 });
+      setTransferencias((r.data || []).map(mapTransferencia));
+    } catch (e) {
+      setLoadingErr(e.message);
+      setTransferencias([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   // Filtrado dinámico
   const transferenciasFiltradas = useMemo(() => {
-    return MOCK_TRANSFERENCIAS.filter((t) => {
+    const desdeYmd = toYmd(desde);
+    const hastaYmd = toYmd(hasta);
+    return transferencias.filter((t) => {
       const matchSearch =
+        !search ||
         t.id.toLowerCase().includes(search.toLowerCase()) ||
         t.inmueble.toLowerCase().includes(search.toLowerCase()) ||
         t.referenciaBancaria.toLowerCase().includes(search.toLowerCase()) ||
         t.clienteNombre.toLowerCase().includes(search.toLowerCase()) ||
         t.concepto.toLowerCase().includes(search.toLowerCase());
 
-      return matchSearch;
-    });
-  }, [search]);
+      const trfFecha = fechaKey(t.fecha);
+      const matchFecha =
+        (!desdeYmd || trfFecha >= desdeYmd) && (!hastaYmd || trfFecha <= hastaYmd);
 
-  const handlePrint = () => {
-    window.print();
+      const matchMetodo =
+        !metodo || t.metodo.toLowerCase() === metodo.toLowerCase();
+
+      return matchSearch && matchFecha && matchMetodo;
+    });
+  }, [search, desde, hasta, metodo, transferencias]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, desde, hasta, metodo]);
+
+  const transferenciasPaginadas = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return transferenciasFiltradas.slice(start, start + PAGE_SIZE);
+  }, [transferenciasFiltradas, page]);
+
+  const totalPaginas = Math.max(1, Math.ceil(transferenciasFiltradas.length / PAGE_SIZE));
+
+  const goToPage = (n) => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    setPage(n);
   };
+
+  function renderPaginas(actual, totalP) {
+    const candidatas = new Set([1, totalP, actual - 2, actual - 1, actual, actual + 1, actual + 2]);
+    const nums = [...candidatas].filter((n) => n >= 1 && n <= totalP).sort((a, b) => a - b);
+    const items = [];
+    let prev = 0;
+    for (const n of nums) {
+      if (prev && n - prev > 1) items.push({ type: "sep", key: `sep-${prev}` });
+      items.push({ type: "page", n, key: `p-${n}` });
+      prev = n;
+    }
+    return items;
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
@@ -131,6 +182,9 @@ export default function TransferenciasRecibidasPage() {
             <button
               onClick={() => {
                 setSearch("");
+                setDesde(null);
+                setHasta(null);
+                setMetodo("");
               }}
               className="inline-flex items-center gap-2 text-xs font-bold px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#18181c] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
             >
@@ -157,11 +211,66 @@ export default function TransferenciasRecibidasPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
+
+            {/* Filtros de fecha y método — método a la izquierda, fechas a la derecha */}
+            <div className="flex flex-wrap items-end gap-3">
+              <div>
+                <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">Método de pago</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {METODOS_PAGO.map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setMetodo(metodo === m ? "" : m)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-bold transition cursor-pointer border ${
+                        metodo === m
+                          ? "bg-[#470A68] text-white border-[#470A68]"
+                          : "bg-slate-50 dark:bg-[#1d1d22] text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700/80 hover:bg-purple-50 dark:hover:bg-purple-950/40 hover:text-purple-800 dark:hover:text-purple-300"
+                      }`}
+                    >
+                      {m}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="ml-auto flex flex-wrap items-end gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">Desde</label>
+                  <SaphiroDatePicker
+                    selected={desde}
+                    onChange={(d) => setDesde(d)}
+                    selectsStart
+                    startDate={desde}
+                    endDate={hasta}
+                    placeholderText="dd/mm/aaaa"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">Hasta</label>
+                  <SaphiroDatePicker
+                    selected={hasta}
+                    onChange={(d) => setHasta(d)}
+                    selectsEnd
+                    startDate={desde}
+                    endDate={hasta}
+                    minDate={desde || undefined}
+                    placeholderText="dd/mm/aaaa"
+                  />
+                </div>
+              </div>
+            </div>
         </div>
+
+        <ErrorBanner message={loadingErr} onClose={() => setLoadingErr("")} />
 
         {/* Lista de Transferencias Recibidas (Propuesta 1) */}
         <div className="space-y-3">
-          {transferenciasFiltradas.length === 0 ? (
+          {loading ? (
+            <div className="bg-white dark:bg-[#151518] rounded-2xl border border-slate-200 dark:border-slate-800 p-12 text-center space-y-3">
+              <p className="font-bold text-slate-700 dark:text-slate-200 animate-pulse">Cargando transferencias...</p>
+            </div>
+          ) : transferenciasFiltradas.length === 0 ? (
             <div className="bg-white dark:bg-[#151518] rounded-2xl border border-slate-200 dark:border-slate-800 p-12 text-center space-y-3">
               <div className="h-14 w-14 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 mx-auto flex items-center justify-center">
                 <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -172,7 +281,7 @@ export default function TransferenciasRecibidasPage() {
               <p className="text-xs text-slate-400">Intenta ajustar el término de búsqueda o cambiar los filtros.</p>
             </div>
           ) : (
-            transferenciasFiltradas.map((trf) => (
+            transferenciasPaginadas.map((trf) => (
               <div
                 key={trf.id}
                 onClick={() => setSelectedTransfer(trf)}
@@ -187,10 +296,6 @@ export default function TransferenciasRecibidasPage() {
                   />
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-mono text-xs font-bold text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/60 px-2 py-0.5 rounded-md">
-                        {trf.id}
-                      </span>
-                      <span className="text-xs text-slate-400">•</span>
                       <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
                         Cliente: <strong className="text-slate-900 dark:text-white">{trf.clienteNombre}</strong>
                       </span>
@@ -201,11 +306,11 @@ export default function TransferenciasRecibidasPage() {
                     </h3>
 
                     <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-1 flex-wrap">
-                      <span>Ref Bancaria: <strong className="font-mono text-slate-800 dark:text-slate-200">{trf.referenciaBancaria}</strong></span>
+                      <span>Numero de referencia: <strong className="font-mono text-slate-800 dark:text-slate-200">{trf.referenciaBancaria}</strong></span>
                       <span>•</span>
-                      <span>{trf.metodo} ({trf.bancoEmisor})</span>
+                      <span>{trf.concepto}</span>
                       <span>•</span>
-                      <span>{trf.fecha}</span>
+                      <span>{formatDate(trf.fecha)}</span>
                     </div>
                   </div>
                 </div>
@@ -214,14 +319,11 @@ export default function TransferenciasRecibidasPage() {
                 <div className="flex items-center justify-between md:justify-end gap-5 border-t md:border-t-0 pt-3 md:pt-0 border-slate-100 dark:border-slate-800/80">
                   <div className="text-left md:text-right">
                     <div className="text-xs text-slate-400">
-                      Monto abonado: <span className="line-through font-mono">${trf.montoBrutoUsd.toFixed(2)} USD</span>
+                      Monto abonado: <span className="line-through font-mono">{fmtTotal(trf.moneda, trf.montoBruto)}</span>
                     </div>
                     <div className="text-lg font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
-                      ${trf.montoNetoUsd.toFixed(2)}{" "}
-                      <span className="text-xs font-bold text-slate-400">USD NETO</span>
-                    </div>
-                    <div className="text-xs text-slate-400 font-mono">
-                      Bs. {trf.montoNetoBs.toLocaleString("es-VE", { minimumFractionDigits: 2 })}
+                      {fmtImporte(trf.moneda, trf.montoNeto)}{" "}
+                      <span className="text-xs font-bold text-slate-400">{trf.moneda} NETO</span>
                     </div>
                   </div>
 
@@ -236,163 +338,63 @@ export default function TransferenciasRecibidasPage() {
                       <span className={`w-1.5 h-1.5 rounded-full ${trf.estado === "Aprobada" ? "bg-emerald-500" : "bg-amber-500"}`}></span>
                       {trf.estado}
                     </span>
-
-                    <button
-                      type="button"
-                      className="hidden sm:inline-flex items-center justify-center p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 group-hover:bg-[#470A68] group-hover:text-white transition"
-                    >
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                      </svg>
-                    </button>
                   </div>
                 </div>
               </div>
             ))
           )}
         </div>
-      </div>
 
-      {/* Modal / Comprobante de Transferencia del Corredor */}
-      {selectedTransfer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-          <div
-            className="bg-white dark:bg-[#121215] text-slate-900 dark:text-slate-100 w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden max-h-[90vh] flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header del Modal */}
-            <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-[#18181c]">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
-                <h2 className="font-extrabold text-lg text-slate-900 dark:text-white">
-                  Comprobante de Transferencia Recibida
-                </h2>
-              </div>
-              <button
-                onClick={() => setSelectedTransfer(null)}
-                className="p-2 rounded-xl text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition cursor-pointer"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+        {!loading && transferenciasPaginadas.length > 0 && totalPaginas > 1 && (
+          <div className="flex flex-col items-center justify-between gap-3 border-t border-slate-200 pt-4 dark:border-slate-700 sm:flex-row">
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              Mostrando {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, transferenciasFiltradas.length)} de {transferenciasFiltradas.length}
             </div>
-
-            {/* Contenido Imprimible */}
-            <div id="transfer-printable" className="p-6 overflow-y-auto space-y-6 flex-1">
-              
-              {/* Encabezado del Comprobante */}
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-6 border-b border-dashed border-slate-300 dark:border-slate-700">
-                <div>
-                  <h3 className="text-xl font-black text-[#470A68] dark:text-purple-400 tracking-tight">
-                    INVERDATA C.A.
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Liquidación a Corredor Inmobiliario</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Caracas, Venezuela</p>
-                </div>
-                <div className="text-left sm:text-right bg-emerald-50 dark:bg-emerald-950/40 p-3 rounded-2xl border border-emerald-200 dark:border-emerald-800/60">
-                  <p className="text-xs font-bold text-emerald-700 dark:text-emerald-300 uppercase">Transferencia N°</p>
-                  <p className="text-lg font-mono font-black text-slate-900 dark:text-white">{selectedTransfer.id}</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Fecha: {selectedTransfer.fecha}</p>
-                </div>
-              </div>
-
-              {/* Info Cliente & Inmueble */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-slate-50 dark:bg-[#18181c] p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
-                  <p className="text-xs font-bold text-slate-400 uppercase">Inmueble Asociado</p>
-                  <p className="font-bold text-slate-800 dark:text-slate-200 text-sm mt-1">{selectedTransfer.inmueble}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{selectedTransfer.inmuebleUbicacion}</p>
-                  <p className="text-xs text-purple-700 dark:text-purple-400 font-semibold mt-2">{selectedTransfer.concepto}</p>
-                </div>
-
-                <div className="bg-slate-50 dark:bg-[#18181c] p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
-                  <p className="text-xs font-bold text-slate-400 uppercase">Datos del Cliente Pagador</p>
-                  <p className="font-bold text-slate-800 dark:text-slate-200 text-sm mt-1">{selectedTransfer.clienteNombre}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{selectedTransfer.clienteEmail}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{selectedTransfer.clienteTelefono}</p>
-                </div>
-              </div>
-
-              {/* Tabla de Liquidación de Comisiones */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
-                  Detalle de Liquidación
-                </h4>
-                <div className="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
-                  <table className="w-full text-xs text-left">
-                    <thead className="bg-slate-100 dark:bg-[#1a1a20] text-slate-600 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-800">
-                      <tr>
-                        <th className="p-3">Detalle</th>
-                        <th className="p-3 text-right">Monto USD</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                      <tr>
-                        <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">Monto total pagado por el cliente</td>
-                        <td className="p-3 text-right font-mono">${selectedTransfer.montoBrutoUsd.toFixed(2)}</td>
-                      </tr>
-                      <tr>
-                        <td className="p-3 text-slate-500">Deducción de comisión de gestión plataforma (10%)</td>
-                        <td className="p-3 text-right font-mono text-red-500">-${selectedTransfer.comisionPlataformaUsd.toFixed(2)}</td>
-                      </tr>
-                    </tbody>
-                    <tfoot className="bg-emerald-50/60 dark:bg-emerald-950/30 font-bold text-slate-900 dark:text-white border-t border-emerald-200 dark:border-emerald-800">
-                      <tr>
-                        <td className="p-3 text-sm font-extrabold text-emerald-800 dark:text-emerald-300">Monto Neto Acreditado al Corredor</td>
-                        <td className="p-3 text-right text-base font-black text-emerald-600 dark:text-emerald-400 font-mono">
-                          ${selectedTransfer.montoNetoUsd.toFixed(2)} USD
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
-              </div>
-
-              {/* Bancos y Referencia */}
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-[#18181c] border border-slate-200 dark:border-slate-800 text-xs">
-                <div className="space-y-1">
-                  <p><span className="text-slate-400">Método de Pago:</span> <strong>{selectedTransfer.metodo}</strong></p>
-                  <p><span className="text-slate-400">Banco Emisor (Cliente):</span> <strong>{selectedTransfer.bancoEmisor}</strong></p>
-                  <p><span className="text-slate-400">Cuenta Destino (Corredor):</span> <strong>{selectedTransfer.bancoReceptor}</strong></p>
-                  <p><span className="text-slate-400">N° Referencia Bancaria:</span> <strong className="font-mono text-purple-700 dark:text-purple-400">{selectedTransfer.referenciaBancaria}</strong></p>
-                </div>
-
-                <div className="flex items-center gap-3 bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shrink-0">
-                  <div className="w-10 h-10 bg-emerald-600 text-white font-bold text-[10px] flex items-center justify-center rounded text-center leading-tight p-1 font-mono">
-                    [QR VERIFIED]
-                  </div>
-                  <div className="text-[10px] text-slate-400 leading-tight">
-                    <p className="font-bold text-slate-700 dark:text-slate-300">Liquidación Validada</p>
-                    <p>Firma digital Inverdata</p>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
-            {/* Acciones del Modal */}
-            <div className="px-6 py-4 bg-slate-50 dark:bg-[#18181c] border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3">
+            <div className="flex flex-wrap items-center gap-1.5">
               <button
-                onClick={() => setSelectedTransfer(null)}
-                className="px-4 py-2 rounded-xl text-xs font-bold border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition cursor-pointer"
+                onClick={() => goToPage(page - 1)}
+                disabled={page <= 1 || loading}
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
               >
-                Cerrar
+                Anterior
               </button>
+              {renderPaginas(page, totalPaginas).map((item) =>
+                item.type === "sep" ? (
+                  <span key={item.key} className="px-1 text-sm text-slate-400">
+                    …
+                  </span>
+                ) : (
+                  <button
+                    key={item.key}
+                    onClick={() => goToPage(item.n)}
+                    disabled={loading || item.n === page}
+                    className={`min-w-[2.25rem] rounded-xl px-3 py-2 text-sm font-medium transition disabled:cursor-not-allowed ${
+                      item.n === page
+                        ? "bg-[#470A68] text-white shadow-sm dark:bg-[#5a0e82]"
+                        : "border border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                    }`}
+                  >
+                    {item.n}
+                  </button>
+                )
+              )}
               <button
-                onClick={handlePrint}
-                className="px-5 py-2 rounded-xl text-xs font-bold bg-[#470A68] hover:bg-[#5a0e82] text-white shadow-md transition flex items-center gap-2 cursor-pointer"
+                onClick={() => goToPage(page + 1)}
+                disabled={page >= totalPaginas || loading}
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                </svg>
-                Imprimir / PDF
+                Siguiente
               </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
+
+      <ComprobanteTransaccionModal
+        variant="liquidacion"
+        data={selectedTransfer}
+        onClose={() => setSelectedTransfer(null)}
+      />
     </div>
   );
 }

@@ -31,6 +31,12 @@ import MisRecibosPage from "./pages/Pagos/MisRecibosPage";
 import TransferenciasRecibidasPage from "./pages/Transacciones/TransferenciasRecibidasPage";
 import Perfil from "./pages/perfil";
 import PerfilUsuarioPage from "./pages/PerfilUsuarioPage";
+import ContratosAlquilerPage from "./pages/Alquileres/ContratosAlquilerPage";
+import ReportesPage from "./pages/ReportesPage";
+import MensualidadesInmueblePage from "./pages/Alquileres/MensualidadesInmueblePage";
+import PasarelaMensualidadPage from "./pages/Pagos/PasarelaMensualidadPage";
+import ConfiguracionPage from "./pages/ConfiguracionPage";
+import ReservacionesVacacionalesPage from "./pages/Alquileres/ReservacionesVacacionalesPage";
 
 export default function App() {
   return (
@@ -47,6 +53,22 @@ export default function App() {
         <Route path="/usuarios/:id" element={<PerfilUsuarioPage />} />
         <Route path="/recibos" element={<MisRecibosPage />} />
         <Route path="/mis-recibos" element={<MisRecibosPage />} />
+        <Route path="/mensualidades" element={<MensualidadesInmueblePage />} />
+        <Route path="/mensualidades/:id" element={<MensualidadesInmueblePage />} />
+        <Route path="/mensualidades/:id/pagar" element={<PasarelaMensualidadPage />} />
+        <Route path="/mensualidades/pagar" element={<PasarelaMensualidadPage />} />
+        <Route path="/pagar-mensualidad" element={<PasarelaMensualidadPage />} />
+        <Route path="/pagar-mensualidad/:id" element={<PasarelaMensualidadPage />} />
+        <Route path="/rentas-contratadas/:id/mensualidades" element={<MensualidadesInmueblePage />} />
+        <Route path="/inmuebles-alquilados/:id/mensualidades" element={<MensualidadesInmueblePage />} />
+        <Route path="/rentas-contratadas" element={<ProtectedRoute roles={["cliente", "corredor"]}><ContratosAlquilerPage /></ProtectedRoute>} />
+        <Route path="/inmuebles-alquilados" element={<Navigate to="/rentas-contratadas" replace />} />
+        <Route path="/reservaciones" element={<ProtectedRoute roles={["cliente", "corredor", "admin"]}><ReservacionesVacacionalesPage /></ProtectedRoute>} />
+        <Route path="/mis-reservas" element={<Navigate to="/reservaciones" replace />} />
+        <Route path="/reservas-vacacionales" element={<Navigate to="/reservaciones" replace />} />
+        <Route path="/reportes" element={<ProtectedRoute roles={["corredor"]}><ReportesPage /></ProtectedRoute>} />
+        <Route path="/configuracion" element={<ConfiguracionPage />} />
+        <Route path="/ajustes" element={<Navigate to="/configuracion" replace />} />
 
         {/* ── Guest: solo usuarios NO autenticados ── */}
         <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />

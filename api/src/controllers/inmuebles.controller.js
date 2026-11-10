@@ -3,6 +3,7 @@ const path = require("path");
 const inmueblesService = require("../services/inmuebles.service");
 const corredoresService = require("../services/corredores.service");
 const buildCtx = require("../utils/ctx");
+const { resolveUuidToId } = require("../middleware/publicId");
 
 const UPLOADS_DIR = path.join(__dirname, "..", "..", "uploads", "properties");
 
@@ -14,18 +15,28 @@ function deleteFiles(files) {
 }
 
 exports.listInmuebles = async (req, res) => {
-  const data = await inmueblesService.listInmuebles(req.query);
-  res.json({ ok: true, data });
+  const result = await inmueblesService.listInmuebles(req.query);
+  res.json({ ok: true, data: result.data, pagination: result.pagination });
 };
 
-exports.listMisInmuebles = async (req, res) => {
-  const data = await inmueblesService.listInmueblesByCorredor(Number(req.params.usuario_id));
-  res.json({ ok: true, data });
+exports.listMisInmuebles = async (req, res, next) => {
+  try {
+    const usuarioId = await resolveUuidToId(req.params.usuario_id, "usuarios", "Usuario");
+    const data = await inmueblesService.listInmueblesByCorredor(Number(usuarioId));
+    res.json({ ok: true, data });
+  } catch (err) {
+    next(err);
+  }
 };
 
-exports.getInmuebleById = async (req, res) => {
-  const data = await inmueblesService.getInmuebleById(Number(req.params.id));
-  res.json({ ok: true, data });
+exports.getInmuebleById = async (req, res, next) => {
+  try {
+    const id = await resolveUuidToId(req.params.id, "inmuebles", "Inmueble");
+    const data = await inmueblesService.getInmuebleById(Number(id));
+    res.json({ ok: true, data });
+  } catch (err) {
+    next(err);
+  }
 };
 
 exports.createInmueble = async (req, res, next) => {
@@ -41,17 +52,23 @@ exports.createInmueble = async (req, res, next) => {
   }
 };
 
-exports.patchInmueble = async (req, res) => {
-  const data = await inmueblesService.patchInmueble(Number(req.params.id), req.body, buildCtx(req));
-  res.json({ ok: true, data });
+exports.patchInmueble = async (req, res, next) => {
+  try {
+    const id = await resolveUuidToId(req.params.id, "inmuebles", "Inmueble");
+    const data = await inmueblesService.patchInmueble(Number(id), req.body, buildCtx(req));
+    res.json({ ok: true, data });
+  } catch (err) {
+    next(err);
+  }
 };
 
 exports.updateInmueble = async (req, res, next) => {
   try {
+    const id = await resolveUuidToId(req.params.id, "inmuebles", "Inmueble");
     const body = typeof req.body.data === "string" ? JSON.parse(req.body.data) : req.body;
     const corredor = await corredoresService.getCorredorByUserId(body.usuario_id);
     body.corredor_id = corredor.id;
-    const data = await inmueblesService.updateInmueble(Number(req.params.id), body, req.files || [], buildCtx(req));
+    const data = await inmueblesService.updateInmueble(Number(id), body, req.files || [], buildCtx(req));
     res.json({ ok: true, data });
   } catch (err) {
     if (req.files?.length) deleteFiles(req.files);
@@ -59,9 +76,14 @@ exports.updateInmueble = async (req, res, next) => {
   }
 };
 
-exports.deleteInmueble = async (req, res) => {
-  const data = await inmueblesService.deleteInmueble(Number(req.params.id), buildCtx(req));
-  res.json({ ok: true, data });
+exports.deleteInmueble = async (req, res, next) => {
+  try {
+    const id = await resolveUuidToId(req.params.id, "inmuebles", "Inmueble");
+    const data = await inmueblesService.deleteInmueble(Number(id), buildCtx(req));
+    res.json({ ok: true, data });
+  } catch (err) {
+    next(err);
+  }
 };
 
 exports.listDisponiblesPorCiudad = async (req, res) => {
@@ -74,7 +96,12 @@ exports.listDisponiblesPorEstado = async (req, res) => {
   res.json({ ok: true, data });
 };
 
-exports.listReservas = async (req, res) => {
-  const data = await inmueblesService.listReservasByInmueble(Number(req.params.id));
-  res.json({ ok: true, data });
+exports.listReservas = async (req, res, next) => {
+  try {
+    const id = await resolveUuidToId(req.params.id, "inmuebles", "Inmueble");
+    const data = await inmueblesService.listReservasByInmueble(Number(id));
+    res.json({ ok: true, data });
+  } catch (err) {
+    next(err);
+  }
 };

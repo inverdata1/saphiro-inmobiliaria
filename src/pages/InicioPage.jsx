@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { apiGet } from "../api";
-import { useAuth } from "../context/useAuth";
 import PropertyCard from "../components/PropertyCard";
+import Carousel from "../components/Carousel";
 import { useT } from "../lib/i18n";
 
 const HERO_IMG =
@@ -22,19 +22,63 @@ const PRICE_PRESETS = [
   { value: "7000-", key: "priceMore" },
 ];
 
+// Carruseles temáticos del inicio. Cada uno pega a /inmuebles con sus filtros y
+// muestra hasta CARRUSEL_LIMIT tarjetas. `seeAllTo` apunta al buscador con los
+// mismos filtros para que "Ver todas" muestre exactamente el mismo conjunto.
+const CARRUSEL_LIMIT = 12;
+
+const CARRUSELES = [
+  {
+    key: "venta",
+    titleKey: "forSale",
+    subKey: "forSaleSub",
+    seeAllTo: "/inmuebles?estado_inmueble=venta&moneda=USD",
+    params: { estado_inmueble: "venta" },
+  },
+  {
+    key: "alquiler",
+    titleKey: "forRent",
+    subKey: "forRentSub",
+    seeAllTo: "/inmuebles?estado_inmueble=alquiler_fijo&moneda=USD",
+    params: { estado_inmueble: "alquiler_fijo" },
+  },
+  {
+    key: "vacacional",
+    titleKey: "vacationRentals",
+    subKey: "vacationRentalsSub",
+    seeAllTo: "/inmuebles?estado_inmueble=vacacional&moneda=USD",
+    params: { estado_inmueble: "vacacional" },
+  },
+  {
+    key: "oportunidades",
+    titleKey: "deals",
+    subKey: "dealsSub",
+    seeAllTo: "/inmuebles?max=1500&moneda=USD",
+    params: { max: 1500 },
+  },
+  {
+    key: "altaGama",
+    titleKey: "premium",
+    subKey: "premiumSub",
+    seeAllTo: "/inmuebles?min=7000&moneda=USD",
+    params: { min: 7000 },
+  },
+];
+
 export default function InicioPage() {
-  const { user } = useAuth();
   const tr = useT();
   const navigate = useNavigate();
-  const isStaff = user?.rol === "admin" || user?.rol === "corredor";
 
   const [latest, setLatest] = useState([]);
+  const [latestLoading, setLatestLoading] = useState(true);
   const [estados, setEstados] = useState([]);
   const [tipos, setTipos] = useState([]);
   const [q, setQ] = useState("");
   const [estadoId, setEstadoId] = useState("");
   const [tipo, setTipo] = useState("");
   const [price, setPrice] = useState("");
+  const [carruseles, setCarruseles] = useState({});
+  const [carruselesLoading, setCarruselesLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
@@ -44,10 +88,42 @@ export default function InicioPage() {
         setLatest(Array.isArray(data) && data.length ? data : MOCK_LATEST);
       } catch {
         setLatest(MOCK_LATEST);
+      } finally {
+        setLatestLoading(false);
       }
     })();
     apiGet("/geo/estados").then((r) => setEstados(r?.data || [])).catch(() => setEstados([]));
     apiGet("/tipos").then((r) => setTipos(r?.data || r || [])).catch(() => setTipos([]));
+  }, []);
+
+  // Carruseles temáticos: cada uno se consulta en paralelo. Si una sección falla o
+  // queda vacía, el propio Carousel no se renderiza (Promise.allSettled no rompe el resto).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const results = await Promise.allSettled(
+        CARRUSELES.map(async (c) => {
+          const res = await apiGet("/inmuebles", {
+            limit: CARRUSEL_LIMIT,
+            estatus: "disponible,reservado",
+            moneda: "USD",
+            ...c.params,
+          });
+          const data = res?.data ?? res ?? [];
+          return [c.key, Array.isArray(data) ? data : []];
+        })
+      );
+      if (cancelled) return;
+      const map = {};
+      results.forEach((r, i) => {
+        map[CARRUSELES[i].key] = r.status === "fulfilled" ? r.value[1] : [];
+      });
+      setCarruseles(map);
+      setCarruselesLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   function search(e) {
@@ -64,10 +140,10 @@ export default function InicioPage() {
       if (min) params.set("min", min);
       if (max) params.set("max", max);
     }
+    // La búsqueda pública solo muestra propiedades cotizadas en USD.
+    params.set("moneda", "USD");
     navigate(`/inmuebles?${params.toString()}`);
   }
-
-  const featured = latest.slice(0, 3);
 
   return (
     <div className="bg-white dark:bg-slate-900">
@@ -146,34 +222,33 @@ export default function InicioPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-16">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <h2 className="text-3xl font-bold text-slate-900 dark:text-white">{tr("mostViewed")}</h2>
-            <p className="mt-1 text-sm text-slate-500">{tr("mostViewedSub")}</p>
-          </div>
-          <Link to="/inmuebles" className="text-sm font-semibold text-slate-900 underline dark:text-white">
-            {tr("seeAll")}
-          </Link>
-        </div>
-        <div className="mt-8 grid grid-cols-1 gap-8 md:grid-cols-3">
-          {featured.map((p) => (
-            <PropertyCard key={p.id || p.inmueble_id} property={p} portal />
-          ))}
-        </div>
-      </section>
+      <Carousel
+        title={tr("mostViewed")}
+        subtitle={tr("mostViewedSub")}
+        seeAllTo="/inmuebles"
+        seeAllLabel={tr("seeAll")}
+        prevLabel={tr("prevSlide")}
+        nextLabel={tr("nextSlide")}
+        loading={latestLoading}
+        items={latest}
+        renderItem={(p) => <PropertyCard property={p} />}
+        skeletonCount={3}
+      />
 
-      {isStaff ? (
-        <section className="mx-auto max-w-6xl px-4 pb-16">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{tr("staff")}</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Link to="/inmuebles/crear" className="btn-secondary">{tr("createProperty")}</Link>
-            <Link to="/transacciones" className="btn-secondary">{tr("transactions")}</Link>
-            <Link to="/comisiones" className="btn-secondary">{tr("commissions")}</Link>
-            <Link to="/bitacora" className="btn-secondary">{tr("log")}</Link>
-          </div>
-        </section>
-      ) : null}
+      {CARRUSELES.map((c) => (
+        <Carousel
+          key={c.key}
+          title={tr(c.titleKey)}
+          subtitle={tr(c.subKey)}
+          seeAllTo={c.seeAllTo}
+          seeAllLabel={tr("seeAll")}
+          prevLabel={tr("prevSlide")}
+          nextLabel={tr("nextSlide")}
+          loading={carruselesLoading}
+          items={carruseles[c.key] || []}
+          renderItem={(p) => <PropertyCard property={p} />}
+        />
+      ))}
     </div>
   );
 }

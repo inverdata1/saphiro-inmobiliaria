@@ -4,7 +4,7 @@ import CardPreview from "../../components/pagos/CardPreview";
 import ComprobantePagoModal from "../../components/pagos/ComprobantePagoModal";
 import { apiGet, apiPost } from "../../api";
 import { formatPrice } from "../../utils/price";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/useAuth";
 import { v4 as uuid } from "uuid";
 
 const DatePickerCalendarModal = lazy(() => import("../../components/DatePickerCalendarModal"));
@@ -339,7 +339,7 @@ export default function ReservationPage() {
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 py-8 px-4 sm:px-6 lg:px-8 transition-colors">
         <div className="max-w-xl mx-auto card p-8 text-center">
           <p className="font-bold text-slate-800 dark:text-slate-200">Este inmueble no admite reservas vacacionales</p>
-          <Link to={`/inmuebles/${inmueble.id}`} className="mt-4 inline-block font-bold text-blue-600 dark:text-blue-400">
+          <Link to={`/inmuebles/${inmueble.uuid || inmueble.id}`} className="mt-4 inline-block font-bold text-blue-600 dark:text-blue-400">
             Ver detalle del inmueble
           </Link>
         </div>

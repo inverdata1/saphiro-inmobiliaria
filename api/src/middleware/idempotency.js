@@ -54,8 +54,10 @@ function withIdempotency(fn, options = {}) {
     // Primera request: estado in-progress en redis, ejecutamos el handler
     const origJson = res.json.bind(res);
     const origSend = res.send.bind(res);
+    let responseSent = false;
 
     const save = (body) => {
+      responseSent = true;
       const statusCode = res.statusCode;
       const headers = {
         "Content-Type": res.get("Content-Type"),
@@ -87,8 +89,11 @@ function withIdempotency(fn, options = {}) {
     try {
       return await fn(req, res, next);
     } catch (err) {
-      // Si falla el handler, borramos la key para permitir reintento
-      await redis.del(redisKey).catch(() => {});
+      // Si la respuesta ya salió, la operacion fue exitosa y la key guardada permite
+      // replay: borrarla abriria la puerta a un reintento que duplica el cobro.
+      if (!responseSent) {
+        await redis.del(redisKey).catch(() => {});
+      }
       return next(err);
     }
   };

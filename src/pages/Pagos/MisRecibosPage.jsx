@@ -1,110 +1,123 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useAuth } from "../../context/useAuth";
+import { apiGet } from "../../api";
+import { formatDate } from "../../utils/date";
+import { fmtImporte } from "../../utils/money";
+import ErrorBanner from "../../components/error/ErrorBanner";
+import ComprobanteTransaccionModal from "../../components/pagos/ComprobanteTransaccionModal";
 
-// Datos de ejemplo realistas de recibos
-const MOCK_RECIBOS = [
-  {
-    id: "REC-2026-0089",
-    referencia: "PAY-984210",
-    inmueble: "Apartamento de Lujo en Altamira",
-    inmuebleUbicacion: "Altamira, Caracas",
-    inmuebleImagen: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=400&q=80",
-    tipo: "Reserva Vacacional",
-    fecha: "2026-09-02",
-    montoUsd: 450.00,
-    montoBs: 16425.00,
-    bancoEmisor: "Banesco",
-    referenciaBancaria: "74839201",
-    estado: "Verificado",
-    cliente: "Carlos Mendoza",
-    emailCliente: "carlos.mendoza@email.com",
-    concepto: "Pago de reserva 3 noches (15 Sep - 18 Sep 2026)",
-    subtotal: 400.00,
-    comisionServicio: 50.00,
-    iva: 0.00,
-  },
-  {
-    id: "REC-2026-0074",
-    referencia: "PAY-872314",
-    inmueble: "Villa Sol & Playa Chichiriviche",
-    inmuebleUbicacion: "Chichiriviche, Falcón",
-    inmuebleImagen: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=400&q=80",
-    tipo: "Reserva Vacacional",
-    fecha: "2026-08-20",
-    montoUsd: 680.00,
-    montoBs: 24820.00,
-    bancoEmisor: "Bank of America",
-    referenciaBancaria: "ZEL-9921048",
-    estado: "Verificado",
-    cliente: "Carlos Mendoza",
-    emailCliente: "carlos.mendoza@email.com",
-    concepto: "Depósito de garantía + alquiler semana completa",
-    subtotal: 600.00,
-    comisionServicio: 80.00,
-    iva: 0.00,
-  },
-  {
-    id: "REC-2026-0061",
-    referencia: "PAY-651209",
-    inmueble: "Townhouse Moderno Las Mercedes",
-    inmuebleUbicacion: "Las Mercedes, Caracas",
-    inmuebleImagen: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=400&q=80",
-    tipo: "Canon de Alquiler",
-    fecha: "2026-08-01",
-    montoUsd: 1200.00,
-    montoBs: 43800.00,
-    bancoEmisor: "Mercantil",
-    referenciaBancaria: "0091238471",
-    estado: "Verificado",
-    cliente: "Carlos Mendoza",
-    emailCliente: "carlos.mendoza@email.com",
-    concepto: "Canon mensual de arrendamiento (Agosto 2026)",
-    subtotal: 1200.00,
-    comisionServicio: 0.00,
-    iva: 0.00,
-  },
-  {
-    id: "REC-2026-0045",
-    referencia: "PAY-443901",
-    inmueble: "Penthouse Vista al Ávila",
-    inmuebleUbicacion: "Los Palos Grandes, Caracas",
-    inmuebleImagen: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=400&q=80",
-    tipo: "Inicial de Compra",
-    fecha: "2026-09-06",
-    montoUsd: 2500.00,
-    montoBs: 91250.00,
-    bancoEmisor: "BBVA Provincial",
-    referenciaBancaria: "88392019",
-    estado: "Pendiente",
-    cliente: "Carlos Mendoza",
-    emailCliente: "carlos.mendoza@email.com",
-    concepto: "Abono inicial apartado de venta de inmueble",
-    subtotal: 2500.00,
-    comisionServicio: 0.00,
-    iva: 0.00,
-  },
-];
+const TIPO_LABEL = {
+  compra: "Compra",
+  venta: "Venta",
+  alquiler: "Alquiler",
+};
+
+const ESTADO_LABEL = {
+  pagado: "Verificado",
+  pendiente: "Pendiente",
+  cancelado: "Cancelado",
+};
+
+const PLACEHOLDER_IMG =
+  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=400&q=80";
+
+function mapRecibo(row) {
+  const num = (v) => Number(v || 0);
+  const moneda = (row.moneda || "USD").toUpperCase();
+  const montoTotal = num(row.monto_total);
+  return {
+    id: row.numero_factura || `REC-${row.transaccion_id}`,
+    referencia: row.numero_factura || `#${row.transaccion_id}`,
+    inmueble: row.inmueble_titulo || `Inmueble #${row.inmueble_id}`,
+    inmuebleUbicacion: row.estado_inmueble || "-",
+    inmuebleImagen: row.inmueble_imagen_url || PLACEHOLDER_IMG,
+    tipo: row.estado_inmueble || TIPO_LABEL[row.tipo_operacion] || row.tipo_operacion || "-",
+    fecha: row.fecha_transaccion,
+    moneda,
+    montoTotal,
+    bancoEmisor: "-",
+    referenciaBancaria: row.numero_factura || `#${row.transaccion_id}`,
+    estado: ESTADO_LABEL[row.estatus_pago] || "Pendiente",
+    concepto: TIPO_LABEL[row.tipo_operacion] || row.tipo_operacion || "-",
+    iva: 0,
+    corredorId: row.corredor_id,
+    // Lineas de transacciones_detalles. El backend manda [] (nunca null) cuando no
+    // hay, pero se protege igual contra respuestas viejas cacheadas.
+    detalles: Array.isArray(row.detalles) ? row.detalles : [],
+  };
+}
 
 export default function MisRecibosPage() {
   const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [selectedRecibo, setSelectedRecibo] = useState(null);
+  const [recibos, setRecibos] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingErr, setLoadingErr] = useState("");
+  const [page, setPage] = useState(1);
+
+  const PAGE_SIZE = 8;
+
+  const load = useCallback(async () => {
+    if (!user?.id) return;
+    setLoading(true);
+    setLoadingErr("");
+    try {
+      const r = await apiGet(`/transacciones/cliente/${user.id}`, { limit: 200 });
+      setRecibos((r.data || []).map(mapRecibo));
+    } catch (e) {
+      setLoadingErr(e.message);
+      setRecibos([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   // Filtrado dinámico
   const recibosFiltrados = useMemo(() => {
-    return MOCK_RECIBOS.filter((r) => {
+    return recibos.filter((r) => {
       const matchSearch =
+        !search ||
         r.inmueble.toLowerCase().includes(search.toLowerCase()) ||
         r.referencia.toLowerCase().includes(search.toLowerCase()) ||
         r.concepto.toLowerCase().includes(search.toLowerCase());
 
       return matchSearch;
     });
-  }, [search]);
+  }, [search, recibos]);
 
-  const handlePrint = () => {
-    window.print();
+  useEffect(() => {
+    setPage(1);
+  }, [search, recibos]);
+
+  const recibosPaginados = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return recibosFiltrados.slice(start, start + PAGE_SIZE);
+  }, [recibosFiltrados, page]);
+
+  const totalPaginas = Math.max(1, Math.ceil(recibosFiltrados.length / PAGE_SIZE));
+
+  const goToPage = (n) => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    setPage(n);
   };
+
+  function renderPaginas(actual, totalP) {
+    const candidatas = new Set([1, totalP, actual - 2, actual - 1, actual, actual + 1, actual + 2]);
+    const nums = [...candidatas].filter((n) => n >= 1 && n <= totalP).sort((a, b) => a - b);
+    const items = [];
+    let prev = 0;
+    for (const n of nums) {
+      if (prev && n - prev > 1) items.push({ type: "sep", key: `sep-${prev}` });
+      items.push({ type: "page", n, key: `p-${n}` });
+      prev = n;
+    }
+    return items;
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 py-8 px-4 sm:px-6 lg:px-8 text-slate-800 dark:text-slate-100 transition-colors">
@@ -123,15 +136,14 @@ export default function MisRecibosPage() {
 
           <div className="flex items-center gap-3">
             <button
-              onClick={() => {
-                setSearch("");
-              }}
-              className="inline-flex items-center gap-2 text-xs font-bold px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#18181c] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+              onClick={load}
+              disabled={loading}
+              className="inline-flex items-center gap-2 text-xs font-bold px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#18181c] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer disabled:opacity-60"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
-              Refrescar
+              {loading ? "Cargando..." : "Refrescar"}
             </button>
           </div>
         </div>
@@ -156,9 +168,15 @@ export default function MisRecibosPage() {
 
         </div>
 
+        <ErrorBanner message={loadingErr} onClose={() => setLoadingErr("")} />
+
         {/* Lista Principal de Recibos (Propuesta 1) */}
         <div className="space-y-3">
-          {recibosFiltrados.length === 0 ? (
+          {loading ? (
+            <div className="bg-white dark:bg-[#151518] rounded-2xl border border-slate-200 dark:border-slate-800 p-12 text-center space-y-3">
+              <p className="font-bold text-slate-700 dark:text-slate-200 animate-pulse">Cargando recibos...</p>
+            </div>
+          ) : recibosFiltrados.length === 0 ? (
             <div className="bg-white dark:bg-[#151518] rounded-2xl border border-slate-200 dark:border-slate-800 p-12 text-center space-y-3">
               <div className="h-14 w-14 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 mx-auto flex items-center justify-center">
                 <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -169,7 +187,7 @@ export default function MisRecibosPage() {
               <p className="text-xs text-slate-400">Intenta cambiar los filtros de búsqueda.</p>
             </div>
           ) : (
-            recibosFiltrados.map((recibo) => (
+            recibosPaginados.map((recibo) => (
               <div
                 key={recibo.id}
                 onClick={() => setSelectedRecibo(recibo)}
@@ -184,14 +202,8 @@ export default function MisRecibosPage() {
                     className="w-14 h-14 rounded-xl object-cover border border-slate-200 dark:border-slate-800 shrink-0"
                   />
                   <div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-mono text-xs font-bold text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/60 px-2 py-0.5 rounded-md">
-                        {recibo.id}
-                      </span>
-                      <span className="text-xs text-slate-400">•</span>
-                      <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                        {recibo.tipo}
-                      </span>
+                    <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                      {recibo.tipo}
                     </div>
 
                     <h3 className="font-bold text-slate-900 dark:text-white text-base mt-0.5 group-hover:text-purple-800 dark:group-hover:text-purple-300 transition-colors">
@@ -201,7 +213,7 @@ export default function MisRecibosPage() {
                     <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-1">
                       <span>Ref: <strong className="font-mono text-slate-700 dark:text-slate-300">{recibo.referenciaBancaria}</strong></span>
                       <span>•</span>
-                      <span>{new Date(recibo.fecha).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" })}</span>
+                      <span>{formatDate(recibo.fecha)}</span>
                     </div>
                   </div>
                 </div>
@@ -210,11 +222,8 @@ export default function MisRecibosPage() {
                 <div className="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-100 dark:border-slate-800/80">
                   <div className="text-left sm:text-right">
                     <div className="text-lg font-black text-slate-900 dark:text-white">
-                      ${recibo.montoUsd.toFixed(2)}{" "}
-                      <span className="text-xs font-normal text-slate-400">USD</span>
-                    </div>
-                    <div className="text-xs text-slate-400 font-mono">
-                      Bs. {recibo.montoBs.toLocaleString("es-VE", { minimumFractionDigits: 2 })}
+                      {fmtImporte(recibo.moneda, recibo.montoTotal)}{" "}
+                      <span className="text-xs font-normal text-slate-400">{recibo.moneda}</span>
                     </div>
                   </div>
 
@@ -245,156 +254,58 @@ export default function MisRecibosPage() {
             ))
           )}
         </div>
-      </div>
 
-      {/* Modal / Visor del Recibo Digital (Propuesta 1) */}
-      {selectedRecibo && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-          <div
-            className="bg-white dark:bg-[#121215] text-slate-900 dark:text-slate-100 w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden max-h-[90vh] flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header del Modal */}
-            <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-[#18181c]">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-purple-600"></span>
-                <h2 className="font-extrabold text-lg text-slate-900 dark:text-white">
-                  Comprobante Digital de Pago
-                </h2>
-              </div>
-              <button
-                onClick={() => setSelectedRecibo(null)}
-                className="p-2 rounded-xl text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition cursor-pointer"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+        {!loading && recibosPaginados.length > 0 && totalPaginas > 1 && (
+          <div className="flex flex-col items-center justify-between gap-3 border-t border-slate-200 pt-4 dark:border-slate-700 sm:flex-row">
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              Mostrando {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, recibosFiltrados.length)} de {recibosFiltrados.length}
             </div>
-
-            {/* Contenido Imprimible del Recibo */}
-            <div id="recibo-printable" className="p-6 overflow-y-auto space-y-6 flex-1">
-              
-              {/* Encabezado del Recibo */}
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-6 border-b border-dashed border-slate-300 dark:border-slate-700">
-                <div>
-                  <h3 className="text-xl font-black text-[#470A68] dark:text-purple-400 tracking-tight">
-                    INVERDATA C.A.
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">RIF: J-50192841-0 • Inmobiliaria Digital</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Caracas, Venezuela</p>
-                </div>
-                <div className="text-left sm:text-right bg-purple-50 dark:bg-purple-950/40 p-3 rounded-2xl border border-purple-200 dark:border-purple-800/60">
-                  <p className="text-xs font-bold text-purple-700 dark:text-purple-300 uppercase">Recibo N°</p>
-                  <p className="text-lg font-mono font-black text-slate-900 dark:text-white">{selectedRecibo.id}</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Fecha: {selectedRecibo.fecha}</p>
-                </div>
-              </div>
-
-              {/* Inmueble y Cliente */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-slate-50 dark:bg-[#18181c] p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
-                  <p className="text-xs font-bold text-slate-400 uppercase">Emisor / Inmueble</p>
-                  <p className="font-bold text-slate-800 dark:text-slate-200 text-sm mt-1">{selectedRecibo.inmueble}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{selectedRecibo.inmuebleUbicacion}</p>
-                  <span className="inline-block mt-2 text-[11px] bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold px-2 py-0.5 rounded">
-                    {selectedRecibo.tipo}
-                  </span>
-                </div>
-
-                <div className="bg-slate-50 dark:bg-[#18181c] p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
-                  <p className="text-xs font-bold text-slate-400 uppercase">Cliente / Pagador</p>
-                  <p className="font-bold text-slate-800 dark:text-slate-200 text-sm mt-1">
-                    {user?.nombre || selectedRecibo.cliente}
-                  </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {user?.email || selectedRecibo.emailCliente}
-                  </p>
-                  <span className="inline-block mt-2 text-[11px] bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 font-semibold px-2 py-0.5 rounded">
-                    Estatus: {selectedRecibo.estado}
-                  </span>
-                </div>
-              </div>
-
-              {/* Detalle de Pago */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
-                  Desglose del Pago
-                </h4>
-                <div className="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
-                  <table className="w-full text-xs text-left">
-                    <thead className="bg-slate-100 dark:bg-[#1a1a20] text-slate-600 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-800">
-                      <tr>
-                        <th className="p-3">Concepto</th>
-                        <th className="p-3 text-right">Monto USD</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                      <tr>
-                        <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">{selectedRecibo.concepto}</td>
-                        <td className="p-3 text-right font-mono">${selectedRecibo.subtotal.toFixed(2)}</td>
-                      </tr>
-                      {selectedRecibo.comisionServicio > 0 && (
-                        <tr>
-                          <td className="p-3 text-slate-500">Comisión por servicio de plataforma</td>
-                          <td className="p-3 text-right font-mono text-slate-500">${selectedRecibo.comisionServicio.toFixed(2)}</td>
-                        </tr>
-                      )}
-                    </tbody>
-                    <tfoot className="bg-purple-50/60 dark:bg-purple-950/30 font-bold text-slate-900 dark:text-white border-t border-purple-200 dark:border-purple-800">
-                      <tr>
-                        <td className="p-3 text-sm font-extrabold">Total Pagado</td>
-                        <td className="p-3 text-right text-base font-black text-[#470A68] dark:text-purple-300 font-mono">
-                          ${selectedRecibo.montoUsd.toFixed(2)} USD
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
-              </div>
-
-              {/* Datos Bancarios y QR */}
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-[#18181c] border border-slate-200 dark:border-slate-800">
-                <div className="text-xs space-y-1 w-full sm:w-auto">
-                  <p><span className="text-slate-400">Banco / Entidad:</span> <strong>{selectedRecibo.bancoEmisor}</strong></p>
-                  <p><span className="text-slate-400">N° de Referencia:</span> <strong className="font-mono text-purple-700 dark:text-purple-400">{selectedRecibo.referenciaBancaria}</strong></p>
-                </div>
-
-                {/* Marcador de QR para verificación */}
-                <div className="flex items-center gap-3 bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 shrink-0">
-                  <div className="w-12 h-12 bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-bold text-[10px] flex items-center justify-center rounded text-center leading-tight p-1 font-mono">
-                    [QR VERIFY]
-                  </div>
-                  <div className="text-[10px] text-slate-400 leading-tight">
-                    <p className="font-bold text-slate-700 dark:text-slate-300">Verificación Segura</p>
-                    <p>Firma digital Inverdata</p>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
-            {/* Acciones del Modal */}
-            <div className="px-6 py-4 bg-slate-50 dark:bg-[#18181c] border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3">
+            <div className="flex flex-wrap items-center gap-1.5">
               <button
-                onClick={() => setSelectedRecibo(null)}
-                className="px-4 py-2 rounded-xl text-xs font-bold border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition cursor-pointer"
+                onClick={() => goToPage(page - 1)}
+                disabled={page <= 1 || loading}
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
               >
-                Cerrar
+                Anterior
               </button>
+              {renderPaginas(page, totalPaginas).map((item) =>
+                item.type === "sep" ? (
+                  <span key={item.key} className="px-1 text-sm text-slate-400">
+                    …
+                  </span>
+                ) : (
+                  <button
+                    key={item.key}
+                    onClick={() => goToPage(item.n)}
+                    disabled={loading || item.n === page}
+                    className={`min-w-[2.25rem] rounded-xl px-3 py-2 text-sm font-medium transition disabled:cursor-not-allowed ${
+                      item.n === page
+                        ? "bg-[#470A68] text-white shadow-sm dark:bg-[#5a0e82]"
+                        : "border border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                    }`}
+                  >
+                    {item.n}
+                  </button>
+                )
+              )}
               <button
-                onClick={handlePrint}
-                className="px-5 py-2 rounded-xl text-xs font-bold bg-[#470A68] hover:bg-[#5a0e82] text-white shadow-md transition flex items-center gap-2 cursor-pointer"
+                onClick={() => goToPage(page + 1)}
+                disabled={page >= totalPaginas || loading}
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                </svg>
-                Imprimir / PDF
+                Siguiente
               </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
+
+      <ComprobanteTransaccionModal
+        variant="recibo"
+        data={selectedRecibo}
+        usuario={user}
+        onClose={() => setSelectedRecibo(null)}
+      />
     </div>
   );
 }

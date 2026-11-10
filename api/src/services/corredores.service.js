@@ -29,9 +29,12 @@ exports.listCorredores = async (query) => {
     `
     SELECT
       u.id,
+      u.uuid AS usuario_uuid,
       c.id AS corredor_id,
       c.licencia_nro,
-      c.comision_base,
+      c.comision_venta,
+      c.comision_alquiler_fijo,
+      c.comision_vacacional,
       u.nombre AS corredor_nombre,
       u.email  AS corredor_email,
       u.active AS active,
@@ -108,7 +111,7 @@ exports.getCorredorByUserId = async (usuario_id) => {
 };
 
 exports.updateCorredor = async (usuario_id, data) => {
-  const { nombre, telefono, comision_base, licencia_nro } = data;
+  const { nombre, comision_venta, comision_alquiler_fijo, comision_vacacional } = data;
 
   const client = await pool.connect();
   let corredor;
@@ -127,12 +130,13 @@ exports.updateCorredor = async (usuario_id, data) => {
 
     const { rows: corrRows } = await client.query(
       `UPDATE corredores
-       SET telefono = COALESCE($2, telefono),
-           comision_base = COALESCE($3, comision_base),
-           licencia_nro = COALESCE($4, licencia_nro)
+       SET
+          comision_venta = COALESCE($2, comision_venta),
+          comision_alquiler_fijo = COALESCE($3, comision_alquiler_fijo),
+          comision_vacacional = COALESCE($4, comision_vacacional)
        WHERE usuario_id = $1
        RETURNING *;`,
-      [usuario_id, telefono, comision_base, licencia_nro]
+      [usuario_id, comision_venta, comision_alquiler_fijo, comision_vacacional]
     );
 
     corredor = corrRows[0];

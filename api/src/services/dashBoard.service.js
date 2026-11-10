@@ -208,13 +208,13 @@ exports.getEstatusPago = async (query) => {
 
   const sql = `
     SELECT
-      c.estatus_pago,
+      t.estatus_pago,
       COUNT(c.id)::int AS comisiones_count,
       COALESCE(SUM(c.monto_comision), 0) AS comision_total_sum
     FROM comisiones c
     JOIN transacciones t ON t.id = c.transaccion_id
     ${where}
-    GROUP BY c.estatus_pago
+    GROUP BY t.estatus_pago
     ORDER BY comision_total_sum DESC;
   `;
 
@@ -244,8 +244,8 @@ exports.getDashboardCorredor = async (corredor_id, query) => {
       COUNT(DISTINCT t.id)::int AS transacciones_count,
       COALESCE(SUM(c.monto_comision), 0) AS comision_total_sum,
       COALESCE(SUM(c.empresa_ganancia), 0) AS ganancia_empresa_sum,
-      COALESCE(SUM(CASE WHEN c.estatus_pago='pagado' THEN c.monto_comision ELSE 0 END), 0) AS comision_pagada_sum,
-      COALESCE(SUM(CASE WHEN c.estatus_pago='pendiente' THEN c.monto_comision ELSE 0 END), 0) AS comision_pendiente_sum
+      COALESCE(SUM(CASE WHEN t.estatus_pago='pagado' THEN c.monto_comision ELSE 0 END), 0) AS comision_pagada_sum,
+      COALESCE(SUM(CASE WHEN t.estatus_pago='pendiente' THEN c.monto_comision ELSE 0 END), 0) AS comision_pendiente_sum
     FROM comisiones c
     JOIN transacciones t ON t.id = c.transaccion_id
     ${where};
@@ -254,7 +254,7 @@ exports.getDashboardCorredor = async (corredor_id, query) => {
   const detalleSql = `
     SELECT
       c.id AS comision_id,
-      c.estatus_pago,
+      t.estatus_pago,
       c.monto_comision,
       c.empresa_ganancia,
       c.fecha_pago,

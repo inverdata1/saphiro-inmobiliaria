@@ -10,10 +10,11 @@ export default function MisInmueblesPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user?.id) return;
+    const userIdentifier = user?.uuid || user?.id;
+    if (!userIdentifier) return;
     (async () => {
       try {
-        const r = await apiGet(`/inmuebles/corredor/${user.id}`);
+        const r = await apiGet(`/inmuebles/corredor/${userIdentifier}`);
         setInmuebles(Array.isArray(r?.data) ? r.data : []);
       } catch {
         setInmuebles([]);
@@ -21,7 +22,7 @@ export default function MisInmueblesPage() {
         setLoading(false);
       }
     })();
-  }, [user?.id]);
+  }, [user?.uuid, user?.id]);
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
@@ -75,7 +76,7 @@ export default function MisInmueblesPage() {
       ) : (
         <div className="mt-6 flex flex-col gap-4">
           {inmuebles.map((item) => (
-            <PropertyCard key={item.id} property={item} tall />
+            <PropertyCard key={item.uuid || item.id} property={item} tall />
           ))}
         </div>
       )}

@@ -15,6 +15,27 @@ exports.create = async ({ usuario_id, titulo, descripcion, tipo_notificacion }) 
   return rows[0];
 };
 
+/* Notifica a todos los administradores activos en una sola sentencia.
+   Devuelve las notificaciones creadas. */
+exports.createToAllAdmins = async ({ titulo, descripcion, tipo_notificacion }) => {
+
+  if (!titulo || !descripcion) {
+    throw new AppError("titulo y descripcion son requeridos", 400);
+  }
+
+  const { rows } = await pool.query(
+    `INSERT INTO notificaciones (usuario_id, titulo, descripcion, tipo_notificacion)
+     SELECT u.id, $1, $2, $3
+     FROM usuarios u
+     WHERE u.rol = 'admin' AND u.active = TRUE AND u.deleted_at IS NULL
+     RETURNING *;`,
+    [titulo, descripcion, tipo_notificacion || null]
+  );
+
+  return rows;
+  
+};
+
 exports.getByUser = async (usuario_id) => {
   const { rows } = await pool.query(
     `SELECT * FROM notificaciones

@@ -8,6 +8,41 @@ function clampInt(n, { min, max, def }) {
   return Math.min(max, Math.max(min, Math.trunc(x)));
 }
 
+const vacio = (v) => v === undefined || v === null || v === "";
+
+/* Área de construcción: opcional (default 0), nunca negativa y nunca mayor al área del inmueble */
+function validarAreaConstruccion(area_m2, area_construccion_m2) {
+  const areaTotal = vacio(area_m2) || Number.isNaN(Number(area_m2)) ? null : Number(area_m2);
+  const areaConst = vacio(area_construccion_m2) ? 0 : Number(area_construccion_m2);
+
+  if (Number.isNaN(areaConst)) throw new AppError("area_construccion_m2 inválida", 400);
+  if (areaConst < 0) throw new AppError("El área de construcción no puede ser menor a 0", 400);
+  if (areaTotal !== null && areaConst > areaTotal) {
+    throw new AppError("El área de construcción no puede ser mayor al área del inmueble", 400);
+  }
+  return areaConst;
+}
+
+/* Cantidad de mascotas permitidas: solo vacacional. Sin cantidad (=0) no se aceptan mascotas */
+function validarCantidadMascotas(estado_inmueble, cantidad_mascotas_permitidas, mascotas) {
+  const cantidad = vacio(cantidad_mascotas_permitidas) ? 0 : Number(cantidad_mascotas_permitidas);
+
+  if (estado_inmueble !== "vacacional") return 0;
+  if (Number.isNaN(cantidad) || cantidad < 0) {
+    throw new AppError("cantidad_mascotas_permitidas inválida", 400);
+  }
+
+  if (cantidad === 0  && mascotas.length > 0) {
+    throw new AppError("No se pueden asignar mascotas si la cantidad de mascotas permitidas es 0", 400);
+  }
+
+  if(cantidad > 0 && mascotas.length === 0) {
+    throw new AppError("Debe asignar al menos una mascota si la cantidad de mascotas permitidas es mayor a 0", 400);
+  }
+  
+  return Math.trunc(cantidad);
+}
+
 const VACACIONAL_SELECT = `,
   CASE WHEN i.estado_inmueble = 'vacacional' THEN (
     SELECT json_build_object(
@@ -17,6 +52,7 @@ const VACACIONAL_SELECT = `,
       'noches_minimas', av.noches_minimas,
       'hora_checkin', av.hora_checkin,
       'hora_checkout', av.hora_checkout,
+      'cantidad_mascotas_permitidas', av.cantidad_mascotas_permitidas,
       'costos_adicionales', (
         SELECT COALESCE(json_agg(json_build_object(
           'costo_adicional_id', c2.id,
@@ -34,31 +70,71 @@ const VACACIONAL_SELECT = `,
   ) ELSE NULL END AS alquiler_vacacional
 `;
 
-// Cálculo dinámico del estatus del inmueble.
-// Vacacionales con reserva vencida (fecha_salida < hoy) vuelven a "disponible" automáticamente.
-const ESTATUS_SELECT = `,
-  COALESCE((
-    SELECT CASE
-      WHEN t.tipo_operacion = 'venta' AND t.estatus_pago = 'pagado' THEN 'vendido'
-      WHEN t.tipo_operacion = 'alquiler' AND t.estatus_pago = 'pagado' AND i.estado_inmueble <> 'vacacional' THEN 'alquilado'
-      WHEN t.tipo_operacion = 'alquiler' AND t.estatus_pago = 'pagado' AND i.estado_inmueble = 'vacacional'
-        AND rv.fecha_salida >= CURRENT_DATE THEN 'reservado'
-      ELSE NULL
-    END
-    FROM transacciones t
-    LEFT JOIN reservas_vacacionales rv ON rv.transaccion_id = t.id
-    WHERE t.inmueble_id = i.id AND t.estatus_pago <> 'cancelado'
-    ORDER BY t.fecha_transaccion DESC NULLS LAST, t.id DESC
-    LIMIT 1
-  ), 'disponible') AS estatus
+const ALQUILER_FIJO_SELECT= `,
+  (SELECT af.precio_mes FROM alquiler_fijo af WHERE af.inmueble_id = i.id LIMIT 1) AS precio_por_mes
 `;
 
+// Cálculo dinámico del estatus del inmueble. Es la única definición: la usan tanto la
+// columna `estatus` de los SELECT como el filtro `?estatus=`, para que ambos no puedan
+// divergir.
+//
+// Prioridad: una venta pagada siempre gana (vender termina el alquiler); si no hay venta,
+// un alquiler fijo se considera "alquilado" por su CONTRATO ACTIVO
+// (contrato.active), no por la transacción: el contrato es la fuente de verdad
+// y sobrevive aunque la transacción que lo originó ya no sea la más reciente. Los demás
+// alquileres siguen derivándose de la transacción pagada más reciente.
+//
+// Vacacionales con reserva vencida (fecha_salida < hoy) vuelven a "disponible" automáticamente.
+//
+// OJO: hoy ninguna ruta cancela una transacción (el PATCH de estatus_pago solo toca
+// `comisiones`). Si se agrega cancelación, hay que dar de baja el contrato en el mismo paso,
+// o un alquiler fijo cancelado seguiría figurando como "alquilado".
+const ESTATUS_EXPR = `
+  COALESCE(
+    (
+      SELECT CASE
+        WHEN t.tipo_operacion = 'venta' AND t.estatus_pago = 'pagado' THEN 'vendido'
+        WHEN t.tipo_operacion = 'alquiler' AND t.estatus_pago = 'pagado' AND i.estado_inmueble = 'vacacional'
+          AND rv.fecha_salida >= CURRENT_DATE THEN 'reservado'
+        ELSE NULL
+      END
+      FROM transacciones t
+      LEFT JOIN reservas_vacacionales rv ON rv.transaccion_id = t.id
+      WHERE t.inmueble_id = i.id AND t.estatus_pago <> 'cancelado'
+      ORDER BY t.fecha_transaccion DESC NULLS LAST, t.id DESC
+      LIMIT 1
+    ),
+    (
+      SELECT CASE
+        WHEN i.estado_inmueble = 'alquiler_fijo'
+          AND EXISTS (
+            SELECT 1
+            FROM alquiler_fijo af
+            JOIN contrato ct ON ct.alquiler_fijo_id = af.id AND ct.active
+            WHERE af.inmueble_id = i.id
+          ) THEN 'alquilado'
+      END
+    ),
+    'disponible'
+  )
+`;
+
+// Exportado para reutilizar en reportes.service.js (reporte de disponibilidad),
+// así la definición del estatus vive en un solo lugar.
+exports.ESTATUS_EXPR = ESTATUS_EXPR;
+
+const ESTATUS_SELECT = `,
+  ${ESTATUS_EXPR} AS estatus
+`;
+
+//Enlistar inmuebles para que el usuario los pueda ver en la pagina
 exports.listInmuebles = async (filters) => {
   const {
     estatus,
     estado_inmueble,
     min,
     max,
+    moneda,
     ciudad_id,
     estado_id,
     tipo_inmueble_id,
@@ -66,10 +142,14 @@ exports.listInmuebles = async (filters) => {
     q,
     limit,
     offset,
+    sort,
   } = filters;
 
   const whereClauses = [];
   const values = [];
+  const PRECIO_EFFECTIVO = `(i.precio +
+   COALESCE((SELECT af.precio_mes FROM alquiler_fijo af WHERE af.inmueble_id = i.id LIMIT 1), 0) +
+    COALESCE((SELECT av.precio_por_noche FROM alquiler_vacacional av WHERE av.inmueble_id = i.id LIMIT 1), 0))`;
 
   if (estatus) {
     // Convertir el parámetro estatus en un array de valores de estatus.
@@ -80,22 +160,7 @@ exports.listInmuebles = async (filters) => {
       // Construir un placeholder por cada estatus permitido.
       let estatusCantidad= values.length;
       const placeholders = estatusArray.map(() => `$${++estatusCantidad}`).join(", ");
-      whereClauses.push(`(
-        COALESCE((
-          SELECT CASE
-            WHEN t.tipo_operacion = 'venta' AND t.estatus_pago = 'pagado' THEN 'vendido'
-            WHEN t.tipo_operacion = 'alquiler' AND t.estatus_pago = 'pagado' AND i.estado_inmueble <> 'vacacional' THEN 'alquilado'
-            WHEN t.tipo_operacion = 'alquiler' AND t.estatus_pago = 'pagado' AND i.estado_inmueble = 'vacacional'
-              AND rv.fecha_salida >= CURRENT_DATE THEN 'reservado'
-            ELSE NULL
-          END
-          FROM transacciones t
-          LEFT JOIN reservas_vacacionales rv ON rv.transaccion_id = t.id
-          WHERE t.inmueble_id = i.id AND t.estatus_pago <> 'cancelado'
-          ORDER BY t.fecha_transaccion DESC NULLS LAST, t.id DESC
-          LIMIT 1
-        ), 'disponible') IN (${placeholders})
-      )`);
+      whereClauses.push(`(${ESTATUS_EXPR} IN (${placeholders}))`);
       values.push(...estatusArray);
     }
   }
@@ -107,12 +172,17 @@ exports.listInmuebles = async (filters) => {
 
   if (min !== undefined && min !== "") {
     values.push(Number(min));
-    whereClauses.push(`(i.precio + COALESCE((SELECT av.precio_por_noche FROM alquiler_vacacional av WHERE av.inmueble_id = i.id LIMIT 1), 0)) >= $${values.length}`);
+    whereClauses.push(`${PRECIO_EFFECTIVO} >= $${values.length}`);
   }
 
   if (max !== undefined && max !== "") {
     values.push(Number(max));
-    whereClauses.push(`(i.precio + COALESCE((SELECT av.precio_por_noche FROM alquiler_vacacional av WHERE av.inmueble_id = i.id LIMIT 1), 0)) <= $${values.length}`);
+    whereClauses.push(`${PRECIO_EFFECTIVO} <= $${values.length}`);
+  }
+
+  if (moneda) {
+    values.push(String(moneda));
+    whereClauses.push(`i.moneda = $${values.length}`);
   }
 
   if (ciudad_id) {
@@ -144,14 +214,42 @@ exports.listInmuebles = async (filters) => {
 
   const where = whereClauses.length ? `WHERE ${whereClauses.join(" AND ")}` : "";
 
+  const SORTS = {
+    newest: "i.id DESC",
+    price_asc: `${PRECIO_EFFECTIVO} ASC NULLS LAST, i.id DESC`,
+    price_desc: `${PRECIO_EFFECTIVO} DESC NULLS LAST, i.id DESC`,
+  };
+
+  const orderClause = SORTS[sort] || SORTS.newest;
+
   const lim = clampInt(limit, { min: 1, max: 500, def: 100 });
   const off = clampInt(offset, { min: 0, max: 1000000, def: 0 });
+
+  const valueCountBeforeLimit = values.length;
 
   values.push(lim);
   const limPos = values.length;
 
   values.push(off);
   const offPos = values.length;
+
+  const joins = `
+    FROM inmuebles i
+    LEFT JOIN tipos_inmueble ti ON ti.id = i.tipo_inmueble_id
+    LEFT JOIN ciudades c ON c.id = i.ciudad_id
+    LEFT JOIN estados e ON e.id = c.estado_id
+    LEFT JOIN corredores co ON co.id = i.corredor_id
+    LEFT JOIN usuarios u ON u.id = co.usuario_id
+  `;
+
+  const countSql = `
+    SELECT COUNT(*)::int AS total
+    ${joins}
+    ${where};
+  `;
+
+  const countRows = await pool.query(countSql, values.slice(0, valueCountBeforeLimit));
+  const total = Number(countRows.rows[0]?.total || 0);
 
   const sql = `
     SELECT
@@ -171,8 +269,10 @@ exports.listInmuebles = async (filters) => {
           ORDER BY ci2.caracteristica_id ASC
         ) ci
         JOIN caracteristicas c ON c.id = ci.caracteristica_id
-      ) AS caracteristicas
+      ) AS caracteristicas,
+      (SELECT af.precio_mes FROM alquiler_fijo af WHERE af.inmueble_id = i.id LIMIT 1) AS precio_por_mes
       ${ESTATUS_SELECT}
+      ${ALQUILER_FIJO_SELECT}
       ${VACACIONAL_SELECT}
     FROM inmuebles i
     LEFT JOIN tipos_inmueble ti ON ti.id = i.tipo_inmueble_id
@@ -181,12 +281,21 @@ exports.listInmuebles = async (filters) => {
     LEFT JOIN corredores co ON co.id = i.corredor_id
     LEFT JOIN usuarios u ON u.id = co.usuario_id
     ${where}
-    ORDER BY i.id DESC
+    ORDER BY ${orderClause}
     LIMIT $${limPos} OFFSET $${offPos};
   `;
 
   const { rows } = await pool.query(sql, values);
-  return rows;
+  return {
+    data: rows,
+    pagination: {
+      page: Math.floor(off / lim) + 1,
+      limit: lim,
+      offset: off,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / lim)),
+    },
+  };
 };
 
 exports.listInmueblesByCorredor = async (usuarioId) => {
@@ -213,6 +322,7 @@ exports.listInmueblesByCorredor = async (usuarioId) => {
           JOIN caracteristicas c2 ON c2.id = ci.caracteristica_id
         ) AS caracteristicas
         ${ESTATUS_SELECT}
+        ${ALQUILER_FIJO_SELECT}
         ${VACACIONAL_SELECT}
       FROM inmuebles i
       LEFT JOIN tipos_inmueble ti ON ti.id = i.tipo_inmueble_id
@@ -230,6 +340,7 @@ exports.listInmueblesByCorredor = async (usuarioId) => {
   return rows;
 };
 
+//Obtener inmuebles por ID
 exports.getInmuebleById = async (id) => {
   if (!id) throw new AppError("id inválido", 400);
 
@@ -242,6 +353,13 @@ exports.getInmuebleById = async (id) => {
       u.nombre  AS corredor_nombre,
       u.foto_url AS corredor_foto,
       co.usuario_id AS corredor_usuario_id,
+      u.uuid AS corredor_usuario_uuid,
+      COALESCE(
+        (SELECT ARRAY_AGG(json_build_object('id', nt.id, 'nro_telefono', nt.nro_telefono, 'codigo_pais', nt.codigo_pais) ORDER BY nt.id ASC)
+         FROM nros_telefono nt
+         WHERE nt.corredor_id = co.id),
+        ARRAY[]::JSON[]
+      ) AS corredor_telefonos,
       ug.latitud,
       ug.longitud,
       ug.google_maps_url
@@ -276,7 +394,7 @@ exports.getInmuebleById = async (id) => {
 
   if (result.estado_inmueble === "vacacional") {
     const { rows: av } = await pool.query(
-      "SELECT id, precio_por_noche, capacidad_personas, noches_minimas, hora_checkin, hora_checkout, permiso_infantes FROM alquiler_vacacional WHERE inmueble_id = $1",
+      "SELECT id, precio_por_noche, capacidad_personas, noches_minimas, hora_checkin, hora_checkout, permiso_infantes, cantidad_mascotas_permitidas FROM alquiler_vacacional WHERE inmueble_id = $1",
       [id]
     );
     result.alquiler_vacacional = av.length ? av[0] : null;
@@ -303,9 +421,19 @@ exports.getInmuebleById = async (id) => {
     }
   }
 
+  if (result.estado_inmueble === "alquiler_fijo") {
+    const { rows: af } = await pool.query(
+      "SELECT id, precio_mes, cantidad_meses FROM alquiler_fijo WHERE inmueble_id = $1",
+      [id]
+    );
+    result.alquiler_fijo = af.length ? af[0] : null;
+    result.precio_por_mes = result.alquiler_fijo?.precio_mes ?? null;
+  }
+
   return result;
 };
 
+//Crear inmuebles
 exports.createInmueble = async (data, files = [], ctx) => {
   const {
     titulo,
@@ -330,6 +458,11 @@ exports.createInmueble = async (data, files = [], ctx) => {
     permiso_infantes,
     costos_adicionales,
     mascotas,
+    precio_por_mes,
+    cantidad_meses,
+    area_construccion_m2,
+    terminos_y_condiciones= "",
+    cantidad_mascotas_permitidas,
   } = data;
 
   if (!titulo) throw new AppError("titulo es requerido", 400);
@@ -337,6 +470,13 @@ exports.createInmueble = async (data, files = [], ctx) => {
   if (precio === undefined || precio === null || precio === "") {
     if (estado_inmueble !== "vacacional") throw new AppError("precio es requerido", 400);
   }
+
+  const areaConst = validarAreaConstruccion(area_m2, area_construccion_m2);
+  const cantidadMascotas = validarCantidadMascotas(
+    estado_inmueble,
+    cantidad_mascotas_permitidas,
+    mascotas
+  );
 
   const client = await pool.connect();
 
@@ -346,9 +486,10 @@ exports.createInmueble = async (data, files = [], ctx) => {
     const { rows } = await client.query(
       `INSERT INTO inmuebles (
         titulo, descripcion, tipo_inmueble_id, estado_inmueble, precio, moneda,
-        ciudad_id, direccion_exacta, area_m2, corredor_id, punto_referencia
+        ciudad_id, direccion_exacta, area_m2, corredor_id, punto_referencia,
+        area_construccion_m2, terminos_y_condiciones
       )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
       RETURNING *;`,
       [
         titulo,
@@ -363,7 +504,9 @@ exports.createInmueble = async (data, files = [], ctx) => {
         direccion_exacta || null,
         area_m2 ?? null,
         corredor_id ? Number(corredor_id) : null,
-        punto_referencia || null
+        punto_referencia || null,
+        areaConst,
+        terminos_y_condiciones && terminos_y_condiciones.trim() === "" ? null : terminos_y_condiciones,
       ]
     );
     const inmueble = rows[0];
@@ -389,8 +532,8 @@ exports.createInmueble = async (data, files = [], ctx) => {
 
     if (estado_inmueble === "vacacional") {
       const { rows: vacRows } = await client.query(
-        `INSERT INTO alquiler_vacacional (inmueble_id, precio_por_noche, capacidad_personas, noches_minimas, hora_checkin, hora_checkout, permiso_infantes)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
+        `INSERT INTO alquiler_vacacional (inmueble_id, precio_por_noche, capacidad_personas, noches_minimas, hora_checkin, hora_checkout, permiso_infantes, cantidad_mascotas_permitidas)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          RETURNING id;`,
         [
           inmueble.id,
@@ -400,6 +543,7 @@ exports.createInmueble = async (data, files = [], ctx) => {
           hora_checkin || null,
           hora_checkout || null,
           permiso_infantes === undefined || permiso_infantes === null ? true : Boolean(permiso_infantes),
+          cantidadMascotas,
         ]
       );
       const alquilerVacacionalId = vacRows[0].id;
@@ -430,6 +574,21 @@ exports.createInmueble = async (data, files = [], ctx) => {
             );
           }
         }
+      }
+    }
+
+    if (estado_inmueble === "alquiler_fijo") {
+      if (
+        precio_por_mes != null &&
+        cantidad_meses != null &&
+        !Number.isNaN(Number(precio_por_mes)) &&
+        !Number.isNaN(Number(cantidad_meses))
+      ) {
+        await client.query(
+          `INSERT INTO alquiler_fijo (inmueble_id, precio_mes, cantidad_meses)
+           VALUES ($1, $2, $3);`,
+          [inmueble.id, Number(precio_por_mes), Number(cantidad_meses)]
+        );
       }
     }
 
@@ -576,23 +735,62 @@ exports.updateInmueble = async (id, data = {}, files = [], ctx) => {
     permiso_infantes,
     costos_adicionales,
     mascotas,
+    precio_por_mes,
+    cantidad_meses,
+    area_construccion_m2,
+    terminos_y_condiciones,
+    cantidad_mascotas_permitidas,
     borrar_imagenes,
   } = data;
 
+  //Validaciones
+
   if (!titulo) throw new AppError("titulo es requerido", 400);
+
   if (!estado_inmueble) throw new AppError("estado_inmueble es requerido", 400);
+
   if (precio === undefined || precio === null || precio === "") {
-    if (estado_inmueble !== "vacacional") throw new AppError("precio es requerido", 400);
+    if (estado_inmueble !== "vacacional" || estado_inmueble !== "alquiler_fijo") throw new AppError("precio es requerido", 400);
   }
+
+  if(precio < 0){
+    throw new AppError("precio no puede ser negativo",400);
+  }
+
+  if(precio === 0 && estado_inmueble === "venta"){
+    throw new AppError("El precio no puede ser 0 en el caso de una venta", 400);
+  }
+
   if (estado_inmueble === "vacacional") {
+
     if (precio_por_noche === undefined || precio_por_noche === null || precio_por_noche === "" || Number(precio_por_noche) <= 0) {
       throw new AppError("precio_por_noche es requerido", 400);
     }
+
     if (capacidad_personas === undefined || capacidad_personas === null || capacidad_personas === "" || Number(capacidad_personas) <= 0) {
       throw new AppError("capacidad_personas es requerido", 400);
     }
   }
 
+  if (estado_inmueble === "alquiler_fijo") {
+
+    if (precio_por_mes === undefined || precio_por_mes === null || precio_por_mes === "" || Number(precio_por_mes) <= 0) {
+      throw new AppError("precio_por_mes es requerido", 400);
+    }
+
+    if (cantidad_meses === undefined || cantidad_meses === null || cantidad_meses === "" || Number(cantidad_meses) <= 0) {
+      throw new AppError("cantidad_meses es requerido", 400);
+    }
+  }
+
+  const areaConst = validarAreaConstruccion(area_m2, area_construccion_m2);
+  const cantidadMascotas = validarCantidadMascotas(
+    estado_inmueble,
+    cantidad_mascotas_permitidas,
+    mascotas
+  );
+
+  // Proceso
   const client = await pool.connect();
 
   const rawQuery = client.query.bind(client);
@@ -621,23 +819,25 @@ exports.updateInmueble = async (id, data = {}, files = [], ctx) => {
         area_m2 = $9,
         corredor_id = $10,
         punto_referencia = $11,
+        area_construccion_m2 = $12,
+        terminos_y_condiciones = $13,
         updated_at = NOW()
-      WHERE id = $12 AND deleted_at IS NULL
+      WHERE id = $14 AND deleted_at IS NULL
       RETURNING *;`,
       [
         titulo,
         descripcion || null,
         tipo_inmueble_id ? Number(tipo_inmueble_id) : null,
         estado_inmueble,
-        estado_inmueble === "vacacional"
-          ? (precio === undefined || precio === null || precio === "" ? 0 : Number(precio))
-          : Number(precio),
-        moneda || "USD",
+        precio,
+        moneda,
         ciudad_id ? Number(ciudad_id) : null,
         direccion_exacta || null,
         area_m2 ?? null,
         data.corredor_id ? Number(data.corredor_id) : null,
         punto_referencia || null,
+        areaConst,
+        terminos_y_condiciones || "",
         id
       ]
     );
@@ -671,8 +871,8 @@ exports.updateInmueble = async (id, data = {}, files = [], ctx) => {
     await client.query("DELETE FROM alquiler_vacacional WHERE inmueble_id = $1;", [id]);
     if (estado_inmueble === "vacacional") {
       const { rows: vacRows } = await client.query(
-        `INSERT INTO alquiler_vacacional (inmueble_id, precio_por_noche, capacidad_personas, noches_minimas, hora_checkin, hora_checkout, permiso_infantes)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
+        `INSERT INTO alquiler_vacacional (inmueble_id, precio_por_noche, capacidad_personas, noches_minimas, hora_checkin, hora_checkout, permiso_infantes, cantidad_mascotas_permitidas)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          RETURNING id;`,
         [
           id,
@@ -682,6 +882,7 @@ exports.updateInmueble = async (id, data = {}, files = [], ctx) => {
           hora_checkin || null,
           hora_checkout || null,
           permiso_infantes === undefined || permiso_infantes === null ? true : Boolean(permiso_infantes),
+          cantidadMascotas,
         ]
       );
       const alquilerVacacionalId = vacRows[0].id;
@@ -711,6 +912,24 @@ exports.updateInmueble = async (id, data = {}, files = [], ctx) => {
               ]
             );
           }
+        }
+      }
+    }
+    
+    // Por si el inmueble es un alquiler fijo
+    if (estado_inmueble === "alquiler_fijo") {
+      const precioMes = Number(precio_por_mes);
+      const meses = Number(cantidad_meses);
+      if (!Number.isNaN(precioMes) && !Number.isNaN(meses)) {
+        const upd = await client.query(
+          `UPDATE alquiler_fijo SET precio_mes = $1, cantidad_meses = $2 WHERE inmueble_id = $3;`,
+          [precioMes, meses, id]
+        );
+        if (!upd.rowCount) {
+          await client.query(
+            `INSERT INTO alquiler_fijo (inmueble_id, precio_mes, cantidad_meses) VALUES ($1, $2, $3);`,
+            [id, precioMes, meses]
+          );
         }
       }
     }
@@ -802,6 +1021,7 @@ exports.listDisponiblesPorCiudad = async (ciudadId, q) => {
     `SELECT i.id, i.titulo, i.precio, i.moneda, i.estado_inmueble, i.corredor_id,
             i.descripcion, i.tipo_inmueble_id, i.area_m2, i.direccion_exacta,
             c.nombre AS ciudad,
+            u.uuid AS corredor_usuario_uuid,
             (SELECT img.url FROM imagenes img WHERE img.inmueble_id = i.id ORDER BY img.orden ASC LIMIT 1) AS imagen_url,
             (
               SELECT json_agg(json_build_object('nombre', c2.nombre, 'valor', ci.valor, 'unidad_medicion', c2.unidad_medicion))
@@ -815,9 +1035,12 @@ exports.listDisponiblesPorCiudad = async (ciudadId, q) => {
               JOIN caracteristicas c2 ON c2.id = ci.caracteristica_id
             ) AS caracteristicas
             ${ESTATUS_SELECT}
+            ${ALQUILER_FIJO_SELECT}
             ${VACACIONAL_SELECT}
      FROM inmuebles i
      LEFT JOIN ciudades c ON c.id = i.ciudad_id
+     LEFT JOIN corredores co ON co.id = i.corredor_id
+     LEFT JOIN usuarios u ON u.id = co.usuario_id
      ${where}
      ORDER BY i.id DESC
      LIMIT 200;`,
@@ -833,6 +1056,7 @@ exports.listDisponiblesPorEstado = async (estadoId) => {
   const { rows } = await pool.query(
     `SELECT i.id, i.titulo, i.precio, i.moneda, i.estado_inmueble, i.corredor_id
             ${ESTATUS_SELECT}
+            ${ALQUILER_FIJO_SELECT}
             ${VACACIONAL_SELECT}
      FROM inmuebles i
      LEFT JOIN ciudades c ON c.id = i.ciudad_id

@@ -9,6 +9,8 @@ const pool = require("./db/pool");
 const inmueblesRoutes = require("./routes/inmuebles.routes");
 const transaccionesRoutes = require("./routes/transacciones.routes");
 const comisionesRoutes = require("./routes/comisiones.routes");
+const contratosRoutes = require("./routes/contratos.routes");
+const reservasRoutes = require("./routes/reservas.routes");
 const reportesRoutes = require("./routes/reportes.routes");
 const dashBoardRoutes = require("./routes/dashBoard.routes");
 const auditoriaRoutes = require("./routes/auditoria.routes");
@@ -30,6 +32,7 @@ const costosAdicionalesRoutes = require("./routes/costosAdicionales.routes");
 const redesSocialesRoutes = require("./routes/redesSociales.routes");
 const tasasRoutes = require("./routes/tasasCambio.routes");
 const mascotasRoutes = require("./routes/mascotas.routes");
+const geocodingRoutes = require("./routes/geocoding.routes");
 const errorHandler = require("./middleware/errorHandler");
 const csrf = require("./middleware/csrf");
 const { initTasasJob } = require("./jobs/tasasCambio.job");
@@ -39,7 +42,7 @@ const app = express();
 const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
 
 app.use(helmet());
-app.use(cors({ origin: CLIENT_URL, credentials: true }));
+app.use(cors({ origin: CLIENT_URL, credentials: true, exposedHeaders: ["Content-Disposition"] }));
 app.use(cookieParser());
 app.use(express.json());
 app.use(csrf);
@@ -74,6 +77,8 @@ app.get("/dbtest", async (_req, res) => {
 app.use("/inmuebles", inmueblesRoutes);
 app.use("/transacciones", transaccionesRoutes);
 app.use("/comisiones", comisionesRoutes);
+app.use("/contratos", contratosRoutes);
+app.use("/reservas", reservasRoutes);
 app.use("/reportes", reportesRoutes);
 app.use("/dashboard", dashBoardRoutes);
 app.use("/auditoria", auditoriaRoutes);
@@ -95,6 +100,7 @@ app.use("/costos-adicionales", costosAdicionalesRoutes);
 app.use("/redes-sociales", redesSocialesRoutes);
 app.use("/tasas", tasasRoutes);
 app.use("/mascotas", mascotasRoutes);
+app.use("/geocoding", geocodingRoutes);
 
 app.use(errorHandler);
 

@@ -23,6 +23,11 @@ export default function PerfilUsuarioPage() {
 
   useEffect(() => {
     let isMounted = true;
+    if (!id || id === "undefined" || id === "null") {
+      setLoading(false);
+      return;
+    }
+
     (async () => {
       setLoading(true);
       try {
@@ -34,7 +39,8 @@ export default function PerfilUsuarioPage() {
         } catch {
           // Si no está logueado o falla, construir datos base
           userData = {
-            id: Number(id),
+            id: id,
+            uuid: id,
             nombre: "Corredor Inmobiliario",
             email: "contacto@inverdata.com",
             rol: "corredor",
@@ -42,10 +48,12 @@ export default function PerfilUsuarioPage() {
           };
         }
 
+        const userUuid = userData?.uuid || id;
+
         // 2. Obtener datos de corredor si aplica
         let corrData = null;
         try {
-          const corrRes = await apiGet(`/corredores/${id}`);
+          const corrRes = await apiGet(`/corredores/${userUuid}`);
           corrData = corrRes?.data || corrRes;
         } catch {
           corrData = null;
@@ -54,7 +62,7 @@ export default function PerfilUsuarioPage() {
         // 3. Obtener inmuebles asociados al corredor
         let inmueblesData = [];
         try {
-          const inmobRes = await apiGet(`/inmuebles/corredor/${id}`);
+          const inmobRes = await apiGet(`/inmuebles/corredor/${userUuid}`);
           inmueblesData = Array.isArray(inmobRes?.data) ? inmobRes.data : Array.isArray(inmobRes) ? inmobRes : [];
         } catch {
           inmueblesData = [];
@@ -63,7 +71,7 @@ export default function PerfilUsuarioPage() {
         // 4. Obtener redes sociales del corredor (público)
         let redesData = [];
         try {
-          const redesRes = await apiGet(`/corredores/${id}/redes-sociales`);
+          const redesRes = await apiGet(`/corredores/${userUuid}/redes-sociales`);
           redesData = Array.isArray(redesRes?.data) ? redesRes.data : Array.isArray(redesRes) ? redesRes : [];
         } catch {
           redesData = [];
@@ -72,7 +80,7 @@ export default function PerfilUsuarioPage() {
         // 5. Obtener teléfonos del corredor (público)
         let telefonosRes = [];
         try {
-          const telRes = await apiGet(`/corredores/${id}/telefonos`);
+          const telRes = await apiGet(`/corredores/${userUuid}/telefonos`);
           telefonosRes = Array.isArray(telRes?.data) ? telRes.data : Array.isArray(telRes) ? telRes : [];
         } catch {
           telefonosRes = [];
@@ -114,15 +122,31 @@ export default function PerfilUsuarioPage() {
       .toUpperCase() || "US";
   }, [nombreCompleto]);
 
-  const esCorredor = usuario?.rol === "corredor" || !!corredorInfo;
-  const esMiPropioPerfil = currentUser && Number(currentUser.id) === Number(id);
+  const esCorredor =
+    usuario?.rol === "corredor" ||
+    !!corredorInfo ||
+    (Array.isArray(telefonosData) && telefonosData.length > 0) ||
+    (Array.isArray(redesSociales) && redesSociales.length > 0);
+
+  const esMiPropioPerfil = useMemo(() => {
+    if (!currentUser || !usuario) return false;
+    // La URL puede traer uuid o id: se comparan ambos segun lo disponible.
+    if (currentUser.uuid && usuario.uuid) return currentUser.uuid === usuario.uuid;
+    return Number(currentUser.id) === Number(usuario.id);
+  }, [currentUser, usuario]);
 
   // Teléfonos del corredor (todos)
   const telefonos = useMemo(() => {
     if (Array.isArray(telefonosData) && telefonosData.length) {
-      return telefonosData.map((t) => t.nro_telefono).filter(Boolean);
+      return telefonosData
+        .map((t) => (typeof t === "string" ? t : t?.nro_telefono))
+        .filter(Boolean);
     }
-    if (Array.isArray(corredorInfo?.telefonos)) return corredorInfo.telefonos.filter(Boolean);
+    if (Array.isArray(corredorInfo?.telefonos) && corredorInfo.telefonos.length) {
+      return corredorInfo.telefonos
+        .map((t) => (typeof t === "string" ? t : t?.nro_telefono))
+        .filter(Boolean);
+    }
     if (usuario?.telefono) return [usuario.telefono];
     return [];
   }, [telefonosData, corredorInfo, usuario]);
@@ -464,7 +488,7 @@ export default function PerfilUsuarioPage() {
               {inmueblesFiltrados.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {inmueblesFiltrados.map((inm) => (
-                    <div key={inm.id} className="h-full">
+                    <div key={inm.uuid || inm.id} className="h-full">
                       <PropertyCard property={inm} />
                     </div>
                   ))}

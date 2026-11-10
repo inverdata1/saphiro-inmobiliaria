@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import { apiGet } from "../api";
 import DataTable from "../components/DataTable";
 import UsuarioPicker from "../components/pickers/UsuarioPicker";
+import SaphiroDatePicker from "../components/pickers/SaphiroDatePicker";
 import ErrorBanner from "../components/error/ErrorBanner";
 import SerieChart from "../components/charts/SerieChart";
 import TopCorredoresBar from "../components/charts/TopCorredoresBar";
-import { formatDateTime } from "../utils/date";
+import { formatDateTime, toYmd } from "../utils/date";
 
 function toBs(v, from, rates) {
   const m = String(from || "USD").toUpperCase();
@@ -48,8 +49,8 @@ export default function BitacoraPage() {
   const [total, setTotal] = useState(0);
   const limit = 10;
 
-  const [desde, setDesde] = useState("");
-  const [hasta, setHasta] = useState("");
+  const [desde, setDesde] = useState(null);
+  const [hasta, setHasta] = useState(null);
   const [tabla, setTabla] = useState("");
   const [accion, setAccion] = useState("");
   const [usuarioId, setUsuarioId] = useState("");
@@ -60,8 +61,8 @@ export default function BitacoraPage() {
   const [kpis, setKpis] = useState(null);
   const [serie, setSerie] = useState([]);
   const [top, setTop] = useState([]);
-  const [dashDesde, setDashDesde] = useState("");
-  const [dashHasta, setDashHasta] = useState("");
+  const [dashDesde, setDashDesde] = useState(null);
+  const [dashHasta, setDashHasta] = useState(null);
 
   const cards = [
     { title: "Transacciones", value: kpis?.transacciones_count ?? "-" },
@@ -84,8 +85,8 @@ export default function BitacoraPage() {
     try {
       const offset = ((p || page) - 1) * limit;
       const r = await apiGet("/auditoria", {
-        desde: desde || undefined,
-        hasta: hasta || undefined,
+        desde: desde ? toYmd(desde) : undefined,
+        hasta: hasta ? toYmd(hasta) : undefined,
         tabla_afectada: tabla || undefined,
         accion: accion || undefined,
         usuario_id: usuarioId || undefined,
@@ -109,8 +110,8 @@ export default function BitacoraPage() {
     setStatsLoading(true);
     try {
       const params = {
-        desde: dashDesde || undefined,
-        hasta: dashHasta || undefined,
+        desde: dashDesde ? toYmd(dashDesde) : undefined,
+        hasta: dashHasta ? toYmd(dashHasta) : undefined,
         moneda,
       };
       const [k, s, t, tasas] = await Promise.all([
@@ -212,11 +213,26 @@ export default function BitacoraPage() {
             <div className="flex flex-wrap gap-2 items-end">
               <div>
                 <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Desde</div>
-                <input className="border rounded-xl px-3 py-2 bg-white dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600" type="date" value={dashDesde} onChange={(e) => setDashDesde(e.target.value)} />
+                <SaphiroDatePicker
+                  selected={dashDesde}
+                  onChange={(d) => setDashDesde(d)}
+                  selectsStart
+                  startDate={dashDesde}
+                  endDate={dashHasta}
+                  placeholderText="dd/mm/aaaa"
+                />
               </div>
               <div>
                 <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Hasta</div>
-                <input className="border rounded-xl px-3 py-2 bg-white dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600" type="date" value={dashHasta} onChange={(e) => setDashHasta(e.target.value)} />
+                <SaphiroDatePicker
+                  selected={dashHasta}
+                  onChange={(d) => setDashHasta(d)}
+                  selectsEnd
+                  startDate={dashDesde}
+                  endDate={dashHasta}
+                  minDate={dashDesde || undefined}
+                  placeholderText="dd/mm/aaaa"
+                />
               </div>
               <button onClick={loadStats} disabled={statsLoading} className="btn-secondary disabled:opacity-60">
                 {statsLoading ? "Cargando…" : "Aplicar"}
@@ -248,11 +264,26 @@ export default function BitacoraPage() {
             <div className="flex flex-wrap gap-2 items-end">
               <div>
                 <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Desde</div>
-                <input className="border rounded-xl px-3 py-2 bg-white dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600" type="date" value={desde} onChange={(e) => setDesde(e.target.value)} />
+                <SaphiroDatePicker
+                  selected={desde}
+                  onChange={(d) => setDesde(d)}
+                  selectsStart
+                  startDate={desde}
+                  endDate={hasta}
+                  placeholderText="dd/mm/aaaa"
+                />
               </div>
               <div>
                 <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Hasta</div>
-                <input className="border rounded-xl px-3 py-2 bg-white dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600" type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} />
+                <SaphiroDatePicker
+                  selected={hasta}
+                  onChange={(d) => setHasta(d)}
+                  selectsEnd
+                  startDate={desde}
+                  endDate={hasta}
+                  minDate={desde || undefined}
+                  placeholderText="dd/mm/aaaa"
+                />
               </div>
               <div>
                 <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Tabla</div>

@@ -10,7 +10,7 @@ export default function useProfilePhotoSync() {
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
-    apiGet(`/usuarios/${user.id}`)
+    apiGet(`/usuarios/${user.uuid}`)
       .then((res) => {
         if (cancelled) return;
         const u = res?.data || res;

@@ -146,6 +146,7 @@ export default function InmuebleDetailPage() {
   const [resenas, setResenas] = useState([]);
   const [reservas, setReservas] = useState([]);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [terminosOpen, setTerminosOpen] = useState(false);
   const menuRef = useRef(null);
   useEffect(() => {
     if (!menuOpen) return;
@@ -205,6 +206,12 @@ export default function InmuebleDetailPage() {
     cargarInmueble();
     cargarCaracteristicas();
   }, [cargarInmueble, cargarCaracteristicas]);
+  /* Redirigir al inicio si el inmueble está vendido o alquilado */
+  useEffect(() => {
+    if (inmueble?.estatus === "vendido" || inmueble?.estatus === "alquilado") {
+      navigate("/", { replace: true });
+    }
+  }, [inmueble?.estatus, navigate]);
   const handleGuardarInmueble = async () => {
     await cargarInmueble(true);
     cargarCaracteristicas();
@@ -287,6 +294,23 @@ export default function InmuebleDetailPage() {
     const sum = resenas.reduce((acc, r) => acc + (r.estrellas || 0), 0);
     return (sum / resenas.length).toFixed(1);
   }, [resenas, inmueble?.promedio_estrellas]);
+  /* Teléfonos del corredor */
+  const telefonosCorredor = useMemo(() => {
+    const tels = inmueble?.corredor_telefonos;
+    if (!Array.isArray(tels)) return [];
+    return tels
+      .map((t) => (typeof t === "string" ? { nro_telefono: t } : t))
+      .filter((t) => t?.nro_telefono)
+      .map((t) => ({
+        ...t,
+        telHref: `tel:${String(t.nro_telefono).replace(/[^\d+]/g, "")}`,
+      }));
+  }, [inmueble?.corredor_telefonos]);
+  /* Términos y condiciones — solo se ofrece si el corredor los escribió */
+  const terminosTexto = useMemo(() => {
+    const t = inmueble?.terminos_y_condiciones;
+    return typeof t === "string" ? t.trim() : "";
+  }, [inmueble?.terminos_y_condiciones]);
   /* ─── loading ───
    */
   if (loading) return <DetailSkeleton />;
@@ -589,25 +613,19 @@ export default function InmuebleDetailPage() {
               </div>{" "}
               <div className="mt-1 text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent dark:from-blue-400 dark:to-indigo-400">
                 {" "}
-                {fmtPrice(inmueble.precio, inmueble.moneda, inmueble.alquiler_vacacional)}{" "}
+                {fmtPrice(inmueble)}{" "}
               </div>{" "}
-              {inmueble.estado_inmueble !== "venta" && !(inmueble.estado_inmueble === "vacacional" && inmueble.alquiler_vacacional) && (
-                <span className="text-xs text-slate-500 dark:text-slate-400">
-                  /mes
-                </span>
-              )}{" "}
             </div>
             {/* Agent card
              */}
             {inmueble.corredor_nombre && inmueble.corredor_usuario_id && (
-              <button
-                onClick={() => navigate(`/perfil/${inmueble.corredor_usuario_id}`)}
-                className="w-full rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800 hover:border-purple-300 dark:hover:border-purple-700 hover:shadow-md transition-all cursor-pointer text-left"
-              >
-                {" "}
-                <div className="flex items-center gap-3">
+              <div className="w-full rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800 hover:border-purple-300 dark:hover:border-purple-700 hover:shadow-md transition-all">
+                <button
+                  onClick={() => navigate(`/perfil/${inmueble.corredor_usuario_uuid || inmueble.corredor_usuario_id}`)}
+                  className="flex w-full items-center gap-3 text-left cursor-pointer"
+                >
                   {" "}
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#5a0e82] text-sm font-bold text-white shadow-md overflow-hidden">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#5a0e82] text-sm font-bold text-white shadow-md overflow-hidden">
                     {inmueble.corredor_foto ? (
                       <img
                         src={inmueble.corredor_foto}
@@ -634,8 +652,31 @@ export default function InmuebleDetailPage() {
                       Corredor asignado · Ver perfil{" "}
                     </div>{" "}
                   </div>{" "}
-                </div>{" "}
-              </button>
+                </button>
+                {telefonosCorredor.length > 0 && (
+                  <div className="mt-3 space-y-1.5 border-t border-slate-100 pt-3 dark:border-slate-700/60">
+                    {telefonosCorredor.map((t, i) => (
+                      <a
+                        key={t.id ?? i}
+                        href={t.telHref}
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex items-center gap-2 text-xs font-medium text-slate-600 transition-colors hover:text-[#470A68] dark:text-slate-300 dark:hover:text-purple-300"
+                      >
+                        <svg
+                          className="h-3.5 w-3.5 shrink-0 text-slate-400"
+                          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"
+                        >
+                          <path
+                            strokeLinecap="round" strokeLinejoin="round"
+                            d="M3 5a2 2 0 012-2h2.586a1 1 0 01.707.293l1.414 1.414a1 1 0 010 1.414L8.414 7.414a13 13 0 006 6l1.293-1.293a1 1 0 011.414 0l1.414 1.414A1 1 0 0119 15.414V18a2 2 0 01-2 2A16 16 0 013 5z"
+                          />
+                        </svg>
+                        {t.nro_telefono}
+                      </a>
+                    ))}
+                  </div>
+                )}{" "}
+              </div>
             )}
             {/* Actions
              */}{" "}
@@ -740,8 +781,8 @@ export default function InmuebleDetailPage() {
                   }
                   navigate(
                     inmueble.estado_inmueble === "vacacional"
-                      ? `/reservar/${inmueble.id || id}`
-                      : `/pagos/${inmueble.id || id}`,
+                      ? `/reservar/${inmueble.uuid || inmueble.id || id}`
+                      : `/pagos/${inmueble.uuid || inmueble.id || id}`,
                     { state: { inmueble } }
                   );
                 }}
@@ -1005,6 +1046,55 @@ export default function InmuebleDetailPage() {
                     </div>
                   )}
                 </div>
+              </section>
+            )}
+            {/* Términos y condiciones — solo si el campo viene con contenido */}
+            {terminosTexto && (
+              <section className="rounded-xl sm:rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <svg
+                    className="h-5 w-5 text-blue-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                  Términos y condiciones
+                </h2>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  El corredor definió las condiciones de esta operación. Revísalas antes de continuar.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setTerminosOpen(true)}
+                  className="btn-primary mt-4 cursor-pointer"
+                >
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  </svg>
+                  Ver términos y condiciones
+                </button>
               </section>
             )}
             {/* Amenities / Features
@@ -1434,6 +1524,62 @@ export default function InmuebleDetailPage() {
       {/* ── Share Modal ──
        */}
       <ShareModal open={shareOpen} onClose={handleCloseShare} url={shareUrl} title="Compartir propiedad" description="Copia el enlace para compartir:"/>{" "}
+      {/* ── Términos y condiciones Modal ── */}
+      <Modal
+        open={terminosOpen && terminosTexto !== ""}
+        onClose={() => setTerminosOpen(false)}
+        className="w-full max-w-2xl mx-4 rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-800 max-h-[85vh] overflow-y-auto scrollbar-custom"
+      >
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <div className="flex items-center gap-2 min-w-0">
+            <svg
+              className="h-5 w-5 shrink-0 text-blue-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
+            <div className="min-w-0">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                Términos y condiciones
+              </h3>
+              {inmueble?.titulo && (
+                <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+                  {inmueble.titulo}
+                </p>
+              )}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setTerminosOpen(false)}
+            aria-label="Cerrar"
+            className="h-8 w-8 shrink-0 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 text-sm leading-relaxed text-slate-700 whitespace-pre-wrap break-words dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-300">
+          {terminosTexto}
+        </div>
+        <div className="mt-5 flex justify-end">
+          <button
+            type="button"
+            onClick={() => setTerminosOpen(false)}
+            className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+          >
+            Cerrar
+          </button>
+        </div>
+      </Modal>
       {/* ── Confirmar Eliminar Modal ── */}
       <Modal
         open={eliminarOpen}

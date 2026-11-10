@@ -150,14 +150,6 @@ export default function ComprobantePagoModal({
 
           {/* Receipt Details Card */}
           <div className="bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-700/80 space-y-2.5 text-xs sm:text-sm">
-            <div className="flex justify-between items-center gap-3 pb-2 border-b border-slate-200 dark:border-slate-700/60">
-              <span className="text-slate-500 dark:text-slate-400 font-medium">
-                Código de Autorización:
-              </span>
-              <span className="font-mono font-bold text-blue-600 dark:text-blue-400">
-                {pagoData.numAprobacion || "AUTH-894210"}
-              </span>
-            </div>
 
             <div className="flex justify-between items-center gap-3 pb-2 border-b border-slate-200 dark:border-slate-700/60">
               <span className="text-slate-500 dark:text-slate-400 font-medium">
@@ -223,19 +215,6 @@ export default function ComprobantePagoModal({
                 )}
               </div>
             </div>
-          </div>
-
-          {/* Security & Transaction Stamp */}
-          <div className="mt-4 flex items-center justify-between px-1 text-[11px] text-slate-400 dark:text-slate-500 border-t border-slate-100 dark:border-slate-800 pt-3">
-            <div className="flex items-center gap-1.5 font-medium">
-              <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-              <span>Encriptación SSL 256-Bit</span>
-            </div>
-            <span className="font-mono text-[10px] tracking-wider uppercase font-bold text-slate-500">
-              SEGURIDAD GARANTIZADA
-            </span>
           </div>
 
           {/* Action Buttons */}

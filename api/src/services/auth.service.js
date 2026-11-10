@@ -90,7 +90,7 @@ exports.register = async ({ nombre, email, password }, ctx) => {
     html: `
       <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;">
         <h2 style="color:#2563eb;">Verifica tu correo electrónico</h2>
-        <p>Hola <strong>${nombre}</strong>, gracias por registrarte en <strong>Inverdata C.A</strong>.</p>
+        <p>Hola <strong>${nombre}</strong>, gracias por registrarte en <strong>Saphiro inmobiliaria</strong>.</p>
         <p>Para completar tu registro, haz clic en el siguiente botón:</p>
         <a href="${CLIENT_BASE_URL}/verificar-email?token=${verifyToken}"
            style="display:inline-block;background:#2563eb;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin:16px 0;">
@@ -200,10 +200,17 @@ exports.reenviarVerificacion = async ({ email }) => {
 //Un admin le envia un enlace por el correo electronico al usuario para que se registre como corredor
 //el usuario queda registrado en la base de datos, pero sin contraseña y datos faltantes que el usuario llenara al
 //atender el correo
-exports.registerCorredor = async ({ email, porcentaje }, ctx) => {
+exports.registerCorredor = async ({ email, comision_venta, comision_alquiler_fijo, comision_vacacional }, ctx) => {
 
   //Validaciones
-  if(!email || !porcentaje) throw new AppError("El email y el porcentaje del corredor son requeridos", 400);
+  if(!email) throw new AppError("El email es requerido", 400);
+  if (
+    comision_venta == null ||
+    comision_alquiler_fijo == null ||
+    comision_vacacional == null
+  ) {
+    throw new AppError("Las comisiones de venta, alquiler fijo y vacacional son requeridas", 400);
+  }
 
   //Verifica si existe un usuario con el mismo correo electronico
   await searchUserByEmail(email);
@@ -223,8 +230,9 @@ exports.registerCorredor = async ({ email, porcentaje }, ctx) => {
 
     //Inserta el corredor
     await client.query(`
-      INSERT INTO corredores (usuario_id, comision_base) VALUES ($1, $2)
-    `, [id_corredor, porcentaje]);
+      INSERT INTO corredores (usuario_id, comision_venta, comision_alquiler_fijo, comision_vacacional)
+      VALUES ($1, $2, $3, $4)
+    `, [id_corredor, comision_venta, comision_alquiler_fijo, comision_vacacional]);
 
     if (ctx) {
       await auditoriaService.registrarInsert({
@@ -258,7 +266,7 @@ exports.registerCorredor = async ({ email, porcentaje }, ctx) => {
     html: `
       <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;">
         <h2 style="color:#2563eb;">Registro de corredor</h2>
-        <p>Has sido registrado en el sistema <strong>Inverdata C.A</strong> como corredor.</p>
+        <p>Has sido registrado en el sistema <strong>Saphiro inmobiliaria</strong> como corredor.</p>
         <p>Para completar tu registro y acceder al panel, haz clic en el siguiente botón:</p>
         <!-- Boton con el enlace con el token para que el usuario complete su registro -->
         <a href="${CLIENT_BASE_URL}/corredores/registro?token=${token}"
@@ -296,7 +304,7 @@ exports.reinvitarCorredor = async ({ id }) => {
     html: `
       <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;">
         <h2 style="color:#2563eb;">Registro de corredor</h2>
-        <p>Has sido registrado en el sistema <strong>Inverdata C.A</strong> como corredor.</p>
+        <p>Has sido registrado en el sistema <strong>Saphiro inmobiliaria</strong> como corredor.</p>
         <p>Para completar tu registro y acceder al panel, haz clic en el siguiente botón:</p>
         <a href="${CLIENT_BASE_URL}/corredores/registro?token=${token}"
            style="display:inline-block;background:#2563eb;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin:16px 0;">
@@ -318,7 +326,7 @@ exports.login = async ({ email, password }) => {
   email= email.toLowerCase();
   //Se busca al usuario en la base de datos por medio del email
   const { rows } = await pool.query(
-    "SELECT id, nombre, email, password_hash, rol, active, email_verified FROM usuarios WHERE email = $1 AND deleted_at IS NULL LIMIT 1;",
+    "SELECT id, uuid, nombre, email, password_hash, rol, active, email_verified FROM usuarios WHERE email = $1 AND deleted_at IS NULL LIMIT 1;",
     [email]
   );
 
@@ -347,6 +355,7 @@ exports.login = async ({ email, password }) => {
     ...tokens,
     user: {
       id: user.id,
+      uuid: user.uuid,
       nombre: user.nombre,
       email: user.email,
       rol: user.rol,
@@ -392,15 +401,15 @@ exports.rotateRefreshToken = async (oldRefreshToken) => {
   //Genera nuevos tokens
   const tokens = await exports.issueTokenPair({ id: payload.id, rol: payload.rol });
 
-  //Obtiene email_verified del usuario
+  //Obtiene email_verified y uuid del usuario
   const { rows } = await pool.query(
-    "SELECT email_verified FROM usuarios WHERE id = $1 LIMIT 1;",
+    "SELECT uuid, email_verified FROM usuarios WHERE id = $1 LIMIT 1;",
     [payload.id]
   );
 
   return {
     ...tokens,
-    user: { id: payload.id, rol: payload.rol, email_verified: rows[0]?.email_verified },
+    user: { id: payload.id, uuid: rows[0]?.uuid, rol: payload.rol, email_verified: rows[0]?.email_verified },
   };
 };
 
@@ -429,7 +438,7 @@ exports.me = async (userId) => {
 
   //Se busca al usuario en la base de datos por medio del id
   const { rows } = await pool.query(
-    "SELECT id, nombre, email, rol, fecha_registro, email_verified, foto_url FROM usuarios WHERE id = $1 LIMIT 1;",
+    "SELECT id, uuid, nombre, email, rol, fecha_registro, email_verified, foto_url FROM usuarios WHERE id = $1 LIMIT 1;",
     [userId]
   );
 
@@ -440,6 +449,7 @@ exports.me = async (userId) => {
   const user = rows[0];
   return {
     id: user.id,
+    uuid: user.uuid,
     nombre: user.nombre,
     email: user.email,
     rol: user.rol,
@@ -630,7 +640,7 @@ exports.invitarAdmin = async ({ email }, ctx) => {
     html: `
       <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;">
         <h2 style="color:#2563eb;">Registro de administrador</h2>
-        <p>Has sido registrado en el sistema <strong>Inverdata C.A</strong> como administrador.</p>
+        <p>Has sido registrado en el sistema <strong>Saphiro inmobiliaria</strong> como administrador.</p>
         <p>Para completar tu registro y acceder al panel, haz clic en el siguiente botón:</p>
         <a href="${CLIENT_BASE_URL}/administradores/registro?token=${token}"
            style="display:inline-block;background:#2563eb;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin:16px 0;">
@@ -665,7 +675,7 @@ exports.reinvitarAdmin = async ({ id }) => {
     html: `
       <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;">
         <h2 style="color:#2563eb;">Registro de administrador</h2>
-        <p>Has sido registrado en el sistema <strong>Inverdata C.A</strong> como administrador.</p>
+        <p>Has sido registrado en el sistema <strong>Saphiro inmobiliaria</strong> como administrador.</p>
         <p>Para completar tu registro y acceder al panel, haz clic en el siguiente botón:</p>
         <a href="${CLIENT_BASE_URL}/administradores/registro?token=${token}"
            style="display:inline-block;background:#2563eb;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin:16px 0;">
@@ -750,7 +760,7 @@ exports.solicitarReset = async ({ email }) => {
     html: `
       <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;">
         <h2 style="color:#2563eb;">Restablecer contraseña</h2>
-        <p>Has solicitado restablecer tu contraseña en <strong>Inverdata C.A</strong>.</p>
+        <p>Has solicitado restablecer tu contraseña en <strong>Saphiro inmobiliaria</strong>.</p>
         <p>Tu código de verificación es:</p>
         <div style="text-align:center;margin:24px 0;">
           <span style="display:inline-block;font-size:32px;font-weight:bold;letter-spacing:8px;color:#1e293b;background:#f1f5f9;padding:16px 32px;border-radius:8px;">${code}</span>

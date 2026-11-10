@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { NavLink, Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import logo from "../assets/logo.inverdata.jpg";
 import {
   ClienteOpciones,
   CorredorOpciones,
   AdminOpciones,
 } from "./NavbarOpciones";
-import { LanguageToggle, useT } from "../lib/i18n";
+import { useT } from "../lib/i18n";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -85,7 +85,6 @@ export default function Navbar() {
           }`}
         >
           <NavOpciones user={user} variant={navVariant} />
-          <LanguageToggle />
 
           <button
             type="button"
@@ -163,9 +162,6 @@ export default function Navbar() {
       >
         <nav className="flex flex-col gap-2 px-4">
           <NavOpciones user={user} variant={navVariant} />
-          <div className="px-1 py-1">
-            <LanguageToggle />
-          </div>
           <button
             type="button"
             onClick={toggleDark}

@@ -32,7 +32,9 @@ export default function ReservationPage() {
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
   const [huespedes, setHuespedes] = useState(1);
-  const [mascotasSel, setMascotasSel] = useState([]);
+  // Cada mascota seleccionada guarda su cantidad: el array es la única fuente de verdad
+  // (ids sueltos + un mapa aparte de cantidades se desincronizan solos).
+  const [mascotasSel, setMascotasSel] = useState([]); // [{ mascota_id, cantidad }]
   const [mascotaSeleccion, setMascotaSeleccion] = useState("");
 
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -97,6 +99,50 @@ export default function ReservationPage() {
   const nochesMin = Number(av?.noches_minimas || 1);
   const huespedesMax = Number(av?.capacidad_personas || 1);
 
+  // Tope de mascotas del inmueble (alquiler_vacacional.cantidad_mascotas_permitidas).
+  // El backend trata 0 como "no se aceptan mascotas"; si viniera 0 pero el inmueble igual
+  // listara tipos, no_topamos nada en vez de bloquear la selección por completo.
+  const maxMascotas = Number(av?.cantidad_mascotas_permitidas || 0);
+  const totalMascotas = mascotasSel.reduce((a, m) => a + (Number(m.cantidad) || 0), 0);
+  const quedanMascotas = maxMascotas > 0 ? Math.max(0, maxMascotas - totalMascotas) : Infinity;
+
+  const agregarMascota = (id) => {
+    const mid = Number(id);
+    if (!mid) return;
+    // Sin esto se puede exceder el tope: llenar una mascota al máximo y luego agregar otra
+    // dejaría el total por encima del permitido (el input solo se autolimita por mascota).
+    if (maxMascotas > 0 && quedanMascotas < 1) return;
+    setMascotasSel((prev) =>
+      prev.some((m) => m.mascota_id === mid) ? prev : [...prev, { mascota_id: mid, cantidad: 1 }]
+    );
+  };
+
+  const topeAlcanzado = maxMascotas > 0 && quedanMascotas < 1;
+
+  const quitarMascota = (mid) =>
+    setMascotasSel((prev) => prev.filter((m) => m.mascota_id !== mid));
+
+  // Igual que el de Huéspedes: no hay campo de texto, se elige con −/+. El máximo es lo que
+  // la mascota ya ocupa + lo que queda libre del inmueble, para que el total no se pase.
+  const cambiarCantidad = (mid, delta) => {
+    setMascotasSel((prev) =>
+      prev.map((m) => {
+        if (m.mascota_id !== mid) return m;
+        const tope = Math.max(1, m.cantidad + quedanMascotas);
+        return { ...m, cantidad: Math.max(1, Math.min(tope, m.cantidad + delta)) };
+      })
+    );
+    if (formErrors.mascotas) setFormErrors((prev) => ({ ...prev, mascotas: "" }));
+  };
+
+  const nombreMascota = (mid) =>
+    mascotasPermitidas.find((m) => Number(m.mascota_id) === Number(mid))?.nombre || `Mascota ${mid}`;
+
+  // Gastos adicionales que el huésped marcó. Arranca vacío: nada se cobra hasta que
+  // se tilde. El servidor valida que los ids existan en el inmueble y recalcula el
+  // total solo con los marcados, así que esta lista y su suma son la fuente de verdad.
+  const [costosSel, setCostosSel] = useState([]); // [costo_adicional_id]
+
   const costos = useMemo(
     () =>
       (inmueble?.costos_adicionales || av?.costos_adicionales || [])
@@ -104,7 +150,14 @@ export default function ReservationPage() {
         .filter((c) => c.monto > 0),
     [inmueble, av]
   );
-  const costoTotal = costos.reduce((a, c) => a + c.monto, 0);
+  const costosActivos = costos.filter((c) => costosSel.includes(Number(c.costo_adicional_id)));
+  const costoTotal = costosActivos.reduce((a, c) => a + c.monto, 0);
+
+  const toggleCosto = (id) =>
+    setCostosSel((prev) => {
+      const mid = Number(id);
+      return prev.includes(mid) ? prev.filter((x) => x !== mid) : [...prev, mid];
+    });
 
   const hoy = toYMD(new Date());
   const maxFecha = toYMD(new Date(new Date().getFullYear() + 2, new Date().getMonth(), new Date().getDate()));
@@ -193,6 +246,24 @@ export default function ReservationPage() {
     return !errors.checkIn && !errors.checkOut && !errors.noches;
   };
 
+  // Mascotas: cada una al menos 1, y la suma dentro del tope del inmueble. El input ya
+  // autolimita mientras se escribe, pero maxMascotas puede cargar tarde (el inmueble se
+  // pide por API), así que hay que revalidar en el envío.
+  const validateMascotas = () => {
+    const errors = {};
+    if (mascotasSel.some((m) => !Number.isInteger(m.cantidad) || m.cantidad < 1)) {
+      errors.mascotas = "La cantidad de cada mascota debe ser un número entero mayor a 0";
+    } else if (maxMascotas > 0 && totalMascotas > maxMascotas) {
+      errors.mascotas = `Este inmueble permite máximo ${maxMascotas} mascota${
+        maxMascotas > 1 ? "s" : ""
+      } en total y llevas ${totalMascotas}`;
+    }
+    setFormErrors((prev) => ({ ...prev, ...errors }));
+    return !errors.mascotas;
+  };
+
+  const validarReserva = () => validateFechas() && validateMascotas();
+
   const submitPago = async ({ metodoPago, cardBrand, formData, detallePago }) => {
     if (!user?.id) {
       throw new Error("Debes iniciar sesión para reservar.");
@@ -210,7 +281,9 @@ export default function ReservationPage() {
         estatus_pago: "pagado",
         metodo_pago: metodoPago,
         detalle_pago: detallePago || {},
-        mascotas: mascotasSel.map((id) => ({ mascota_id: id })),
+        mascotas: mascotasSel.map((m) => ({ mascota_id: m.mascota_id, cantidad: m.cantidad })),
+        // Lista explícita (puede ir vacía): el backend no cobra lo que no venga acá.
+        costos_adicionales: costosSel.map((id) => ({ costo_adicional_id: id })),
       },
       idemKeyRef.current
     );
@@ -267,7 +340,7 @@ export default function ReservationPage() {
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900 py-8 px-4 sm:px-6 lg:px-8 transition-colors">
         <div className="max-w-xl mx-auto card p-8 text-center">
           <p className="font-bold text-slate-800 dark:text-slate-200">Este inmueble no admite reservas vacacionales</p>
-          <Link to={`/inmuebles/${inmueble.id}`} className="mt-4 inline-block font-bold text-blue-600 dark:text-blue-400">
+          <Link to={`/inmuebles/${inmueble.uuid || inmueble.id}`} className="mt-4 inline-block font-bold text-blue-600 dark:text-blue-400">
             Ver detalle del inmueble
           </Link>
         </div>
@@ -363,7 +436,7 @@ export default function ReservationPage() {
                 <div className="pt-1 flex items-end justify-between border-t border-slate-100 dark:border-slate-800">
                   <span className="text-sm text-slate-500 dark:text-slate-400">Tarifa</span>
                   <span className="text-xl font-black text-blue-600 dark:text-blue-400">
-                    {formatPrice(montoInicial, moneda, av)}
+                    {formatPrice(inmueble)}
                   </span>
                 </div>
               </div>
@@ -468,57 +541,155 @@ export default function ReservationPage() {
 
               {mascotasPermitidas.length > 0 && (
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                    Mascotas permitidas
-                  </label>
+                  <div className="flex items-baseline justify-between mb-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                      Mascotas permitidas
+                    </label>
+                    {maxMascotas > 0 && (
+                      <span className="text-[11px] text-slate-400 dark:text-slate-500">
+                        {totalMascotas} de {maxMascotas} mascota{maxMascotas > 1 ? "s" : ""}
+                      </span>
+                    )}
+                  </div>
                   <select
                     value={mascotaSeleccion}
+                    disabled={topeAlcanzado}
                     onChange={(e) => {
                       const val = e.target.value;
                       setMascotaSeleccion("");
-                      if (val) {
-                        setMascotasSel((prev) =>
-                          prev.includes(Number(val)) ? prev : [...prev, Number(val)]
-                        );
-                      }
+                      if (val) agregarMascota(val);
                     }}
-                    className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-3 text-slate-800 dark:text-slate-200 font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm cursor-pointer"
+                    className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-3 text-slate-800 dark:text-slate-200 font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <option value="">Agregar mascota…</option>
+                    <option value="">
+                      {topeAlcanzado ? "Tope de mascotas alcanzado" : "Agregar mascota…"}
+                    </option>
                     {mascotasPermitidas
-                      .filter((m) => !mascotasSel.includes(m.mascota_id))
+                      .filter((m) => !mascotasSel.some((s) => s.mascota_id === Number(m.mascota_id)))
                       .map((m) => (
                         <option key={m.mascota_id} value={m.mascota_id}>{m.nombre}</option>
                       ))}
                   </select>
 
                   {mascotasSel.length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {mascotasSel.filter((id) => mascotasPermitidas.some((m) => String(m.mascota_id) === String(id))).map((mascotaId) => {
-                        const mascota = mascotasPermitidas.find((m) => String(m.mascota_id) === String(mascotaId));
-                        const nombre = mascota?.nombre;
-                        if (!nombre) return null;
+                    <div className="mt-3 space-y-2">
+                      {mascotasSel.map(({ mascota_id: id, cantidad }) => {
+                        const nombre = nombreMascota(id);
+                        // Máximo que admite esta mascota: lo que ya lleva + lo que queda libre.
+                        const tope = Math.max(1, cantidad + quedanMascotas);
                         return (
-                          <span
-                            key={mascotaId}
-                            className="inline-flex items-center gap-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200"
+                          <div
+                            key={id}
+                            className="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2"
                           >
-                            {nombre}
+                            <svg className="w-4 h-4 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 0c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                            </svg>
+                            <span className="text-sm font-medium text-slate-700 dark:text-slate-200 flex-1 min-w-0 truncate">
+                              {nombre}
+                            </span>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => cambiarCantidad(id, -1)}
+                                disabled={cantidad <= 1}
+                                className="h-8 w-8 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-black text-lg leading-none flex items-center justify-center hover:bg-slate-300 dark:hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                                aria-label={`Menos ${nombre}`}
+                              >
+                                −
+                              </button>
+                              <span
+                                className="w-8 text-center text-base font-extrabold text-slate-900 dark:text-white tabular-nums"
+                                aria-label={`Cantidad de ${nombre}`}
+                              >
+                                {cantidad}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => cambiarCantidad(id, 1)}
+                                disabled={cantidad >= tope}
+                                className="h-8 w-8 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-black text-lg leading-none flex items-center justify-center hover:bg-slate-300 dark:hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                                aria-label={`Más ${nombre}`}
+                              >
+                                +
+                              </button>
+                            </div>
                             <button
                               type="button"
-                              onClick={() => setMascotasSel((prev) => prev.filter((id) => id !== mascotaId))}
-                              className="text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
+                              onClick={() => quitarMascota(id)}
+                              className="shrink-0 text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
                               aria-label={`Quitar ${nombre}`}
                             >
-                              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                               </svg>
                             </button>
-                          </span>
+                          </div>
                         );
                       })}
                     </div>
                   )}
+                  {guardarError("mascotas")}
+                </div>
+              )}
+
+              {costos.length > 0 && (
+                <div>
+                  <div className="flex items-baseline justify-between mb-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                      Gastos adicionales
+                    </label>
+                    <span className="text-[11px] text-slate-400 dark:text-slate-500">
+                      {costosActivos.length} de {costos.length} seleccionado
+                      {costosActivos.length === 1 ? "" : "s"}
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    {costos.map((c) => {
+                      const marcado = costosSel.includes(Number(c.costo_adicional_id));
+                      return (
+                        <label
+                          key={c.costo_adicional_id}
+                          className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2.5 transition-colors ${
+                            marcado
+                              ? "border-purple-300 bg-purple-50/70 dark:border-purple-700 dark:bg-purple-900/20"
+                              : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600"
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={marcado}
+                            onChange={() => toggleCosto(c.costo_adicional_id)}
+                            className="h-4 w-4 shrink-0 rounded border-slate-300 text-purple-700 focus:ring-purple-600 dark:border-slate-600 dark:bg-slate-900"
+                          />
+                          <span
+                            className={`text-sm font-medium flex-1 min-w-0 truncate ${
+                              marcado
+                                ? "text-slate-900 dark:text-white"
+                                : "text-slate-600 dark:text-slate-300"
+                            }`}
+                          >
+                            {c.costo_adicional_nombre}
+                          </span>
+                          <span
+                            className={`shrink-0 text-xs font-semibold tabular-nums ${
+                              marcado
+                                ? "text-purple-800 dark:text-purple-300"
+                                : "text-slate-400 dark:text-slate-500"
+                            }`}
+                          >
+                            {esBs ? `Bs. ${fmtBs(c.monto)}` : `${simbolo}${fmtMonto(c.monto)}${sufijoMoneda}`}
+                            /noche
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+
+                  <p className="mt-1.5 text-[11px] text-slate-400 dark:text-slate-500">
+                    Solo se cobran los que marques. Los demás no se incluyen en el total.
+                  </p>
                 </div>
               )}
             </div>
@@ -549,7 +720,7 @@ export default function ReservationPage() {
                       {esBs ? `Bs. ${fmtBs(noches * precioNoche)}` : `${simbolo}${fmtMonto(noches * precioNoche)}${sufijoMoneda}`}
                     </span>
                   </div>
-                  {costos.map((c) => (
+                  {costosActivos.map((c) => (
                     <div key={c.costo_adicional_id} className="flex justify-between text-sm">
                       <span className="text-slate-600 dark:text-slate-400">
                         {c.costo_adicional_nombre} × {noches} {noches > 1 ? "noches" : "noche"}
@@ -574,9 +745,9 @@ export default function ReservationPage() {
               subtitulo="Acepta tarjetas de crédito y débito, pago movil, Paypal, Binance y Zelle"
               montoLabel={totalLabel}
               inmueble={inmueble}
-              validacionExtra={validateFechas}
+              validacionExtra={validarReserva}
               onSubmit={submitPago}
-              onComprobanteClose={() => navigate("/inmuebles")}
+              onComprobanteClose={() => navigate("/reservaciones")}
               resumen={
                 <div className="rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-4 space-y-1.5 text-sm">
                   <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">

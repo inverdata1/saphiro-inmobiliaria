@@ -2,39 +2,20 @@ import { useState, useEffect } from "react";
 import { NavLink, Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/useAuth";
 import useProfilePhotoSync from "../../hooks/useProfilePhotoSync";
-import logo from "../../assets/logo.inverdata.jpg";
-import {
-  ClienteOpciones,
-  CorredorOpciones,
-  AdminOpciones,
-  ClienteSlider,
-  CorredorSlider,
-  AdminSlider,
-} from "./NavbarOpciones";
+import { Item } from "./NavbarOpciones";
 import NotificationDropdown from "../NotificationDropdown";
 import { SidebarOpciones } from "./SidebarOpciones";
-import { LanguageToggle, useT } from "../../lib/i18n";
+import { useT } from "../../lib/i18n";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const tr = useT();
   const navigate = useNavigate();
   const location = useLocation();
-  const isStaff = user?.rol === "admin" || user?.rol === "corredor";
-  const navVariant = isStaff ? "dark" : "light";
   const [open, setOpen] = useState(false);
   const [dark, setDark] = useState(() => document.documentElement.classList.contains("dark"));
-  const [searchQuery, setSearchQuery] = useState("");
 
   useProfilePhotoSync();
-
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/inmuebles?q=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchQuery("");
-    }
-  };
 
   useEffect(() => {
     if (!open) return;
@@ -50,20 +31,6 @@ export default function Navbar() {
     localStorage.setItem("theme", next ? "dark" : "light");
   }
 
-  const NavOpciones =
-    user?.rol === "admin"
-      ? AdminOpciones
-      : user?.rol === "corredor"
-        ? CorredorOpciones
-        : ClienteOpciones;
-
-  const NavSlider =
-    user?.rol === "admin"
-      ? AdminSlider
-      : user?.rol === "corredor"
-        ? CorredorSlider
-        : ClienteSlider;
-
   const initials = user
     ? (user.nombre || user.name || "")
       .split(" ")
@@ -75,77 +42,48 @@ export default function Navbar() {
 
   return (
     <>
-      <header
-        className={
-          isStaff
-            ? "sticky top-0 z-40 text-white shadow-md dark:bg-purple-900 border-b border-white/10 dark:border-purple-800/50"
-            : "sticky top-0 z-40 bg-white text-slate-900 shadow-sm border-b border-slate-100"
-        }
-        style={isStaff ? { backgroundColor: "#470A68" } : undefined}
-      >
-        {/* Fila superior: logo + search + acciones */}
-        <div className="px-4 py-3 flex items-center justify-between gap-3 max-w-7xl mx-auto">
-          {/* Hamburger */}
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
-            className={
-              isStaff
-                ? "inline-flex items-center justify-center rounded-xl border border-white/20 p-2.5 text-white/85 hover:bg-white/10 active:scale-95 shrink-0 dark:border-white/20 cursor-pointer"
-                : "inline-flex items-center justify-center rounded-xl border border-slate-200 p-2.5 text-slate-800 hover:bg-slate-50 active:scale-95 shrink-0 cursor-pointer"
-            }
-            aria-label="Abrir menú"
-          >
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 12h18" />
-              <path d="M3 6h18" />
-              <path d="M3 18h18" />
-            </svg>
-          </button>
+      <header className="sticky top-0 z-40 bg-white text-slate-900 shadow-sm border-b border-slate-100">
+        {/* Fila superior: logo + acciones */}
+        <div className="px-3 sm:px-5 py-3 sm:py-4 flex items-center justify-between gap-2 sm:gap-4 max-w-7xl mx-auto">
+          <div className="flex items-center min-w-0">
+            {/* Hamburger (oculto en desktop para invitados: en lg+ ya están Inicio e Inmuebles) */}
+            <button
+              type="button"
+              onClick={() => setOpen(true)}
+              className={`inline-flex items-center justify-center rounded-xl border border-slate-200 p-2 sm:p-2.5 text-slate-800 hover:bg-slate-50 active:scale-95 shrink-0 cursor-pointer ${user ? "" : "lg:hidden"}`}
+              aria-label="Abrir menú"
+            >
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 12h18" />
+                <path d="M3 6h18" />
+                <path d="M3 18h18" />
+              </svg>
+            </button>
 
-          {/* Logo */}
-          <NavLink to="/" className="flex shrink-0 items-center gap-2.5">
-            <img src={logo} alt="InmoSoft" className="h-9 w-9 rounded-xl bg-white/15 p-0.5" />
-            <span className={`hidden sm:block text-base font-extrabold tracking-tight ${isStaff ? "text-white" : "text-slate-900"}`}>Inverdata C.A</span>
-          </NavLink>
-
-          {/* Search bar (oculta en página de inicio) */}
-          {location.pathname === "/" ? (
-            <div className="flex-1 max-w-md mx-4 min-w-0" aria-hidden="true" />
-          ) : (
-            <form onSubmit={handleSearchSubmit} className="flex-1 max-w-md mx-4 min-w-0">
-              <div className="relative flex items-center">
-                <input
-                  type="text"
-                  placeholder="Buscar inmuebles..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className={
-                    isStaff
-                      ? "w-full bg-white/15 text-white placeholder-white/60 focus:placeholder-white/80 rounded-xl px-4 py-2 pl-10 text-sm focus:outline-none focus:ring-2 focus:ring-white/20 focus:bg-white/25 border border-transparent dark:bg-white/10 dark:focus:bg-white/20"
-                      : "w-full bg-slate-100 text-slate-800 placeholder-slate-400 rounded-xl px-4 py-2 pl-10 text-sm focus:outline-none focus:ring-2 focus:ring-slate-200 border border-transparent"
-                  }
-                />
-                <div className="absolute left-3.5 flex items-center pointer-events-none">
-                  <svg className={`h-4 w-4 ${isStaff ? "text-white/70" : "text-slate-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </div>
-              </div>
-            </form>
-          )}
+            {/* Logo */}
+            <NavLink
+              to="/"
+              className={`flex shrink-0 items-center ${user ? "ml-3 sm:ml-6 lg:ml-8" : "ml-3 sm:ml-6"}`}
+            >
+              <img
+                src="/saphiro-inmobiliaria-logo.png"
+                alt="Saphiro Inmobiliaria"
+                className="h-6 w-auto object-contain sm:h-8 md:h-9 lg:h-10"
+              />
+            </NavLink>
+          </div>
 
           {/* Acciones derecha */}
-          <div className="flex items-center gap-2">
-            <LanguageToggle />
+          <div className="flex items-center gap-1 sm:gap-2">
+            {/* Opciones de navegación (desktop) */}
+            <div className="hidden lg:flex min-w-0 items-center gap-1.5 mr-2">
+              <Item to="/" label="Inicio" variant="nav" />
+              <Item to="/inmuebles" label="Inmuebles" variant="nav" />
+            </div>
             <button
               type="button"
               onClick={toggleDark}
-              className={
-                isStaff
-                  ? "relative inline-flex h-9.5 w-9.5 items-center justify-center rounded-xl text-white/85 hover:bg-white/10 transition active:scale-95 cursor-pointer"
-                  : "relative inline-flex h-9.5 w-9.5 items-center justify-center rounded-xl text-slate-700 hover:bg-slate-50 transition active:scale-95 cursor-pointer"
-              }
+              className="relative inline-flex h-9 w-9 sm:h-9.5 sm:w-9.5 items-center justify-center rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition active:scale-95 cursor-pointer"
               aria-label="Cambiar modo oscuro/claro"
             >
               <svg
@@ -169,11 +107,7 @@ export default function Navbar() {
                 <Link
                   to="/perfil"
                   title="Ver mi perfil"
-                  className={
-                    isStaff
-                      ? "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15 text-white border border-white/25 text-xs font-extrabold overflow-hidden hover:ring-2 hover:ring-white/40 hover:scale-105 transition-all cursor-pointer"
-                      : "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-700 border border-slate-200 text-xs font-extrabold overflow-hidden hover:ring-2 hover:ring-slate-300 hover:scale-105 transition-all cursor-pointer"
-                  }
+                  className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-700 border border-slate-200 text-xs font-extrabold overflow-hidden hover:ring-2 hover:ring-slate-300 hover:scale-105 transition-all cursor-pointer"
                 >
                   {user.foto_perfil || user.avatar ? (
                     <img
@@ -187,11 +121,7 @@ export default function Navbar() {
                 </Link>
                 <button
                   onClick={() => { logout(); navigate("/"); }}
-                  className={
-                    isStaff
-                      ? "hidden sm:inline-flex whitespace-nowrap items-center justify-center rounded-xl border border-white/25 bg-white/10 px-4 py-2 text-xs font-bold text-white hover:bg-white/20 transition-all cursor-pointer"
-                      : "hidden sm:inline-flex whitespace-nowrap items-center justify-center rounded-full border border-slate-200 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all cursor-pointer"
-                  }
+                  className="hidden sm:inline-flex whitespace-nowrap items-center justify-center rounded-full border border-slate-200 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all cursor-pointer"
                 >
                   Salir
                 </button>
@@ -199,12 +129,7 @@ export default function Navbar() {
             ) : (
               <Link
                 to="/login"
-                className={
-                  isStaff
-                    ? "inline-flex whitespace-nowrap items-center justify-center rounded-xl bg-white hover:bg-white/95 px-4 py-2 text-xs font-bold transition active:scale-95 shadow-sm"
-                    : "inline-flex whitespace-nowrap items-center justify-center rounded-full bg-slate-900 hover:bg-slate-800 px-5 py-2 text-sm font-semibold text-white transition active:scale-95 shadow-sm"
-                }
-                style={isStaff ? { color: "#5a0e82" } : undefined}
+                className="inline-flex whitespace-nowrap items-center justify-center rounded-full bg-slate-900 hover:bg-slate-800 px-3 sm:px-5 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-white transition active:scale-95 shadow-sm"
               >
                 {tr("signIn")}
               </Link>
@@ -212,15 +137,6 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Fila inferior: navegación horizontal (desktop) */}
-        <nav
-          className={`hidden md:block border-t ${isStaff ? "border-white/15" : "border-slate-100 bg-white"}`}
-          style={isStaff ? { backgroundColor: "#5a0e82" } : undefined}
-        >
-          <div className="px-4 flex items-center gap-1.5 overflow-x-auto scrollbar-custom py-2 max-w-7xl mx-auto">
-            <NavOpciones user={user} variant={navVariant} />
-          </div>
-        </nav>
       </header>
 
       {/* Overlay */}
@@ -231,31 +147,32 @@ export default function Navbar() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-72 flex flex-col bg-white shadow-2xl transition-transform duration-300 ease-in-out dark:bg-[#0c0c0e] border-r border-slate-100 dark:border-slate-850 ${open ? "translate-x-0" : "-translate-x-full"
+        className={`fixed inset-y-0 left-0 z-50 w-[85vw] max-w-72 flex flex-col bg-white shadow-2xl transition-transform duration-300 ease-in-out dark:bg-[#0c0c0e] border-r border-slate-100 dark:border-slate-850 ${open ? "translate-x-0" : "-translate-x-full"
           }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-5 border-b border-slate-100 dark:border-slate-850">
-          <NavLink to="/" className="flex items-center gap-2 min-w-0" onClick={() => setOpen(false)}>
-            <img src={logo} alt="InmoSoft" className="h-8.5 w-8.5 rounded-xl bg-slate-100/50 p-0.5 shrink-0" />
-            <span className="truncate font-extrabold text-sm text-slate-800 dark:text-white">Inverdata C.A</span>
+        <div className="relative flex items-center justify-center px-5 py-2 border-b border-slate-100 dark:border-slate-850">
+          <NavLink
+            to="/"
+            onClick={() => setOpen(false)}
+            className="flex items-center"
+          >
+            <img
+              src="/inverdata-logo.png"
+              alt="Inverdata"
+              className="h-14 sm:h-20 lg:h-24 w-auto object-contain rounded-xl border border-slate-200 p-1 sm:p-1.5 bg-white"
+            />
           </NavLink>
           <button
             type="button"
             onClick={() => setOpen(false)}
-            className="rounded-xl p-2 text-slate-400 hover:bg-slate-50 dark:hover:bg-[#18181c] cursor-pointer"
+            className="absolute right-4 sm:right-5 top-1/2 -translate-y-1/2 rounded-xl p-2 text-slate-400 hover:bg-slate-50 dark:hover:bg-[#18181c] cursor-pointer"
+            aria-label="Cerrar menú"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
-        </div>
-
-        {/* Slider de navegación (móvil) */}
-        <div className="md:hidden overflow-x-auto border-b border-slate-100 dark:border-slate-850 px-4 py-4 bg-slate-50/50 dark:bg-transparent">
-          <div className="flex gap-2 min-w-max">
-            <NavSlider user={user} onClick={() => setOpen(false)} />
-          </div>
         </div>
 
         {/* Opciones del sidebar */}

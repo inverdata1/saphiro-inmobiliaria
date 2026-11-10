@@ -80,7 +80,7 @@ export default function UsuariosAdminPage() {
     if (!deleteTarget) return;
     setLoading(true);
     try {
-      await apiDelete(`/usuarios/${deleteTarget.id}`);
+      await apiDelete(`/usuarios/${deleteTarget.uuid}`);
       setRows((prev) => prev.filter((r) => r.id !== deleteTarget.id));
       setDeleteTarget(null);
     } catch (e) {

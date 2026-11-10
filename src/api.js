@@ -133,6 +133,49 @@ export async function apiGet(path, params = {}) {
   return doFetch(url.toString(), { headers: baseHeaders(), credentials: "include" });
 }
 
+/**
+ * Descarga un archivo generado por la API (p. ej. /reportes/:tipo?format=pdf).
+ * Resuelve el nombre desde Content-Disposition y dispara la descarga del blob.
+ * Reintenta una vez tras refrescar la sesión si recibe 401.
+ */
+export async function apiDownload(path, params = {}) {
+  const url = new URL(API_BASE + path);
+  Object.entries(params).forEach(([k, v]) => {
+    if (v === undefined || v === null || v === "") return;
+    url.searchParams.set(k, v);
+  });
+
+  const init = {
+    headers: { "X-Requested-With": "XMLHttpRequest" },
+    credentials: "include",
+  };
+
+  let res = await fetch(url.toString(), init);
+  if (res.status === 401) {
+    await refreshSession();
+    res = await fetch(url.toString(), init);
+  }
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => null);
+    throw new Error(data?.message || data?.error || `HTTP ${res.status}`);
+  }
+
+  const blob = await res.blob();
+  const cd = res.headers.get("Content-Disposition") || "";
+  const match = /filename\*?=(?:UTF-8''|")?([^";]+)"?/i.exec(cd);
+  const filename = decodeURIComponent(match[1]);
+
+  const objectUrl = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = objectUrl;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(objectUrl);
+}
+
 export async function apiPost(path, body = {}, idempotencyKey) {
   const headers = baseHeaders();
   if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey;

@@ -1,14 +1,20 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import PasarelaPago from "../../components/pagos/PasarelaPago";
 import { apiGet, apiPost } from "../../api";
 import { useAuth } from "../../context/useAuth";
+import { v4 as uuid } from "uuid";
 
 export default function PasarelaPagoPage() {
   const { inmuebleId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
+
+  // Clave de idempotencia estable entre re-renders: un reintento del mismo intento de
+  // pago reenvía la MISMA key y el backend devuelve la respuesta cacheada en vez de
+  // cobrar de nuevo. Se regenera solo tras un pago exitoso.
+  const idemKeyRef = useRef(uuid());
 
   // Property info
   const [inmueble, setInmueble] = useState(
@@ -105,8 +111,12 @@ export default function PasarelaPagoPage() {
         numero_tarjeta: formData?.numeroTarjeta || "",
         marca_tarjeta: cardBrand || "",
         detalle_pago: detallePago || {},
-      }
+      },
+      idemKeyRef.current
     );
+
+    // Pago confirmado: la siguiente key debe ser una transaccion nueva, no un replay.
+    idemKeyRef.current = uuid();
 
     const data = res?.data;
     // Precio y moneda los define el servidor en base al inmueble

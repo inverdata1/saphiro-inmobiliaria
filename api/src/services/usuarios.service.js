@@ -70,7 +70,7 @@ exports.listClientes = async (query) => {
 
   const { rows } = await pool.query(
     `
-      SELECT id, nombre, email, fecha_registro
+      SELECT id, uuid, nombre, email, fecha_registro
       FROM usuarios
       ${where}
       ORDER BY id ASC
@@ -112,7 +112,7 @@ exports.listUsuarios = async (query) => {
 
   const { rows } = await pool.query(
     `
-      SELECT id, nombre, email, fecha_registro
+      SELECT id, uuid, nombre, email, fecha_registro
       FROM usuarios
       ${where}
       ORDER BY id ASC
@@ -129,7 +129,7 @@ exports.getUsuarioById = async (id) => {
   if (!Number.isInteger(id) || id <= 0) throw new AppError("id inválido", 400);
 
   const { rows } = await pool.query(
-    `SELECT id, nombre, email, rol, fecha_registro, foto_url FROM usuarios WHERE id = $1 LIMIT 1;`,
+    `SELECT id, uuid, nombre, email, rol, fecha_registro, foto_url FROM usuarios WHERE id = $1 LIMIT 1;`,
     [id]
   );
 
