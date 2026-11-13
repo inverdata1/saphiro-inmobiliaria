@@ -34,6 +34,7 @@ export default function DatePickerCalendarModal({
   title = "Selecciona una fecha",
   subtitle,
   reservas,
+  rangeStart = "",
 }) {
   const [calHeight, setCalHeight] = useState(0);
   const calendarRef = useRef(null);
@@ -148,6 +149,12 @@ export default function DatePickerCalendarModal({
 
               if (selectedDate && dateStr === selectedDate) {
                 classes.push("fc-date-selected");
+              }
+              if (ocupadas.has(dateStr)) {
+                classes.push("fc-day-ocupada");
+              }
+              if (rangeStart && selectedDate && dateStr >= rangeStart && dateStr <= selectedDate) {
+                classes.push("fc-day-range");
               }
 
               return classes;

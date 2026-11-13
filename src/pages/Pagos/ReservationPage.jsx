@@ -747,7 +747,7 @@ export default function ReservationPage() {
               inmueble={inmueble}
               validacionExtra={validarReserva}
               onSubmit={submitPago}
-              onComprobanteClose={() => navigate("/reservaciones")}
+              onComprobanteClose={() => navigate(`/inmuebles/${inmueble?.uuid || inmueble?.id || inmuebleId}`)}
               resumen={
                 <div className="rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-4 space-y-1.5 text-sm">
                   <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
@@ -788,6 +788,7 @@ export default function ReservationPage() {
           }}
           onSelect={handleCalendarSelect}
           selectedDate={calendarTarget === "checkIn" ? checkIn : checkOut}
+          rangeStart={calendarTarget === "checkOut" ? checkIn : ""}
           minDate={calendarTarget === "checkIn" ? checkInMin : checkOutMin}
           maxDate={maxFecha}
           reservas={reservas}

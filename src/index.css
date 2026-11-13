@@ -65,3 +65,23 @@
 .lang-switch span { border-radius: 999px; padding: 4px 7px; opacity: 0.38; }
 .lang-switch span.is-on { opacity: 1; background: color-mix(in srgb, currentColor 16%, transparent); }
 
+
+.calendar-saphiro .fc-day-ocupada {
+  background: #fecaca !important;
+}
+.calendar-saphiro .fc-date-selected,
+.calendar-saphiro .fc-day-range {
+  background: #bbf7d0 !important;
+}
+.calendar-saphiro .fc-reserva-block {
+  background: #dc2626;
+  border: none;
+  color: white;
+}
+.dark .calendar-saphiro .fc-day-ocupada {
+  background: #7f1d1d !important;
+}
+.dark .calendar-saphiro .fc-date-selected,
+.dark .calendar-saphiro .fc-day-range {
+  background: #14532d !important;
+}

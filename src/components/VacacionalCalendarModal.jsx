@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Calendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import esLocale from "@fullcalendar/core/locales/es";
-import { reservasToEvents } from "../utils/reservas";
+import { fechasOcupadas, reservasToEvents } from "../utils/reservas";
 
 function getCalHeight() {
   const vh = Math.round(window.innerHeight * 0.96);
@@ -11,6 +11,7 @@ function getCalHeight() {
 
 export default function VacacionalCalendarModal({ open, onClose, titulo, reservas }) {
   const [calHeight, setCalHeight] = useState(0);
+  const ocupadas = useMemo(() => fechasOcupadas(reservas), [reservas]);
 
   useEffect(() => {
     if (!open) return;
@@ -70,6 +71,7 @@ export default function VacacionalCalendarModal({ open, onClose, titulo, reserva
               left: "prev,next",
               center: "title",
             }}
+            dayCellClassNames={(arg) => (ocupadas.has(arg.dateStr) ? ["fc-day-ocupada"] : [])}
             initialDate={new Date().toISOString().slice(0, 10)}
             validRange={{
               start: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}-01`,

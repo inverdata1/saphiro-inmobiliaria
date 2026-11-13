@@ -42,12 +42,15 @@ exports.getInmuebleById = async (req, res, next) => {
 exports.createInmueble = async (req, res, next) => {
   try {
     const body = typeof req.body.data === "string" ? JSON.parse(req.body.data) : req.body;
-    const actorId = req.user?.rol === "admin" ? req.user.id : body.usuario_id;
+    const admin = req.user?.rol === "admin";
+    const requestedId = Number(body.usuario_id);
+    const selectedBroker = admin && Number.isFinite(requestedId) && requestedId > 0 && requestedId !== Number(req.user?.id);
+    const lookupId = selectedBroker ? requestedId : body.usuario_id;
     try {
-      const corredor = await corredoresService.getCorredorByUserId(actorId);
+      const corredor = await corredoresService.getCorredorByUserId(lookupId);
       body.corredor_id = corredor.id;
     } catch (lookupErr) {
-      if (!(req.user?.rol === "admin" && lookupErr.statusCode === 404)) throw lookupErr;
+      if (!(admin && lookupErr.statusCode === 404 && !selectedBroker)) throw lookupErr;
       body.corredor_id = null;
     }
     const data = await inmueblesService.createInmueble(body, req.files || [], buildCtx(req));

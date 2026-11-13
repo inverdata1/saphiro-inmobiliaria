@@ -782,7 +782,7 @@ export default function InmuebleDetailPage() {
               )}
             </div>
 
-            {user?.rol !== "admin" && user?.id !== inmueble.corredor_usuario_id && inmueble.estatus !== "vendido" && inmueble.estatus !== "alquilado" && (
+            {user?.id !== inmueble.corredor_usuario_id && inmueble.estatus !== "vendido" && inmueble.estatus !== "alquilado" && (
               <button
                 onClick={() => {
                   if (!user) {

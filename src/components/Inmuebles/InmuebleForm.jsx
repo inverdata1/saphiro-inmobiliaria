@@ -35,6 +35,17 @@ export default function InmuebleForm({
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  const [corredores, setCorredores] = useState([]);
+  const [corredorUsuarioId, setCorredorUsuarioId] = useState("");
+  const esAdmin = user?.rol === "admin";
+
+  useEffect(() => {
+    if (!esAdmin) return;
+    apiGet("/corredores?limit=200")
+      .then((r) => setCorredores(Array.isArray(r?.data) ? r.data : []))
+      .catch(() => setCorredores([]));
+  }, [esAdmin]);
+
   const [tipos, setTipos] = useState([]);
   const [estados, setEstados] = useState([]);
   const [ciudades, setCiudades] = useState([]);
@@ -427,6 +438,7 @@ export default function InmuebleForm({
   function validate() {
     const errs = {};
     if (!form.titulo?.trim()) errs.titulo = "El título es obligatorio";
+    if (esAdmin && !edit && !corredorUsuarioId) errs.corredorUsuarioId = "Selecciona el corredor";
     if (!form.tipo_inmueble_id) errs.tipo_inmueble_id = "Selecciona un tipo de inmueble";
     const precioNum = Number(form.precio);
     if (
@@ -525,7 +537,7 @@ export default function InmuebleForm({
         ciudad_id: form.ciudad_id ? Number(form.ciudad_id) : null,
         direccion_exacta: form.direccion_exacta || null,
         punto_referencia: form.punto_referencia || null,
-        usuario_id: user?.id ? Number(user.id) : null,
+        usuario_id: esAdmin ? Number(corredorUsuarioId) : user?.id ? Number(user.id) : null,
         latitud: form.latitud ? Number(form.latitud) : null,
         longitud: form.longitud ? Number(form.longitud) : null,
         caracteristicas,
@@ -607,6 +619,28 @@ export default function InmuebleForm({
             placeholder="Condiciones de alquiler, compra, uso, penalidades…"
           />
         </div>
+
+        {esAdmin && !edit ? (
+          <div>
+            <label className={labelCls}>Corredor *</label>
+            <select
+              className={`${inputCls} ${fieldErrors.corredorUsuarioId ? inputClsErr : ""}`}
+              value={corredorUsuarioId}
+              onChange={(e) => {
+                setCorredorUsuarioId(e.target.value);
+                setFieldErrors((p) => ({ ...p, corredorUsuarioId: "" }));
+              }}
+            >
+              <option value="">Seleccionar corredor…</option>
+              {corredores.map((c) => (
+                <option key={c.corredor_id || c.id} value={c.id}>
+                  {c.corredor_nombre || c.nombre || c.corredor_email || c.email}
+                </option>
+              ))}
+            </select>
+            {fieldErrors.corredorUsuarioId ? <p className={errMsgCls}>{fieldErrors.corredorUsuarioId}</p> : null}
+          </div>
+        ) : null}
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>

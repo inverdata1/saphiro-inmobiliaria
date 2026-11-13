@@ -76,10 +76,41 @@ export default function Navbar() {
           {/* Acciones derecha */}
           <div className="flex items-center gap-1 sm:gap-2">
             {/* Opciones de navegación (desktop) */}
-            <div className="hidden lg:flex min-w-0 items-center gap-1.5 mr-2">
-              <Item to="/" label="Inicio" variant="nav" />
-              <Item to="/inmuebles" label="Inmuebles" variant="nav" />
-              <Item to="/precios" label="Planes" variant="nav" />
+            <div className="hidden lg:flex min-w-0 max-w-[70vw] flex-wrap items-center justify-end gap-1 mr-2">
+              {(user?.rol === "admin"
+                ? [
+                    ["/", "Inicio"],
+                    ["/inmuebles", "Inmuebles"],
+                    ["/inmuebles/crear", "Cargar inmueble"],
+                    ["/transacciones", "Transacciones"],
+                    ["/planes", "Planes"],
+                    ["/reservaciones", "Reservas"],
+                    ["/corredores", "Corredores"],
+                    ["/administradores", "Administradores"],
+                    ["/comisiones", "Comisiones"],
+                    ["/bitacora", "Bitácora"],
+                  ]
+                : user?.rol === "corredor"
+                  ? [
+                      ["/", "Inicio"],
+                      ["/inmuebles", "Inmuebles"],
+                      ["/mis-inmuebles", "Mis inmuebles"],
+                      ["/inmuebles/crear", "Cargar inmueble"],
+                      ["/mi-plan", "Mi plan"],
+                      ["/precios", "Planes"],
+                      ["/rentas-contratadas", "Contratos"],
+                      ["/reservaciones", "Reservas"],
+                      ["/guardados", "Guardados"],
+                    ]
+                  : [
+                      ["/", "Inicio"],
+                      ["/inmuebles", "Inmuebles"],
+                      ["/precios", "Planes"],
+                      ...(user ? [["/guardados", "Guardados"]] : []),
+                    ]
+              ).map(([to, label]) => (
+                <Item key={to} to={to} label={label} variant="nav" />
+              ))}
             </div>
             <button
               type="button"

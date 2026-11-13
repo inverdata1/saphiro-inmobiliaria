@@ -1028,6 +1028,11 @@ exports.crearReserva = async (data, ctx) => {
     );
     const reserva = resRows[0];
 
+    await client.query(
+      `UPDATE inmuebles SET estatus = 'reservado' WHERE id = $1 AND estatus = 'disponible'`,
+      [inmueble_id]
+    );
+
     // Mascotas de la reserva. Va después de tener `reserva.id` porque la tabla cuelga de
     // la reserva, no de la transacción. Todas en el mismo INSERT: si una falla el
     // ROLLBACK de abajo se lleva la reserva entera.
