@@ -126,6 +126,7 @@ export default function InmuebleDetailPage() {
     google_maps_url: "https://maps.google.com/?q=18.4738,-69.9399",
   };
   const [inmueble, setInmueble] = useState(null);
+  const [loadError, setLoadError] = useState("");
   const [inmuebleCaracteristicas, setInmuebleCaracteristicas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeImg, setActiveImg] = useState(0);
@@ -181,7 +182,9 @@ export default function InmuebleDetailPage() {
     setActiveImg(i);
   };
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";
-  const esDueno = user && inmueble && Number(user.id) === Number(inmueble.corredor_usuario_id);
+  const esDueno = user && inmueble && (
+    user.rol === "admin" || Number(user.id) === Number(inmueble.corredor_usuario_id)
+  );
   const cargarInmueble = useCallback(async (silencioso = false) => {
     if (!silencioso) setLoading(true);
     try {
@@ -189,7 +192,8 @@ export default function InmuebleDetailPage() {
       setInmueble(r?.data ?? r);
     } catch (e) {
       console.error("Error al cargar inmueble:", e);
-      setInmueble(MOCK_INMUEBLE);
+      setInmueble(null);
+      setLoadError(e?.message || "No se pudo cargar el inmueble.");
     } finally {
       if (!silencioso) setLoading(false);
     }
@@ -314,7 +318,13 @@ export default function InmuebleDetailPage() {
   /* ─── loading ───
    */
   if (loading) return <DetailSkeleton />;
-  if (!inmueble) return null;
+  if (!inmueble) {
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-16 text-center">
+        <p className="text-lg font-semibold">{loadError || "No se pudo cargar el inmueble."}</p>
+      </div>
+    );
+  }
 
   /* ─── event handlers ─── */
   const handlePrevImage = () => {

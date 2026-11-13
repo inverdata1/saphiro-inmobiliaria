@@ -80,7 +80,7 @@ export default function Navbar() {
         </button>
 
         <nav
-          className={`hidden md:flex flex-1 min-w-0 items-center justify-end gap-2 overflow-x-auto ${
+          className={`hidden md:flex flex-1 min-w-0 flex-wrap items-center justify-end gap-2 ${
             open ? "block" : ""
           }`}
         >

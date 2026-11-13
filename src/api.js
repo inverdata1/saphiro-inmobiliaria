@@ -49,8 +49,21 @@ export class SessionExpiredError extends Error {
   }
 }
 
+function apiUrl(path, params) {
+  const base = (API_BASE || "").trim() || window.location.origin;
+  const absolute = /^https?:\/\//i.test(base)
+    ? base
+    : new URL(base, window.location.origin).toString();
+  const url = new URL(`${absolute.replace(/\/$/, "")}${path.startsWith("/") ? path : `/${path}`}`);
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === "") return;
+    url.searchParams.set(key, String(value));
+  });
+  return url;
+}
+
 function refreshSessionOnce() {
-  return fetch(API_BASE + "/auth/refresh", {
+  return fetch(apiUrl("/auth/refresh").toString(), {
     method: "POST",
     headers: { "X-Requested-With": "XMLHttpRequest" },
     credentials: "include",
@@ -125,12 +138,7 @@ async function doFetch(url, init, isRetry = false) {
 }
 
 export async function apiGet(path, params = {}) {
-  const url = new URL(API_BASE + path);
-  Object.entries(params).forEach(([k, v]) => {
-    if (v === undefined || v === null || v === "") return;
-    url.searchParams.set(k, v);
-  });
-  return doFetch(url.toString(), { headers: baseHeaders(), credentials: "include" });
+  return doFetch(apiUrl(path, params).toString(), { headers: baseHeaders(), credentials: "include" });
 }
 
 /**
@@ -139,11 +147,7 @@ export async function apiGet(path, params = {}) {
  * Reintenta una vez tras refrescar la sesión si recibe 401.
  */
 export async function apiDownload(path, params = {}) {
-  const url = new URL(API_BASE + path);
-  Object.entries(params).forEach(([k, v]) => {
-    if (v === undefined || v === null || v === "") return;
-    url.searchParams.set(k, v);
-  });
+  const url = apiUrl(path, params);
 
   const init = {
     headers: { "X-Requested-With": "XMLHttpRequest" },
@@ -179,7 +183,7 @@ export async function apiDownload(path, params = {}) {
 export async function apiPost(path, body = {}, idempotencyKey) {
   const headers = baseHeaders();
   if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey;
-  return doFetch(API_BASE + path, {
+  return doFetch(apiUrl(path).toString(), {
     method: "POST",
     headers,
     credentials: "include",
@@ -190,7 +194,7 @@ export async function apiPost(path, body = {}, idempotencyKey) {
 export async function apiPatch(path, body = {}, idempotencyKey) {
   const headers = baseHeaders();
   if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey;
-  return doFetch(API_BASE + path, {
+  return doFetch(apiUrl(path).toString(), {
     method: "PATCH",
     headers,
     credentials: "include",
@@ -201,7 +205,7 @@ export async function apiPatch(path, body = {}, idempotencyKey) {
 export async function apiPut(path, body = {}, idempotencyKey) {
   const headers = baseHeaders();
   if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey;
-  return doFetch(API_BASE + path, {
+  return doFetch(apiUrl(path).toString(), {
     method: "PUT",
     headers,
     credentials: "include",
@@ -210,7 +214,7 @@ export async function apiPut(path, body = {}, idempotencyKey) {
 }
 
 export async function apiUpload(path, formData, method = "POST") {
-  return doFetch(API_BASE + path, {
+  return doFetch(apiUrl(path).toString(), {
     method,
     headers: { "X-Requested-With": "XMLHttpRequest" },
     credentials: "include",
@@ -227,5 +231,5 @@ export async function apiDelete(path, body = null, idempotencyKey) {
     credentials: "include",
   };
   if (body) init.body = JSON.stringify(body);
-  return doFetch(API_BASE + path, init);
+  return doFetch(apiUrl(path).toString(), init);
 }
