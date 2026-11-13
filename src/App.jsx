@@ -93,7 +93,7 @@ export default function App() {
         <Route path="/reservar/:inmuebleId" element={<ProtectedRoute roles={["cliente", "corredor"]}><ReservationPage /></ProtectedRoute>} />
 
         {/* ── Corredores ── */}
-        <Route path="/inmuebles/crear" element={<ProtectedRoute roles={["corredor"]}><CrearInmueblePage /></ProtectedRoute>} />
+        <Route path="/inmuebles/crear" element={<ProtectedRoute roles={["corredor", "admin"]}><CrearInmueblePage /></ProtectedRoute>} />
         <Route path="/mis-inmuebles" element={<ProtectedRoute roles={["corredor"]}><MisInmueblesPage /></ProtectedRoute>} />
         <Route path="/mis-transferencias" element={<ProtectedRoute roles={["corredor", "admin"]}><TransferenciasRecibidasPage /></ProtectedRoute>} />
         <Route path="/transferencias-recibidas" element={<TransferenciasRecibidasPage />} />

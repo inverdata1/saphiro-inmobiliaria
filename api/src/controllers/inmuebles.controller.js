@@ -42,8 +42,14 @@ exports.getInmuebleById = async (req, res, next) => {
 exports.createInmueble = async (req, res, next) => {
   try {
     const body = typeof req.body.data === "string" ? JSON.parse(req.body.data) : req.body;
-    const corredor = await corredoresService.getCorredorByUserId(body.usuario_id);
-    body.corredor_id = corredor.id;
+    const actorId = req.user?.rol === "admin" ? req.user.id : body.usuario_id;
+    try {
+      const corredor = await corredoresService.getCorredorByUserId(actorId);
+      body.corredor_id = corredor.id;
+    } catch (lookupErr) {
+      if (!(req.user?.rol === "admin" && lookupErr.statusCode === 404)) throw lookupErr;
+      body.corredor_id = null;
+    }
     const data = await inmueblesService.createInmueble(body, req.files || [], buildCtx(req));
     res.status(201).json({ ok: true, data });
   } catch (err) {

@@ -119,6 +119,7 @@ export function AdminSidebar({ onClick }) {
     <>
       <SideLink to="/" onClick={onClick} icon={ICONS.inicio} end className="lg:hidden">Inicio</SideLink>
       <SideLink to="/inmuebles" onClick={onClick} icon={ICONS.inmuebles} className="lg:hidden">Inmuebles</SideLink>
+      <SideLink to="/inmuebles/crear" onClick={onClick} icon={ICONS.inmuebles}>Cargar inmueble</SideLink>
       <SideLink to="/transacciones" onClick={onClick} icon={ICONS.transacciones}>Transacciones</SideLink>
       <SideLink to="/planes" onClick={onClick} icon={ICONS.comisiones}>Planes</SideLink>
       <SideLink to="/reservaciones" onClick={onClick} icon={ICONS.reservasVacacionales}>Reservas vacacionales</SideLink>

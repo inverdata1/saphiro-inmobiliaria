@@ -167,7 +167,7 @@ export default function InmueblesPage() {
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          {(user?.rol === "corredor" && user) && (
+          {(user && (user.rol === "corredor" || user.rol === "admin")) && (
             <Link
               to="/inmuebles/crear"
               className="btn-primary shrink-0"
