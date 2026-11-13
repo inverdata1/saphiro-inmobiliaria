@@ -101,6 +101,8 @@ export function CorredorSidebar({ onClick }) {
       <SideLink to="/" onClick={onClick} icon={ICONS.inicio} end className="lg:hidden">Inicio</SideLink>
       <SideLink to="/inmuebles" onClick={onClick} icon={ICONS.inmuebles} className="lg:hidden">Inmuebles</SideLink>
       <SideLink to="/mis-inmuebles" onClick={onClick} icon={ICONS.misInmuebles}>Mis inmuebles</SideLink>
+      <SideLink to="/mi-plan" onClick={onClick} icon={ICONS.reportes}>Mi plan</SideLink>
+      <SideLink to="/precios" onClick={onClick} icon={ICONS.reportes}>Planes</SideLink>
       <SideLink to="/rentas-contratadas" onClick={onClick} icon={ICONS.inmueblesAlquilados}>Contratos de alquiler</SideLink>
       <SideLink to="/reservaciones" onClick={onClick} icon={ICONS.reservasVacacionales}>Reservas vacacionales</SideLink>
       <SideLink to="/guardados" onClick={onClick} icon={ICONS.guardados}>Guardados</SideLink>
@@ -118,6 +120,7 @@ export function AdminSidebar({ onClick }) {
       <SideLink to="/" onClick={onClick} icon={ICONS.inicio} end className="lg:hidden">Inicio</SideLink>
       <SideLink to="/inmuebles" onClick={onClick} icon={ICONS.inmuebles} className="lg:hidden">Inmuebles</SideLink>
       <SideLink to="/transacciones" onClick={onClick} icon={ICONS.transacciones}>Transacciones</SideLink>
+      <SideLink to="/planes" onClick={onClick} icon={ICONS.comisiones}>Planes</SideLink>
       <SideLink to="/reservaciones" onClick={onClick} icon={ICONS.reservasVacacionales}>Reservas vacacionales</SideLink>
       <SideLink to="/corredores" onClick={onClick} icon={ICONS.corredores}>Corredores</SideLink>
       <SideLink to="/administradores" onClick={onClick} icon={ICONS.administradores}>Administradores</SideLink>
@@ -133,6 +136,7 @@ export function PublicoSidebar({ onClick }) {
     <>
       <SideLink to="/" onClick={onClick} icon={ICONS.inicio} end className="lg:hidden">Inicio</SideLink>
       <SideLink to="/inmuebles" onClick={onClick} icon={ICONS.inmuebles} className="lg:hidden">Inmuebles</SideLink>
+      <SideLink to="/precios" onClick={onClick} icon={ICONS.reportes}>Planes</SideLink>
       <SideLink to="/configuracion" onClick={onClick} icon={ICONS.config}>Configuración</SideLink>
     </>
   );

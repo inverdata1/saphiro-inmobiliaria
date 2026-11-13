@@ -37,6 +37,10 @@ import MensualidadesInmueblePage from "./pages/Alquileres/MensualidadesInmuebleP
 import PasarelaMensualidadPage from "./pages/Pagos/PasarelaMensualidadPage";
 import ConfiguracionPage from "./pages/ConfiguracionPage";
 import ReservacionesVacacionalesPage from "./pages/Alquileres/ReservacionesVacacionalesPage";
+import PlanesPage from "./pages/PlanesPage";
+import MiPlanPage from "./pages/MiPlanPage";
+import PreciosPage from "./pages/PreciosPage";
+import CrmPage from "./pages/CrmPage";
 
 export default function App() {
   return (
@@ -103,6 +107,10 @@ export default function App() {
         <Route path="/bitacora" element={<ProtectedRoute roles={["admin"]}><BitacoraPage /></ProtectedRoute>} />
 
         {/* ── Catch-all ── */}
+        <Route path="/precios" element={<PreciosPage />} />
+        <Route path="/planes" element={<ProtectedRoute roles={["admin"]}><PlanesPage /></ProtectedRoute>} />
+        <Route path="/mi-plan" element={<ProtectedRoute roles={["corredor"]}><MiPlanPage /></ProtectedRoute>} />
+        <Route path="/crm" element={<ProtectedRoute roles={["corredor"]}><CrmPage /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>

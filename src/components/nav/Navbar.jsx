@@ -79,6 +79,7 @@ export default function Navbar() {
             <div className="hidden lg:flex min-w-0 items-center gap-1.5 mr-2">
               <Item to="/" label="Inicio" variant="nav" />
               <Item to="/inmuebles" label="Inmuebles" variant="nav" />
+              <Item to="/precios" label="Planes" variant="nav" />
             </div>
             <button
               type="button"

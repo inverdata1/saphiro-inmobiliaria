@@ -33,6 +33,8 @@ const redesSocialesRoutes = require("./routes/redesSociales.routes");
 const tasasRoutes = require("./routes/tasasCambio.routes");
 const mascotasRoutes = require("./routes/mascotas.routes");
 const geocodingRoutes = require("./routes/geocoding.routes");
+const planesRoutes = require("./routes/planes.routes");
+const crmRoutes = require("./routes/crm.routes");
 const errorHandler = require("./middleware/errorHandler");
 const csrf = require("./middleware/csrf");
 const { initTasasJob } = require("./jobs/tasasCambio.job");
@@ -101,6 +103,8 @@ app.use("/redes-sociales", redesSocialesRoutes);
 app.use("/tasas", tasasRoutes);
 app.use("/mascotas", mascotasRoutes);
 app.use("/geocoding", geocodingRoutes);
+app.use("/planes", planesRoutes);
+app.use("/crm", crmRoutes);
 
 app.use(errorHandler);
 
