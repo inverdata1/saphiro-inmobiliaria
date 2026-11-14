@@ -63,55 +63,21 @@ export default function Navbar() {
             {/* Logo */}
             <NavLink
               to="/"
-              className={`flex shrink-0 items-center ${user ? "ml-3 sm:ml-6 lg:ml-8" : "ml-3 sm:ml-6"}`}
+              className={`flex shrink-0 items-center gap-2.5 ${user ? "ml-3 sm:ml-6 lg:ml-8" : "ml-3 sm:ml-6"}`}
             >
               <img
-                src="/saphiro-inmobiliaria-logo.png"
-                alt="Saphiro Inmobiliaria"
-                className="h-6 w-auto object-contain sm:h-8 md:h-9 lg:h-10"
+                src="/inverdata-logo.png"
+                alt=""
+                className="h-9 w-9 rounded-xl bg-slate-100 object-contain p-0.5"
               />
+              <span className="hidden sm:block text-base font-extrabold tracking-tight text-slate-900">
+                Saphiro Inmobiliaria
+              </span>
             </NavLink>
           </div>
 
           {/* Acciones derecha */}
           <div className="flex items-center gap-1 sm:gap-2">
-            {/* Opciones de navegación (desktop) */}
-            <div className="hidden lg:flex min-w-0 max-w-[70vw] flex-wrap items-center justify-end gap-1 mr-2">
-              {(user?.rol === "admin"
-                ? [
-                    ["/", "Inicio"],
-                    ["/inmuebles", "Inmuebles"],
-                    ["/inmuebles/crear", "Cargar inmueble"],
-                    ["/transacciones", "Transacciones"],
-                    ["/planes", "Planes"],
-                    ["/reservaciones", "Reservas"],
-                    ["/corredores", "Corredores"],
-                    ["/administradores", "Administradores"],
-                    ["/comisiones", "Comisiones"],
-                    ["/bitacora", "Bitácora"],
-                  ]
-                : user?.rol === "corredor"
-                  ? [
-                      ["/", "Inicio"],
-                      ["/inmuebles", "Inmuebles"],
-                      ["/mis-inmuebles", "Mis inmuebles"],
-                      ["/inmuebles/crear", "Cargar inmueble"],
-                      ["/mi-plan", "Mi plan"],
-                      ["/precios", "Planes"],
-                      ["/rentas-contratadas", "Contratos"],
-                      ["/reservaciones", "Reservas"],
-                      ["/guardados", "Guardados"],
-                    ]
-                  : [
-                      ["/", "Inicio"],
-                      ["/inmuebles", "Inmuebles"],
-                      ["/precios", "Planes"],
-                      ...(user ? [["/guardados", "Guardados"]] : []),
-                    ]
-              ).map(([to, label]) => (
-                <Item key={to} to={to} label={label} variant="nav" />
-              ))}
-            </div>
             <button
               type="button"
               onClick={toggleDark}
@@ -169,6 +135,48 @@ export default function Navbar() {
           </div>
         </div>
 
+
+        <div className="hidden lg:block border-t border-slate-100">
+          <div className="max-w-7xl mx-auto px-3 sm:px-5 py-2 flex flex-wrap items-center gap-1">
+            {/* Opciones de navegación (desktop) */}
+            <div className="flex flex-wrap items-center gap-1">
+              {(user?.rol === "admin"
+                ? [
+                    ["/", "Inicio"],
+                    ["/inmuebles", "Inmuebles"],
+                    ["/inmuebles/crear", "Cargar inmueble"],
+                    ["/transacciones", "Transacciones"],
+                    ["/planes", "Planes"],
+                    ["/reservaciones", "Reservas"],
+                    ["/corredores", "Corredores"],
+                    ["/administradores", "Administradores"],
+                    ["/comisiones", "Comisiones"],
+                    ["/bitacora", "Bitácora"],
+                  ]
+                : user?.rol === "corredor"
+                  ? [
+                      ["/", "Inicio"],
+                      ["/inmuebles", "Inmuebles"],
+                      ["/mis-inmuebles", "Mis inmuebles"],
+                      ["/inmuebles/crear", "Cargar inmueble"],
+                      ["/mi-plan", "Mi plan"],
+                      ["/precios", "Planes"],
+                      ["/rentas-contratadas", "Contratos"],
+                      ["/reservaciones", "Reservas"],
+                      ["/guardados", "Guardados"],
+                    ]
+                  : [
+                      ["/", "Inicio"],
+                      ["/inmuebles", "Inmuebles"],
+                      ["/precios", "Planes"],
+                      ...(user ? [["/guardados", "Guardados"]] : []),
+                    ]
+              ).map(([to, label]) => (
+                <Item key={to} to={to} label={label} variant="nav" />
+              ))}
+            </div>
+          </div>
+        </div>
       </header>
 
       {/* Overlay */}
