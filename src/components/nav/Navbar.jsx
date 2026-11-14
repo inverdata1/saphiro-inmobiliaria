@@ -137,7 +137,7 @@ export default function Navbar() {
 
 
         <div className="hidden lg:block border-t border-slate-100">
-          <div className="max-w-7xl mx-auto px-3 sm:px-5 py-2 flex flex-wrap items-center gap-1">
+          <div className="max-w-7xl mx-auto px-3 sm:px-5 py-2 pl-3 sm:pl-5 lg:pl-80 flex flex-wrap items-center gap-1">
             {/* Opciones de navegación (desktop) */}
             <div className="flex flex-wrap items-center gap-1">
               {(user?.rol === "admin"

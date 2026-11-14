@@ -599,27 +599,6 @@ export default function InmuebleForm({
       <ErrorMessage message={err} onClose={() => setErr("")} />
 
       <form onSubmit={handleSubmit} className="p-6 space-y-5">
-        <div>
-          <label className={labelCls}>Título *</label>
-          <input className={`${inputCls} ${fieldErrors.titulo ? inputClsErr : ""}`} value={form.titulo} onChange={(e) => { set("titulo", e.target.value); setFieldErrors((p) => ({ ...p, titulo: "" })); }} placeholder="Ej: Apartamento en Bella Vista" />
-          {fieldErrors.titulo && <p className={errMsgCls}>{fieldErrors.titulo}</p>}
-        </div>
-
-        <div>
-          <label className={labelCls}>Descripción</label>
-          <textarea className={inputCls + " min-h-[80px]"} value={form.descripcion} onChange={(e) => set("descripcion", e.target.value)} placeholder="Descripción del inmueble" />
-        </div>
-
-        <div>
-          <label className={labelCls}>Términos y condiciones</label>
-          <textarea
-            className={inputCls + " min-h-[80px]"}
-            value={form.terminos_y_condiciones}
-            onChange={(e) => set("terminos_y_condiciones", e.target.value)}
-            placeholder="Condiciones de alquiler, compra, uso, penalidades…"
-          />
-        </div>
-
         {esAdmin && !edit ? (
           <div>
             <label className={labelCls}>Corredor *</label>
@@ -641,6 +620,27 @@ export default function InmuebleForm({
             {fieldErrors.corredorUsuarioId ? <p className={errMsgCls}>{fieldErrors.corredorUsuarioId}</p> : null}
           </div>
         ) : null}
+
+        <div>
+          <label className={labelCls}>Título *</label>
+          <input className={`${inputCls} ${fieldErrors.titulo ? inputClsErr : ""}`} value={form.titulo} onChange={(e) => { set("titulo", e.target.value); setFieldErrors((p) => ({ ...p, titulo: "" })); }} placeholder="Ej: Apartamento en Bella Vista" />
+          {fieldErrors.titulo && <p className={errMsgCls}>{fieldErrors.titulo}</p>}
+        </div>
+
+        <div>
+          <label className={labelCls}>Descripción</label>
+          <textarea className={inputCls + " min-h-[80px]"} value={form.descripcion} onChange={(e) => set("descripcion", e.target.value)} placeholder="Descripción del inmueble" />
+        </div>
+
+        <div>
+          <label className={labelCls}>Términos y condiciones</label>
+          <textarea
+            className={inputCls + " min-h-[80px]"}
+            value={form.terminos_y_condiciones}
+            onChange={(e) => set("terminos_y_condiciones", e.target.value)}
+            placeholder="Condiciones de alquiler, compra, uso, penalidades…"
+          />
+        </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
