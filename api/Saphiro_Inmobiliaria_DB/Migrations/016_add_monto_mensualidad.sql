@@ -1,0 +1,1 @@
+ALTER TABLE mensualidades ADD COLUMN monto DECIMAL(10,2) NOT NULL;

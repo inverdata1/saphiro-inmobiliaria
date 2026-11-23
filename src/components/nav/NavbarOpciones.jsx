@@ -7,9 +7,9 @@ const linkActiveLight = "bg-slate-900 text-white shadow-sm";
 const linkIdleLight = "text-slate-600 hover:bg-slate-100";
 
 /* Variante compacta para la fila superior de la navbar */
-const linkBaseNav = "whitespace-nowrap px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors duration-150";
-const linkActiveNav = "bg-slate-900 text-white shadow-sm";
-const linkIdleNav = "text-slate-600 hover:bg-slate-100 hover:text-slate-900";
+const linkBaseNav = "whitespace-nowrap px-3 py-2 rounded-lg text-sm font-bold transition-colors duration-150";
+const linkActiveNav = "bg-slate-900 text-white shadow-sm dark:bg-white dark:text-slate-900 dark:shadow-none";
+const linkIdleNav = "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-[#18181c] dark:hover:text-white";
 
 export function Item({ to, label, variant = "dark" }) {
   const base = variant === "nav" ? linkBaseNav : linkBase;

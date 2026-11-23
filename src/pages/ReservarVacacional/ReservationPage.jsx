@@ -304,18 +304,18 @@ export default function ReservationPage() {
   const inputCls = (field) =>
     `w-full rounded-xl border ${
       formErrors[field] ? "border-red-500 ring-1 ring-red-500" : "border-slate-300 dark:border-slate-700"
-    } bg-slate-50 dark:bg-slate-800 px-4 py-3 text-slate-800 dark:text-slate-200 font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm`;
+    } bg-slate-50 dark:bg-[#141417] px-4 py-3 text-slate-800 dark:text-slate-200 font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm`;
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 py-8 px-4 sm:px-6 lg:px-8 transition-colors animate-pulse">
+      <div className="min-h-screen bg-slate-50 dark:bg-[#0c0c0e] py-8 px-4 sm:px-6 lg:px-8 transition-colors animate-pulse">
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
           <div className="lg:col-span-5 space-y-5">
-            <div className="h-56 bg-slate-200 rounded-2xl dark:bg-slate-800" />
-            <div className="h-40 bg-slate-200 rounded-2xl dark:bg-slate-800" />
-            <div className="h-52 bg-slate-200 rounded-2xl dark:bg-slate-800" />
+            <div className="h-56 bg-slate-200 rounded-2xl dark:bg-[#141417]" />
+            <div className="h-40 bg-slate-200 rounded-2xl dark:bg-[#141417]" />
+            <div className="h-52 bg-slate-200 rounded-2xl dark:bg-[#141417]" />
           </div>
-          <div className="lg:col-span-7 h-[560px] bg-slate-200 rounded-3xl dark:bg-slate-800" />
+          <div className="lg:col-span-7 h-[560px] bg-slate-200 rounded-3xl dark:bg-[#141417]" />
         </div>
       </div>
     );
@@ -323,7 +323,7 @@ export default function ReservationPage() {
 
   if (loadError || !inmueble) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 py-8 px-4 sm:px-6 lg:px-8 transition-colors">
+      <div className="min-h-screen bg-slate-50 dark:bg-[#0c0c0e] py-8 px-4 sm:px-6 lg:px-8 transition-colors">
         <div className="max-w-xl mx-auto card p-8 text-center">
           <p className="font-bold text-slate-800 dark:text-slate-200">{loadError || "No se encontró el inmueble"}</p>
           <Link to="/inmuebles" className="mt-4 inline-block font-bold text-blue-600 dark:text-blue-400">
@@ -336,7 +336,7 @@ export default function ReservationPage() {
 
   if (!esVacacional || !av) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 py-8 px-4 sm:px-6 lg:px-8 transition-colors">
+      <div className="min-h-screen bg-slate-50 dark:bg-[#0c0c0e] py-8 px-4 sm:px-6 lg:px-8 transition-colors">
         <div className="max-w-xl mx-auto card p-8 text-center">
           <p className="font-bold text-slate-800 dark:text-slate-200">Este inmueble no admite reservas vacacionales</p>
           <Link to={`/inmuebles/${inmueble.uuid || inmueble.id}`} className="mt-4 inline-block font-bold text-blue-600 dark:text-blue-400">
@@ -348,7 +348,7 @@ export default function ReservationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 py-8 px-4 sm:px-6 lg:px-8 transition-colors">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0c0c0e] py-8 px-4 sm:px-6 lg:px-8 transition-colors">
       <div className="max-w-6xl mx-auto">
         <div className="mb-6 flex items-center justify-between">
           <button
@@ -403,13 +403,13 @@ export default function ReservationPage() {
                 </div>
 
                 <div className="flex flex-wrap gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 dark:bg-slate-800 px-2.5 py-1.5">
+                  <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 dark:bg-[#141417] px-2.5 py-1.5">
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                     {huespedesMax} {huespedesMax === 1 ? "huésped máximo" : "huéspedes máximo"}
                   </span>
-                  <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 dark:bg-slate-800 px-2.5 py-1.5">
+                  <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 dark:bg-[#141417] px-2.5 py-1.5">
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <rect x="3" y="4" width="18" height="18" rx="2" strokeWidth="2" />
                       <line x1="16" y1="2" x2="16" y2="6" strokeWidth="2" />
@@ -419,7 +419,7 @@ export default function ReservationPage() {
                     Mín. {nochesMin} noche{nochesMin > 1 ? "s" : ""}
                   </span>
                   {av.hora_checkin && (
-                    <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 dark:bg-slate-800 px-2.5 py-1.5">
+                    <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 dark:bg-[#141417] px-2.5 py-1.5">
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <circle cx="12" cy="12" r="10" strokeWidth="2" />
                         <polyline points="12 6 12 12 16 14" strokeWidth="2" />
@@ -453,7 +453,7 @@ export default function ReservationPage() {
                     onClick={() => openCalendar("checkIn")}
                     className={`w-full text-left rounded-xl border ${
                       formErrors.checkIn ? "border-red-500 ring-1 ring-red-500" : "border-slate-300 dark:border-slate-700"
-                    } bg-slate-50 dark:bg-slate-800 px-4 py-3 text-slate-800 dark:text-slate-200 font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm cursor-pointer hover:border-slate-400 dark:hover:border-slate-600`}
+                    } bg-slate-50 dark:bg-[#141417] px-4 py-3 text-slate-800 dark:text-slate-200 font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm cursor-pointer hover:border-slate-400 dark:hover:border-slate-600`}
                   >
                     {checkIn ? (
                       <span className="flex items-center gap-2">
@@ -480,7 +480,7 @@ export default function ReservationPage() {
                     onClick={() => openCalendar("checkOut")}
                     className={`w-full text-left rounded-xl border ${
                       formErrors.checkOut ? "border-red-500 ring-1 ring-red-500" : "border-slate-300 dark:border-slate-700"
-                    } bg-slate-50 dark:bg-slate-800 px-4 py-3 text-slate-800 dark:text-slate-200 font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm cursor-pointer hover:border-slate-400 dark:hover:border-slate-600`}
+                    } bg-slate-50 dark:bg-[#141417] px-4 py-3 text-slate-800 dark:text-slate-200 font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm cursor-pointer hover:border-slate-400 dark:hover:border-slate-600`}
                   >
                     {checkOut ? (
                       <span className="flex items-center gap-2">
@@ -509,12 +509,12 @@ export default function ReservationPage() {
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                   Huéspedes
                 </label>
-                <div className="flex items-center justify-between rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2">
+                <div className="flex items-center justify-between rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-[#141417] px-3 py-2">
                   <button
                     type="button"
                     onClick={() => setHuespedes((h) => Math.max(1, h - 1))}
                     disabled={huespedes <= 1}
-                    className="h-8 w-8 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-black text-lg leading-none flex items-center justify-center hover:bg-slate-300 dark:hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                    className="h-8 w-8 rounded-lg bg-slate-200 dark:bg-[#1f1f24] text-slate-700 dark:text-slate-200 font-black text-lg leading-none flex items-center justify-center hover:bg-slate-300 dark:hover:bg-[#2a2a30] disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
                     aria-label="Menos huéspedes"
                   >
                     −
@@ -524,7 +524,7 @@ export default function ReservationPage() {
                     type="button"
                     onClick={() => setHuespedes((h) => Math.min(huespedesMax, h + 1))}
                     disabled={huespedes >= huespedesMax}
-                    className="h-8 w-8 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-black text-lg leading-none flex items-center justify-center hover:bg-slate-300 dark:hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                    className="h-8 w-8 rounded-lg bg-slate-200 dark:bg-[#1f1f24] text-slate-700 dark:text-slate-200 font-black text-lg leading-none flex items-center justify-center hover:bg-slate-300 dark:hover:bg-[#2a2a30] disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
                     aria-label="Más huéspedes"
                   >
                     +
@@ -583,7 +583,7 @@ export default function ReservationPage() {
 
           {/* Right Column: Visa / Mastercard Payment Gateway */}
           <div className="lg:col-span-7">
-            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xl relative">
+            <div className="bg-white dark:bg-[#141417] rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xl relative">
               <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
                 <div>
                   <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -604,7 +604,7 @@ export default function ReservationPage() {
               </div>
 
               {/* Method Selector */}
-              <div className="grid grid-cols-2 gap-2 p-1.5 bg-slate-200/70 dark:bg-slate-900 rounded-2xl border border-slate-300/60 dark:border-slate-800 mb-6">
+              <div className="grid grid-cols-2 gap-2 p-1.5 bg-slate-200/70 dark:bg-[#0c0c0e] rounded-2xl border border-slate-300/60 dark:border-slate-800 mb-6">
                 <button
                   type="button"
                   onClick={() => setMetodoPago("credito")}
@@ -677,7 +677,7 @@ export default function ReservationPage() {
                       onChange={handleCardNumberChange}
                       className={`w-full font-mono rounded-xl border ${
                         formErrors.numeroTarjeta ? "border-red-500 ring-1 ring-red-500" : "border-slate-300 dark:border-slate-700"
-                      } bg-slate-50 dark:bg-slate-800 px-4 py-3 text-slate-800 dark:text-slate-200 font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm tracking-wider`}
+                      } bg-slate-50 dark:bg-[#141417] px-4 py-3 text-slate-800 dark:text-slate-200 font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm tracking-wider`}
                     />
                     <div className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5 pointer-events-none">
                       {cardBrand === "visa" && (
@@ -714,7 +714,7 @@ export default function ReservationPage() {
                       onChange={handleExpiryChange}
                       className={`w-full font-mono rounded-xl border ${
                         formErrors.vencimiento ? "border-red-500 ring-1 ring-red-500" : "border-slate-300 dark:border-slate-700"
-                      } bg-slate-50 dark:bg-slate-800 px-4 py-3 text-slate-800 dark:text-slate-200 font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm tracking-wider`}
+                      } bg-slate-50 dark:bg-[#141417] px-4 py-3 text-slate-800 dark:text-slate-200 font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm tracking-wider`}
                     />
                     {guardarError("vencimiento")}
                   </div>
@@ -741,7 +741,7 @@ export default function ReservationPage() {
                         }}
                         className={`w-full font-mono text-center tracking-widest rounded-xl border ${
                           formErrors.cvv ? "border-red-500 ring-1 ring-red-500" : "border-slate-300 dark:border-slate-700"
-                        } bg-slate-50 dark:bg-slate-800 px-4 py-3 text-slate-800 dark:text-slate-200 font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm`}
+                        } bg-slate-50 dark:bg-[#141417] px-4 py-3 text-slate-800 dark:text-slate-200 font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm`}
                       />
                       <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -756,7 +756,7 @@ export default function ReservationPage() {
 
 
 
-                <div className="rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-4 space-y-1.5 text-sm">
+                <div className="rounded-2xl bg-slate-50 dark:bg-[#18181c]/60 border border-slate-200 dark:border-slate-700 p-4 space-y-1.5 text-sm">
                   <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
                     <span>{checkIn ? `Desde ${formatDisplayDate(checkIn)}` : "Fechas por seleccionar"}</span>
                     <span>{checkOut ? `Hasta ${formatDisplayDate(checkOut)}` : "—"}</span>

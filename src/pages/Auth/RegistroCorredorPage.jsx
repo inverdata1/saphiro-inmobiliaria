@@ -141,7 +141,7 @@ await apiPost("/auth/completar-registro", {
               autoComplete="name"
               value={form.nombre}
               onChange={handleChange}
-              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900"
+              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-100 dark:focus:ring-blue-900"
               placeholder="Nombre del corredor"
             />
           </div>
@@ -155,7 +155,7 @@ await apiPost("/auth/completar-registro", {
               name="numero_licencia"
               value={form.numero_licencia}
               onChange={handleChange}
-              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900"
+              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-100 dark:focus:ring-blue-900"
               placeholder="LIC-000000"
             />
           </div>
@@ -176,7 +176,7 @@ await apiPost("/auth/completar-registro", {
                     numero: limitarNumero(prev.numero, conf?.max ? conf.max + nuevoCodigo.length : undefined),
                   }));
                 }}
-                className="w-40 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900"
+                className="w-40 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-100 dark:focus:ring-blue-900"
               >
                 {phoneFormats.map((c) => (
                   <option key={c.iso2} value={c.iso2}>
@@ -195,7 +195,7 @@ await apiPost("/auth/completar-registro", {
                   e.preventDefault();
                   setPhone((prev) => ({ ...prev, numero: limitarNumero(prev.numero + e.clipboardData.getData("text"), maxDigitosTotales) }));
                 }}
-                className="flex-1 min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900"
+                className="flex-1 min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-100 dark:focus:ring-blue-900"
                 placeholder={paisSeleccionado?.example?.split(" ").slice(1).join("").replace(/-/g, "") || "Número"}
               />
               {maxDigitos ? (
@@ -217,7 +217,7 @@ await apiPost("/auth/completar-registro", {
               autoComplete="new-password"
               value={form.password}
               onChange={handleChange}
-              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900"
+              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-100 dark:focus:ring-blue-900"
               placeholder="••••••••"
             />
           </div>
@@ -233,7 +233,7 @@ await apiPost("/auth/completar-registro", {
               autoComplete="new-password"
               value={form.confirmPassword}
               onChange={handleChange}
-              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900"
+              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-100 dark:focus:ring-blue-900"
               placeholder="••••••••"
             />
           </div>

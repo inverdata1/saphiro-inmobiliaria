@@ -68,7 +68,7 @@ export default function PasarelaPago({
   const inputCls = (campo) =>
     `w-full rounded-xl border ${
       formErrors[campo] ? "border-red-500 ring-1 ring-red-500" : "border-slate-300 dark:border-slate-700"
-    } bg-slate-50 dark:bg-slate-800 px-4 py-3 text-slate-800 dark:text-slate-200 font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm`;
+    } bg-slate-50 dark:bg-[#141417] px-4 py-3 text-slate-800 dark:text-slate-200 font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm`;
 
   const validarFormulario = () => {
     const errors = {};
@@ -227,7 +227,7 @@ export default function PasarelaPago({
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xl relative transition-all">
+    <div className="bg-white dark:bg-[#141417] rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xl relative transition-all">
       {/* Header */}
       <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
         <div>
@@ -243,7 +243,7 @@ export default function PasarelaPago({
         <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2.5">
           Selecciona cómo deseas pagar:
         </label>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 p-1.5 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700/60">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 p-1.5 bg-slate-100 dark:bg-[#18181c]/80 rounded-2xl border border-slate-200 dark:border-slate-700/60">
           {/* Card Tab */}
           <button
             type="button"
@@ -254,7 +254,7 @@ export default function PasarelaPago({
             className={`flex flex-col items-center justify-center gap-1 py-2.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               metodoPago === "tarjeta"
                 ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-950/20"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700/50"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-[#1f1f24]/50"
             }`}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -274,7 +274,7 @@ export default function PasarelaPago({
             className={`flex flex-col items-center justify-center gap-1 py-2.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               metodoPago === "pagomovil"
                 ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-950/20"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700/50"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-[#1f1f24]/50"
             }`}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -294,7 +294,7 @@ export default function PasarelaPago({
             className={`flex flex-col items-center justify-center gap-1 py-2.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               metodoPago === "zelle"
                 ? "bg-gradient-to-r from-purple-600 to-violet-600 text-white shadow-md shadow-purple-950/20"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700/50"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-[#1f1f24]/50"
             }`}
           >
             <span className="font-black text-sm tracking-tighter">zelle</span>
@@ -311,7 +311,7 @@ export default function PasarelaPago({
             className={`flex flex-col items-center justify-center gap-1 py-2.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               metodoPago === "binance"
                 ? "bg-gradient-to-r from-amber-500 to-yellow-600 text-slate-950 shadow-md shadow-amber-950/20"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700/50"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-[#1f1f24]/50"
             }`}
           >
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -330,7 +330,7 @@ export default function PasarelaPago({
             className={`flex flex-col items-center justify-center gap-1 py-2.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               metodoPago === "paypal"
                 ? "bg-gradient-to-r from-sky-500 to-blue-700 text-white shadow-md shadow-blue-950/20"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700/50"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-[#1f1f24]/50"
             }`}
           >
             <span className="font-black italic text-xs tracking-wider">PayPal</span>
@@ -342,13 +342,13 @@ export default function PasarelaPago({
       {/* Card Preview y Selector Crédito / Débito (solo con método tarjeta) */}
       {metodoPago === "tarjeta" && (
         <>
-          <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-4">
+          <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-[#141417] rounded-xl mb-4">
             <button
               type="button"
               onClick={() => setTipoTarjeta("credito")}
               className={`py-2 px-3 rounded-lg font-bold text-xs transition-all cursor-pointer ${
                 tipoTarjeta === "credito"
-                  ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+                  ? "bg-white dark:bg-[#1f1f24] text-slate-900 dark:text-white shadow-sm"
                   : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
@@ -359,7 +359,7 @@ export default function PasarelaPago({
               onClick={() => setTipoTarjeta("debito")}
               className={`py-2 px-3 rounded-lg font-bold text-xs transition-all cursor-pointer ${
                 tipoTarjeta === "debito"
-                  ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+                  ? "bg-white dark:bg-[#1f1f24] text-slate-900 dark:text-white shadow-sm"
                   : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
@@ -413,7 +413,7 @@ export default function PasarelaPago({
                   onChange={handleCardNumberChange}
                   className={`w-full font-mono rounded-xl border ${
                     formErrors.numeroTarjeta ? "border-red-500 ring-1 ring-red-500" : "border-slate-300 dark:border-slate-700"
-                  } bg-slate-50 dark:bg-slate-800 px-4 py-3 text-slate-800 dark:text-slate-200 font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm tracking-wider`}
+                  } bg-slate-50 dark:bg-[#141417] px-4 py-3 text-slate-800 dark:text-slate-200 font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm tracking-wider`}
                 />
                 <div className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5 pointer-events-none">
                   {cardBrand === "visa" && (
@@ -450,7 +450,7 @@ export default function PasarelaPago({
                   onChange={handleExpiryChange}
                   className={`w-full font-mono rounded-xl border ${
                     formErrors.vencimiento ? "border-red-500 ring-1 ring-red-500" : "border-slate-300 dark:border-slate-700"
-                  } bg-slate-50 dark:bg-slate-800 px-4 py-3 text-slate-800 dark:text-slate-200 font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm tracking-wider`}
+                  } bg-slate-50 dark:bg-[#141417] px-4 py-3 text-slate-800 dark:text-slate-200 font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm tracking-wider`}
                 />
                 {guardarError("vencimiento")}
               </div>
@@ -476,7 +476,7 @@ export default function PasarelaPago({
                   }}
                   className={`w-full font-mono text-center tracking-widest rounded-xl border ${
                     formErrors.cvv ? "border-red-500 ring-1 ring-red-500" : "border-slate-300 dark:border-slate-700"
-                  } bg-slate-50 dark:bg-slate-800 px-4 py-3 text-slate-800 dark:text-slate-200 font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm`}
+                  } bg-slate-50 dark:bg-[#141417] px-4 py-3 text-slate-800 dark:text-slate-200 font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm`}
                 />
                 {guardarError("cvv")}
               </div>
@@ -495,7 +495,7 @@ export default function PasarelaPago({
                 <select
                   value={pagoMovilData.bancoEmisor}
                   onChange={(e) => setPagoMovilData({ ...pagoMovilData, bancoEmisor: e.target.value })}
-                  className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-3 text-slate-800 dark:text-slate-200 font-medium focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all text-sm cursor-pointer"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-[#141417] px-4 py-3 text-slate-800 dark:text-slate-200 font-medium focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all text-sm cursor-pointer"
                 >
                   <option value="Banesco">Banesco</option>
                   <option value="Mercantil">Banco Mercantil</option>
@@ -634,7 +634,7 @@ export default function PasarelaPago({
                   placeholder="@mi_nickname"
                   value={binanceData.nicknameBinance}
                   onChange={(e) => setBinanceData({ ...binanceData, nicknameBinance: e.target.value })}
-                  className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-3 text-slate-800 dark:text-slate-200 font-medium focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all text-sm"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-[#141417] px-4 py-3 text-slate-800 dark:text-slate-200 font-medium focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all text-sm"
                 />
               </div>
 
@@ -653,7 +653,7 @@ export default function PasarelaPago({
                   }}
                   className={`w-full font-mono text-center tracking-widest rounded-xl border ${
                     formErrors.payPin ? "border-red-500 ring-1 ring-red-500" : "border-slate-300 dark:border-slate-700"
-                  } bg-slate-50 dark:bg-slate-800 px-4 py-3 text-slate-800 dark:text-slate-200 font-bold focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all text-sm`}
+                  } bg-slate-50 dark:bg-[#141417] px-4 py-3 text-slate-800 dark:text-slate-200 font-bold focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all text-sm`}
                 />
                 {guardarError("payPin")}
               </div>

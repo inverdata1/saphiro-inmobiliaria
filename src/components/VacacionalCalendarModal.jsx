@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Calendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import esLocale from "@fullcalendar/core/locales/es";
-import { fechasOcupadas, reservasToEvents } from "../utils/reservas";
+import { reservasToEvents } from "../utils/reservas";
 
 function getCalHeight() {
   const vh = Math.round(window.innerHeight * 0.96);
@@ -11,7 +11,6 @@ function getCalHeight() {
 
 export default function VacacionalCalendarModal({ open, onClose, titulo, reservas }) {
   const [calHeight, setCalHeight] = useState(0);
-  const ocupadas = useMemo(() => fechasOcupadas(reservas), [reservas]);
 
   useEffect(() => {
     if (!open) return;
@@ -28,7 +27,7 @@ export default function VacacionalCalendarModal({ open, onClose, titulo, reserva
       onClick={onClose}
     >
       <div
-        className="w-full sm:max-w-2xl max-h-[96vh] overflow-hidden rounded-t-2xl sm:rounded-2xl bg-white shadow-2xl dark:bg-slate-800 dark:border dark:border-slate-700"
+        className="w-full sm:max-w-2xl max-h-[96vh] overflow-hidden rounded-t-2xl sm:rounded-2xl bg-white shadow-2xl dark:bg-[#141417] dark:border dark:border-slate-700"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between p-3 sm:p-4 pb-0">
@@ -43,7 +42,7 @@ export default function VacacionalCalendarModal({ open, onClose, titulo, reserva
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 cursor-pointer shrink-0"
+            className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-[#1f1f24] cursor-pointer shrink-0"
             aria-label="Cerrar calendario"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -71,7 +70,6 @@ export default function VacacionalCalendarModal({ open, onClose, titulo, reserva
               left: "prev,next",
               center: "title",
             }}
-            dayCellClassNames={(arg) => (ocupadas.has(arg.dateStr) ? ["fc-day-ocupada"] : [])}
             initialDate={new Date().toISOString().slice(0, 10)}
             validRange={{
               start: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}-01`,

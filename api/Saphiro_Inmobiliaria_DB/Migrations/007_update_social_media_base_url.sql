@@ -1,0 +1,1 @@
+UPDATE redes_sociales SET base_url = replace(base_url, 'https://', '') WHERE base_url LIKE 'https://%';

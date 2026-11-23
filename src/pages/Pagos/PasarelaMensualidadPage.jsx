@@ -255,7 +255,7 @@ export default function PasarelaMensualidadPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-purple-100 dark:bg-purple-950 text-[#470A68] dark:text-purple-300">
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300">
               Cuota #{cuotaActiva?.numero ?? "-"}
             </span>
             <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
@@ -291,7 +291,7 @@ export default function PasarelaMensualidadPage() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 py-8 px-4 sm:px-6 lg:px-8 transition-colors">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0c0c0e] py-8 px-4 sm:px-6 lg:px-8 transition-colors">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Navegación y Volver */}
         <div className="flex items-center justify-between">
@@ -318,7 +318,7 @@ export default function PasarelaMensualidadPage() {
           {/* COLUMNA IZQUIERDA: RESUMEN DEL CONTRATO DE ARRIENDO */}
           <div className="lg:col-span-5 space-y-6">
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-100 dark:bg-purple-950/60 text-[#470A68] dark:text-purple-300 text-xs font-black tracking-wider uppercase mb-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 text-xs font-black tracking-wider uppercase mb-2">
                 Canon de Arrendamiento
               </div>
               <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
@@ -358,7 +358,7 @@ export default function PasarelaMensualidadPage() {
                     {cuotasPagadas} de {totalCuotas} cuotas pagadas
                   </span>
                 </div>
-                <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                <div className="w-full bg-slate-100 dark:bg-[#141417] rounded-full h-2.5 overflow-hidden">
                   <div
                     className="bg-gradient-to-r from-[#470A68] to-purple-500 h-full rounded-full transition-all duration-500"
                     style={{ width: `${Math.round((cuotasPagadas / totalCuotas) * 100)}%` }}

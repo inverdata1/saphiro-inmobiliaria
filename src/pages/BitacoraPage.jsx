@@ -187,7 +187,7 @@ export default function BitacoraPage() {
                 onClick={() => changeMoneda(m)}
                 className={`px-3 py-1.5 text-xs font-medium transition cursor-pointer ${moneda === m
                     ? "bg-[#5a0e82] text-white hover:bg-[#470A68]"
-                    : "bg-white dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+                    : "bg-white dark:bg-[#141417] dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#1f1f24]"
                   }`}
               >
                 {m}
@@ -208,7 +208,7 @@ export default function BitacoraPage() {
 
       <div className="mt-5 grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 space-y-4">
-          <div className="bg-white border rounded-2xl p-4 shadow-sm dark:bg-slate-800 dark:border-slate-700">
+          <div className="bg-white border rounded-2xl p-4 shadow-sm dark:bg-[#141417] dark:border-slate-700">
             <div className="font-bold mb-3 dark:text-slate-100">Filtros dashboard</div>
             <div className="flex flex-wrap gap-2 items-end">
               <div>
@@ -242,7 +242,7 @@ export default function BitacoraPage() {
 
           <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 ${statsLoading ? "opacity-60 animate-pulse" : ""}`}>
             {cards.map((c) => (
-              <div key={c.title} className="bg-white border rounded-2xl p-4 shadow-sm dark:bg-slate-800 dark:border-slate-700">
+              <div key={c.title} className="bg-white border rounded-2xl p-4 shadow-sm dark:bg-[#141417] dark:border-slate-700">
                 <div className="text-xs text-slate-500 dark:text-slate-400">{c.title}</div>
                 <div className="text-xl font-extrabold mt-1 dark:text-slate-100">{statsLoading && !kpis ? "-" : c.value}</div>
               </div>
@@ -251,14 +251,14 @@ export default function BitacoraPage() {
 
           <SerieChart data={serie} moneda={moneda} />
 
-          <div className="bg-white border rounded-2xl p-4 shadow-sm dark:bg-slate-800 dark:border-slate-700">
+          <div className="bg-white border rounded-2xl p-4 shadow-sm dark:bg-[#141417] dark:border-slate-700">
             <div className="font-bold mb-3 dark:text-slate-100">Top corredores</div>
             <TopCorredoresBar data={top} moneda={moneda} />
           </div>
         </div>
 
         <div className="space-y-4">
-          <div className="bg-white border rounded-2xl p-4 shadow-sm dark:bg-slate-800 dark:border-slate-700">
+          <div className="bg-white border rounded-2xl p-4 shadow-sm dark:bg-[#141417] dark:border-slate-700">
             <div className="font-bold mb-3 dark:text-slate-100">Filtros</div>
 
             <div className="flex flex-wrap gap-2 items-end">
@@ -287,7 +287,7 @@ export default function BitacoraPage() {
               </div>
               <div>
                 <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Tabla</div>
-                <select className="border rounded-xl px-3 py-2 bg-white w-40 dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600" value={tabla} onChange={(e) => setTabla(e.target.value)}>
+                <select className="border rounded-xl px-3 py-2 bg-white w-40 dark:bg-[#141417] dark:text-slate-100 dark:border-slate-600" value={tabla} onChange={(e) => setTabla(e.target.value)}>
                   <option value="">Todas</option>
                   <option value="usuarios">usuarios</option>
                   <option value="corredores">corredores</option>
@@ -300,7 +300,7 @@ export default function BitacoraPage() {
               </div>
               <div>
                 <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Acción</div>
-                <select className="border rounded-xl px-3 py-2 bg-white w-40 dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600" value={accion} onChange={(e) => setAccion(e.target.value)}>
+                <select className="border rounded-xl px-3 py-2 bg-white w-40 dark:bg-[#141417] dark:text-slate-100 dark:border-slate-600" value={accion} onChange={(e) => setAccion(e.target.value)}>
                   <option value="">Todas</option>
                   <option value="INSERT">INSERT</option>
                   <option value="UPDATE">UPDATE</option>
@@ -327,7 +327,7 @@ export default function BitacoraPage() {
             </div>
           </div>
 
-          <div className="bg-white border rounded-2xl p-4 shadow-sm dark:bg-slate-800 dark:border-slate-700">
+          <div className="bg-white border rounded-2xl p-4 shadow-sm dark:bg-[#141417] dark:border-slate-700">
             <div className="font-bold mb-3 dark:text-slate-100">Logs</div>
             <DataTable
               columns={[
@@ -349,14 +349,14 @@ export default function BitacoraPage() {
                 <button
                   disabled={page <= 1 || loading}
                   onClick={() => { const p = page - 1; setPage(p); load(p); }}
-                  className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 cursor-pointer hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+                  className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 cursor-pointer hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-[#1f1f24]"
                 >
                   ← Anterior
                 </button>
                 <button
                   disabled={page >= Math.ceil(total / limit) || loading}
                   onClick={() => { const p = page + 1; setPage(p); load(p); }}
-                  className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 cursor-pointer hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+                  className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 cursor-pointer hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-[#1f1f24]"
                 >
                   Siguiente →
                 </button>

@@ -9,7 +9,6 @@ import InicioPage from "./pages/InicioPage";
 import InmueblesPage from "./pages/Inmuebles/InmueblesPage";
 import InmuebleDetailPage from "./pages/Inmuebles/InmuebleDetailPage";
 import CrearInmueblePage from "./pages/Inmuebles/CrearInmueblePage";
-import ConsultaAlquileresPage from "./pages/Inmuebles/ConsultaAlquileresPage";
 import MisInmueblesPage from "./pages/Inmuebles/MisInmueblesPage";
 import TransaccionesPage from "./pages/Transacciones/transaccionesPage";
 import ComisionesPage from "./pages/ComisionesPage";
@@ -38,12 +37,7 @@ import MensualidadesInmueblePage from "./pages/Alquileres/MensualidadesInmuebleP
 import PasarelaMensualidadPage from "./pages/Pagos/PasarelaMensualidadPage";
 import ConfiguracionPage from "./pages/ConfiguracionPage";
 import ReservacionesVacacionalesPage from "./pages/Alquileres/ReservacionesVacacionalesPage";
-import CitasPage from "./pages/Citas/CitasPage";
-import PagoReservaPage from "./pages/Pagos/PagoReservaPage";
-import PlanesPage from "./pages/PlanesPage";
-import MiPlanPage from "./pages/MiPlanPage";
-import PreciosPage from "./pages/PreciosPage";
-import CrmPage from "./pages/CrmPage";
+import PrivacidadPage from "./pages/PrivacidadPage";
 
 export default function App() {
   return (
@@ -54,6 +48,9 @@ export default function App() {
       <Routes>
         {/* ── Públicas (sin auth) ── */}
         <Route path="/" element={<InicioPage />} />
+        <Route path="/privacidad" element={<PrivacidadPage />} />
+        <Route path="/politica-de-privacidad" element={<Navigate to="/privacidad" replace />} />
+        <Route path="/privacy" element={<Navigate to="/privacidad" replace />} />
         <Route path="/inmuebles" element={<InmueblesPage />} />
         <Route path="/inmuebles/:id" element={<InmuebleDetailPage />} />
         <Route path="/perfil/:id" element={<PerfilUsuarioPage />} />
@@ -71,8 +68,6 @@ export default function App() {
         <Route path="/rentas-contratadas" element={<ProtectedRoute roles={["cliente", "corredor"]}><ContratosAlquilerPage /></ProtectedRoute>} />
         <Route path="/inmuebles-alquilados" element={<Navigate to="/rentas-contratadas" replace />} />
         <Route path="/reservaciones" element={<ProtectedRoute roles={["cliente", "corredor", "admin"]}><ReservacionesVacacionalesPage /></ProtectedRoute>} />
-        <Route path="/citas" element={<ProtectedRoute roles={["cliente", "corredor", "admin"]}><CitasPage /></ProtectedRoute>} />
-        <Route path="/pagar-reserva/:reservaId" element={<ProtectedRoute roles={["cliente", "corredor", "admin"]}><PagoReservaPage /></ProtectedRoute>} />
         <Route path="/mis-reservas" element={<Navigate to="/reservaciones" replace />} />
         <Route path="/reservas-vacacionales" element={<Navigate to="/reservaciones" replace />} />
         <Route path="/reportes" element={<ProtectedRoute roles={["corredor"]}><ReportesPage /></ProtectedRoute>} />
@@ -98,13 +93,12 @@ export default function App() {
         <Route path="/reservar/:inmuebleId" element={<ProtectedRoute roles={["cliente", "corredor"]}><ReservationPage /></ProtectedRoute>} />
 
         {/* ── Corredores ── */}
-        <Route path="/inmuebles/crear" element={<ProtectedRoute roles={["corredor", "admin"]}><CrearInmueblePage /></ProtectedRoute>} />
+        <Route path="/inmuebles/crear" element={<ProtectedRoute roles={["corredor"]}><CrearInmueblePage /></ProtectedRoute>} />
         <Route path="/mis-inmuebles" element={<ProtectedRoute roles={["corredor"]}><MisInmueblesPage /></ProtectedRoute>} />
         <Route path="/mis-transferencias" element={<ProtectedRoute roles={["corredor", "admin"]}><TransferenciasRecibidasPage /></ProtectedRoute>} />
         <Route path="/transferencias-recibidas" element={<TransferenciasRecibidasPage />} />
 
         {/* ── Administradores ── */}
-        <Route path="/consulta-alquileres" element={<ProtectedRoute roles={["admin"]}><ConsultaAlquileresPage /></ProtectedRoute>} />
         <Route path="/dashboard" element={<ProtectedRoute roles={["admin"]}><DashboardPage /></ProtectedRoute>} />
         <Route path="/transacciones" element={<ProtectedRoute roles={["admin"]}><TransaccionesPage /></ProtectedRoute>} />
         <Route path="/corredores" element={<ProtectedRoute roles={["admin"]}><CorredoresPage /></ProtectedRoute>} />
@@ -113,10 +107,6 @@ export default function App() {
         <Route path="/bitacora" element={<ProtectedRoute roles={["admin"]}><BitacoraPage /></ProtectedRoute>} />
 
         {/* ── Catch-all ── */}
-        <Route path="/precios" element={<PreciosPage />} />
-        <Route path="/planes" element={<ProtectedRoute roles={["admin"]}><PlanesPage /></ProtectedRoute>} />
-        <Route path="/mi-plan" element={<ProtectedRoute roles={["corredor"]}><MiPlanPage /></ProtectedRoute>} />
-        <Route path="/crm" element={<ProtectedRoute roles={["corredor"]}><CrmPage /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>

@@ -70,7 +70,7 @@ exports.listClientes = async (query) => {
 
   const { rows } = await pool.query(
     `
-      SELECT id, uuid, nombre, email, rol, fecha_registro
+      SELECT id, uuid, nombre, email, fecha_registro
       FROM usuarios
       ${where}
       ORDER BY id ASC
@@ -112,7 +112,7 @@ exports.listUsuarios = async (query) => {
 
   const { rows } = await pool.query(
     `
-      SELECT id, uuid, nombre, email, rol, fecha_registro
+      SELECT id, uuid, nombre, email, fecha_registro
       FROM usuarios
       ${where}
       ORDER BY id ASC

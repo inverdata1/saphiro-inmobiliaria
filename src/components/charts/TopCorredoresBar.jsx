@@ -23,7 +23,7 @@ export default function TopCorredoresBar({ data, moneda }) {
   const tooltipColor = dark ? "#e2e8f0" : "#000";
 
   return (
-    <div className="bg-white border rounded-2xl p-4 shadow-sm min-w-0 dark:bg-slate-800 dark:border-slate-700">
+    <div className="bg-white border rounded-2xl p-4 shadow-sm min-w-0 dark:bg-[#141417] dark:border-slate-700">
       <div className="font-bold mb-3 dark:text-slate-100">(comisión total)</div>
       <div className="h-64 min-h-[256px] w-full">
         <ResponsiveContainer width="100%" height="100%">

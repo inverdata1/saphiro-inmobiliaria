@@ -10,52 +10,6 @@ function clampInt(n, { min, max, def }) {
 
 const vacio = (v) => v === undefined || v === null || v === "";
 
-function campoUbicacion(k, v) {
-  if (k === "edificio_nombre") {
-    const edificio = String(v ?? "").trim();
-    if (edificio.length > 120) throw new AppError("El nombre del edificio no puede pasar de 120 caracteres", 400);
-    return edificio || null;
-  }
-  if (k === "piso") {
-    const piso = String(v ?? "").trim();
-    if (piso.length > 20) throw new AppError("El piso no puede pasar de 20 caracteres", 400);
-    return piso || null;
-  }
-  if (k === "codigo_interno") {
-    const codigo = String(v ?? "").trim().toUpperCase();
-    if (codigo && !/^[A-Z0-9]{4}$/.test(codigo)) {
-      throw new AppError("El código interno debe tener 4 letras o números", 400);
-    }
-    return codigo || null;
-  }
-  return v;
-}
-
-function ubicacionInterna(data, { required } = {}) {
-  const edificio_nombre = campoUbicacion("edificio_nombre", data.edificio_nombre);
-  const piso = campoUbicacion("piso", data.piso);
-  const codigo_interno = campoUbicacion("codigo_interno", data.codigo_interno);
-  if (required && !edificio_nombre) throw new AppError("Indica el edificio o conjunto residencial", 400);
-  if (required && !codigo_interno) throw new AppError("El código interno debe tener 4 letras o números", 400);
-  return { edificio_nombre, piso, codigo_interno };
-}
-
-async function codigoLibre(db, codigo, id) {
-  if (!codigo) return;
-  const { rows } = await db.query(
-    `SELECT id FROM inmuebles
-      WHERE deleted_at IS NULL
-        AND upper(codigo_interno) = $1
-        AND ($2::int IS NULL OR id <> $2)
-      LIMIT 1`,
-    [codigo, id || null]
-  );
-  if (rows.length) throw new AppError("Ese código interno ya está usado por otra propiedad", 409);
-}
-
-exports.ubicacionInterna = ubicacionInterna;
-
-
 /* Área de construcción: opcional (default 0), nunca negativa y nunca mayor al área del inmueble */
 function validarAreaConstruccion(area_m2, area_construccion_m2) {
   const areaTotal = vacio(area_m2) || Number.isNaN(Number(area_m2)) ? null : Number(area_m2);
@@ -89,16 +43,6 @@ function validarCantidadMascotas(estado_inmueble, cantidad_mascotas_permitidas, 
   return Math.trunc(cantidad);
 }
 
-
-function porcentajeReservaDe(valor) {
-  if (valor === undefined || valor === null || valor === "") return 50;
-  const n = Number(valor);
-  if (!Number.isFinite(n) || n < 0 || n > 100) {
-    throw new AppError("porcentaje_reserva debe estar entre 0 y 100", 400);
-  }
-  return n;
-}
-
 const VACACIONAL_SELECT = `,
   CASE WHEN i.estado_inmueble = 'vacacional' THEN (
     SELECT json_build_object(
@@ -109,7 +53,6 @@ const VACACIONAL_SELECT = `,
       'hora_checkin', av.hora_checkin,
       'hora_checkout', av.hora_checkout,
       'cantidad_mascotas_permitidas', av.cantidad_mascotas_permitidas,
-      'porcentaje_reserva', av.porcentaje_reserva,
       'costos_adicionales', (
         SELECT COALESCE(json_agg(json_build_object(
           'costo_adicional_id', c2.id,
@@ -378,7 +321,7 @@ exports.listInmueblesByCorredor = async (usuarioId) => {
           ) ci
           JOIN caracteristicas c2 ON c2.id = ci.caracteristica_id
         ) AS caracteristicas
-        , ${ESTATUS_EXPR} AS estatus_publico
+        ${ESTATUS_SELECT}
         ${ALQUILER_FIJO_SELECT}
         ${VACACIONAL_SELECT}
       FROM inmuebles i
@@ -388,9 +331,8 @@ exports.listInmueblesByCorredor = async (usuarioId) => {
       JOIN corredores co ON co.id = i.corredor_id AND co.usuario_id = $1
       WHERE i.deleted_at IS NULL
     ) sub
-    WHERE sub.estatus_publico = 'disponible'
-       OR (sub.estado_raw = 'vacacional' AND sub.estatus_publico <> 'vendido')
-       OR sub.estatus_publico IS NULL
+    WHERE sub.estatus = 'disponible'
+       OR (sub.estado_raw = 'vacacional' AND sub.estatus <> 'vendido')
     ORDER BY sub.id DESC;
   `;
 
@@ -452,7 +394,7 @@ exports.getInmuebleById = async (id) => {
 
   if (result.estado_inmueble === "vacacional") {
     const { rows: av } = await pool.query(
-      "SELECT id, precio_por_noche, porcentaje_reserva, capacidad_personas, noches_minimas, hora_checkin, hora_checkout, permiso_infantes, cantidad_mascotas_permitidas FROM alquiler_vacacional WHERE inmueble_id = $1",
+      "SELECT id, precio_por_noche, capacidad_personas, noches_minimas, hora_checkin, hora_checkout, permiso_infantes, cantidad_mascotas_permitidas FROM alquiler_vacacional WHERE inmueble_id = $1",
       [id]
     );
     result.alquiler_vacacional = av.length ? av[0] : null;
@@ -502,7 +444,6 @@ exports.createInmueble = async (data, files = [], ctx) => {
     moneda,
     ciudad_id,
     direccion_exacta,
-    numero_apto,
     area_m2,
     corredor_id,
     latitud,
@@ -510,7 +451,6 @@ exports.createInmueble = async (data, files = [], ctx) => {
     caracteristicas,
     punto_referencia,
     precio_por_noche,
-    porcentaje_reserva,
     capacidad_personas,
     noches_minimas,
     hora_checkin,
@@ -537,21 +477,19 @@ exports.createInmueble = async (data, files = [], ctx) => {
     cantidad_mascotas_permitidas,
     mascotas
   );
-  const ubicacion = ubicacionInterna(data, { required: true });
 
   const client = await pool.connect();
 
   try {
     await client.query("BEGIN");
-    await codigoLibre(client, ubicacion.codigo_interno, null);
 
     const { rows } = await client.query(
       `INSERT INTO inmuebles (
         titulo, descripcion, tipo_inmueble_id, estado_inmueble, precio, moneda,
-        ciudad_id, direccion_exacta, numero_apto, area_m2, corredor_id, punto_referencia,
-        area_construccion_m2, terminos_y_condiciones, edificio_nombre, piso, codigo_interno
+        ciudad_id, direccion_exacta, area_m2, corredor_id, punto_referencia,
+        area_construccion_m2, terminos_y_condiciones
       )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
       RETURNING *;`,
       [
         titulo,
@@ -564,15 +502,11 @@ exports.createInmueble = async (data, files = [], ctx) => {
         moneda || "USD",
         ciudad_id ? Number(ciudad_id) : null,
         direccion_exacta || null,
-        numero_apto ? String(numero_apto).trim() : null,
         area_m2 ?? null,
         corredor_id ? Number(corredor_id) : null,
         punto_referencia || null,
         areaConst,
         terminos_y_condiciones && terminos_y_condiciones.trim() === "" ? null : terminos_y_condiciones,
-        ubicacion.edificio_nombre,
-        ubicacion.piso,
-        ubicacion.codigo_interno,
       ]
     );
     const inmueble = rows[0];
@@ -598,8 +532,8 @@ exports.createInmueble = async (data, files = [], ctx) => {
 
     if (estado_inmueble === "vacacional") {
       const { rows: vacRows } = await client.query(
-        `INSERT INTO alquiler_vacacional (inmueble_id, precio_por_noche, capacidad_personas, noches_minimas, hora_checkin, hora_checkout, permiso_infantes, cantidad_mascotas_permitidas, porcentaje_reserva)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        `INSERT INTO alquiler_vacacional (inmueble_id, precio_por_noche, capacidad_personas, noches_minimas, hora_checkin, hora_checkout, permiso_infantes, cantidad_mascotas_permitidas)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          RETURNING id;`,
         [
           inmueble.id,
@@ -610,7 +544,6 @@ exports.createInmueble = async (data, files = [], ctx) => {
           hora_checkout || null,
           permiso_infantes === undefined || permiso_infantes === null ? true : Boolean(permiso_infantes),
           cantidadMascotas,
-          porcentajeReservaDe(porcentaje_reserva),
         ]
       );
       const alquilerVacacionalId = vacRows[0].id;
@@ -717,10 +650,6 @@ exports.patchInmueble = async (id, body, ctx) => {
     "precio",
     "ciudad_id",
     "direccion_exacta",
-    "numero_apto",
-    "edificio_nombre",
-    "piso",
-    "codigo_interno",
     "area_m2",
     "corredor_id",
   ]);
@@ -730,20 +659,15 @@ exports.patchInmueble = async (id, body, ctx) => {
 
   const set = [];
   const values = [];
-  let codigoPatch;
 
   keys.forEach((k) => {
     let v = body[k];
     if (["precio", "area_m2"].includes(k)) v = v === "" ? null : Number(v);
     if (["tipo_inmueble_id", "ciudad_id", "corredor_id"].includes(k))
       v = v === "" ? null : Number(v);
-    if (["edificio_nombre", "piso", "codigo_interno"].includes(k)) v = campoUbicacion(k, v);
-    if (k === "codigo_interno") codigoPatch = v;
     values.push(v);
     set.push(`${k} = $${values.length}`);
   });
-
-  if (codigoPatch) await codigoLibre(pool, codigoPatch, id);
 
   values.push(id);
 
@@ -798,14 +722,12 @@ exports.updateInmueble = async (id, data = {}, files = [], ctx) => {
     moneda,
     ciudad_id,
     direccion_exacta,
-    numero_apto,
     area_m2,
     punto_referencia,
     latitud,
     longitud,
     caracteristicas,
     precio_por_noche,
-    porcentaje_reserva,
     capacidad_personas,
     noches_minimas,
     hora_checkin,
@@ -867,7 +789,6 @@ exports.updateInmueble = async (id, data = {}, files = [], ctx) => {
     cantidad_mascotas_permitidas,
     mascotas
   );
-  const ubicacion = ubicacionInterna(data, { required: true });
 
   // Proceso
   const client = await pool.connect();
@@ -884,7 +805,6 @@ exports.updateInmueble = async (id, data = {}, files = [], ctx) => {
 
   try {
     await client.query("BEGIN");
-    await codigoLibre(client, ubicacion.codigo_interno, id);
 
     const { rows } = await client.query(
       `UPDATE inmuebles SET
@@ -896,17 +816,13 @@ exports.updateInmueble = async (id, data = {}, files = [], ctx) => {
         moneda = $6,
         ciudad_id = $7,
         direccion_exacta = $8,
-        numero_apto = $9,
-        edificio_nombre = $10,
-        piso = $11,
-        codigo_interno = $12,
-        area_m2 = $13,
-        corredor_id = $14,
-        punto_referencia = $15,
-        area_construccion_m2 = $16,
-        terminos_y_condiciones = $17,
+        area_m2 = $9,
+        corredor_id = $10,
+        punto_referencia = $11,
+        area_construccion_m2 = $12,
+        terminos_y_condiciones = $13,
         updated_at = NOW()
-      WHERE id = $18 AND deleted_at IS NULL
+      WHERE id = $14 AND deleted_at IS NULL
       RETURNING *;`,
       [
         titulo,
@@ -917,10 +833,6 @@ exports.updateInmueble = async (id, data = {}, files = [], ctx) => {
         moneda,
         ciudad_id ? Number(ciudad_id) : null,
         direccion_exacta || null,
-        numero_apto ? String(numero_apto).trim() : null,
-        ubicacion.edificio_nombre,
-        ubicacion.piso,
-        ubicacion.codigo_interno,
         area_m2 ?? null,
         data.corredor_id ? Number(data.corredor_id) : null,
         punto_referencia || null,
@@ -959,8 +871,8 @@ exports.updateInmueble = async (id, data = {}, files = [], ctx) => {
     await client.query("DELETE FROM alquiler_vacacional WHERE inmueble_id = $1;", [id]);
     if (estado_inmueble === "vacacional") {
       const { rows: vacRows } = await client.query(
-        `INSERT INTO alquiler_vacacional (inmueble_id, precio_por_noche, capacidad_personas, noches_minimas, hora_checkin, hora_checkout, permiso_infantes, cantidad_mascotas_permitidas, porcentaje_reserva)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        `INSERT INTO alquiler_vacacional (inmueble_id, precio_por_noche, capacidad_personas, noches_minimas, hora_checkin, hora_checkout, permiso_infantes, cantidad_mascotas_permitidas)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          RETURNING id;`,
         [
           id,
@@ -971,7 +883,6 @@ exports.updateInmueble = async (id, data = {}, files = [], ctx) => {
           hora_checkout || null,
           permiso_infantes === undefined || permiso_infantes === null ? true : Boolean(permiso_infantes),
           cantidadMascotas,
-          porcentajeReservaDe(porcentaje_reserva),
         ]
       );
       const alquilerVacacionalId = vacRows[0].id;
@@ -1163,7 +1074,6 @@ exports.listDisponiblesPorEstado = async (estadoId) => {
 
 exports.listReservasByInmueble = async (inmuebleId) => {
   if (!inmuebleId) throw new AppError("inmueble_id requerido", 400);
-  await require("./reservas.service").ensureAutorizada();
 
   const { rows } = await pool.query(
     `SELECT
@@ -1179,11 +1089,7 @@ exports.listReservasByInmueble = async (inmuebleId) => {
        rv.fecha_salida,
        rv.num_huespedes,
        rv.precio_total,
-       rv.monto_cobrado,
-       rv.cobro_modo,
-       rv.noches_cobradas,
-       rv.fecha_reserva,
-       COALESCE(rv.autorizada, false) AS autorizada
+       rv.fecha_reserva
      FROM reservas_vacacionales rv
      JOIN alquiler_vacacional av ON av.id = rv.alquiler_vacacional_id
      JOIN usuarios u ON u.id = rv.cliente_id
@@ -1236,75 +1142,4 @@ exports.deleteInmueble = async (id, ctx) => {
   }
 
   return eliminado;
-};
-
-
-exports.consultaAlquileres = async (query = {}) => {
-  const edificio = String(query.edificio || "").trim() || null;
-  const codigo = String(query.codigo || "").trim().toUpperCase() || null;
-  if (codigo && !/^[A-Z0-9]{4}$/.test(codigo)) {
-    throw new AppError("El código interno debe tener 4 letras o números", 400);
-  }
-
-  const edificios = await pool.query(
-    `SELECT DISTINCT trim(edificio_nombre) AS nombre
-       FROM inmuebles
-      WHERE deleted_at IS NULL
-        AND edificio_nombre IS NOT NULL
-        AND trim(edificio_nombre) <> ''
-        AND estado_inmueble IN ('alquiler_fijo', 'vacacional')
-      ORDER BY 1`
-  );
-
-  const { rows } = await pool.query(
-    `SELECT
-        i.id,
-        i.uuid,
-        i.titulo,
-        i.estado_inmueble,
-        i.edificio_nombre,
-        i.numero_apto,
-        i.piso,
-        i.codigo_interno,
-        c.nombre AS ciudad,
-        COALESCE(ocu.ocupaciones, '[]'::json) AS ocupaciones
-      FROM inmuebles i
-      LEFT JOIN ciudades c ON c.id = i.ciudad_id
-      LEFT JOIN LATERAL (
-        SELECT json_agg(x ORDER BY x.desde) AS ocupaciones
-        FROM (
-          SELECT 'vacacional'::text AS tipo,
-                 to_char(rv.fecha_entrada, 'YYYY-MM-DD') AS desde,
-                 to_char(rv.fecha_salida, 'YYYY-MM-DD') AS hasta,
-                 u.nombre AS cliente
-            FROM reservas_vacacionales rv
-            JOIN alquiler_vacacional av ON av.id = rv.alquiler_vacacional_id
-            LEFT JOIN usuarios u ON u.id = rv.cliente_id
-            LEFT JOIN transacciones t ON t.id = rv.transaccion_id
-           WHERE av.inmueble_id = i.id
-             AND COALESCE(t.estatus_pago, '') <> 'cancelado'
-          UNION ALL
-          SELECT 'fijo'::text,
-                 to_char(ct.fecha_inicio, 'YYYY-MM-DD'),
-                 to_char((ct.fecha_inicio + (ct.cantidad_meses || ' months')::interval)::date, 'YYYY-MM-DD'),
-                 u2.nombre
-            FROM contrato ct
-            JOIN alquiler_fijo af ON af.id = ct.alquiler_fijo_id
-            LEFT JOIN usuarios u2 ON u2.id = ct.usuario_id
-           WHERE af.inmueble_id = i.id
-             AND ct.active IS TRUE
-        ) x
-      ) ocu ON true
-     WHERE i.deleted_at IS NULL
-       AND i.estado_inmueble IN ('alquiler_fijo', 'vacacional')
-       AND ($1::text IS NULL OR lower(trim(i.edificio_nombre)) = lower(trim($1)))
-       AND ($2::text IS NULL OR upper(i.codigo_interno) = upper($2))
-     ORDER BY i.edificio_nombre NULLS LAST, i.codigo_interno NULLS LAST, i.titulo`,
-    [edificio, codigo]
-  );
-
-  return {
-    edificios: edificios.rows.map((r) => r.nombre),
-    inmuebles: rows,
-  };
 };

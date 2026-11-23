@@ -13,11 +13,12 @@ lerna-debug.log*
 /dist-ssr
 /out
 
-# Variables de Entorno (¡CRÍTICO!)
+# Variables de Entorno
 .env
 .env.local
 .env.development.local
 .env.test.local
+.env.test
 .env.production.local
 *.local
 

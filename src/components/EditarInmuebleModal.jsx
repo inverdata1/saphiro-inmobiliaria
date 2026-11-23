@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { apiGet, apiUpload } from "../api";
-import { useAuth } from "../context/useAuth";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -87,10 +86,6 @@ function MapaPin({ latitud, longitud, onChange }) {
 }
 
 export default function EditarInmuebleModal({ open, onClose, inmueble, caracteristicasIniciales = [], usuarioId, onSaved }) {
-  const { user } = useAuth();
-  const esAdmin = user?.rol === "admin";
-  const [corredores, setCorredores] = useState([]);
-  const [corredorUsuarioId, setCorredorUsuarioId] = useState("");
   const [tipos, setTipos] = useState([]);
   const [estados, setEstados] = useState([]);
   const [ciudades, setCiudades] = useState([]);
@@ -144,13 +139,6 @@ export default function EditarInmuebleModal({ open, onClose, inmueble, caracteri
   }, [previews]);
 
   useEffect(() => {
-    if (!esAdmin) return;
-    apiGet("/corredores?limit=200")
-      .then((r) => setCorredores(Array.isArray(r?.data) ? r.data : []))
-      .catch(() => setCorredores([]));
-  }, [esAdmin]);
-
-  useEffect(() => {
     (async () => {
       try {
         const [t, e, c, ca, m] = await Promise.all([
@@ -177,7 +165,6 @@ export default function EditarInmuebleModal({ open, onClose, inmueble, caracteri
       estados.find((s) => s.nombre === inmueble.estado)?.id ?? "";
     const vac = inmueble.alquiler_vacacional || {};
 
-    setCorredorUsuarioId(inmueble.corredor_usuario_id ? String(inmueble.corredor_usuario_id) : "");
     setForm({
       titulo: inmueble.titulo || "",
       descripcion: inmueble.descripcion || "",
@@ -336,7 +323,7 @@ export default function EditarInmuebleModal({ open, onClose, inmueble, caracteri
     setImagenesExistentes((p) => p.filter((img) => img.id !== id));
   }
 
-  const inputCls = "mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900";
+  const inputCls = "mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-100 dark:focus:ring-blue-900";
   const labelCls = "text-xs font-semibold text-slate-500 dark:text-slate-400";
   const inputClsErr = "border-red-300 focus:border-red-400 focus:ring-red-100 dark:border-red-700 dark:focus:ring-red-900";
   const errMsgCls = "mt-1 text-xs text-red-600 dark:text-red-400";
@@ -394,15 +381,13 @@ export default function EditarInmuebleModal({ open, onClose, inmueble, caracteri
         descripcion: form.descripcion || null,
         tipo_inmueble_id: form.tipo_inmueble_id ? Number(form.tipo_inmueble_id) : null,
         estado_inmueble: form.estado_inmueble,
-        precio: form.estado_inmueble === "vacacional" && !form.montoInicial ? 0 : form.precio ? Number(form.precio) : null,
+        precio: form.precio ? Number(form.precio) : null,
         moneda: form.moneda,
         area_m2: form.area_m2 ? Number(form.area_m2) : null,
         ciudad_id: form.ciudad_id ? Number(form.ciudad_id) : null,
         direccion_exacta: form.direccion_exacta || null,
         punto_referencia: form.punto_referencia || null,
-        usuario_id: esAdmin
-          ? (corredorUsuarioId ? Number(corredorUsuarioId) : null)
-          : (usuarioId ? Number(usuarioId) : null),
+        usuario_id: usuarioId ? Number(usuarioId) : null,
         latitud: form.latitud ? Number(form.latitud) : null,
         longitud: form.longitud ? Number(form.longitud) : null,
         caracteristicas: caracteristicasPayload,
@@ -447,8 +432,8 @@ export default function EditarInmuebleModal({ open, onClose, inmueble, caracteri
 
   return (
     <div className="fixed inset-0 z-40 grid place-items-center bg-black/40 p-4">
-      <div className="w-full max-w-3xl max-h-[88vh] overflow-y-auto scrollbar-custom rounded-2xl bg-white shadow-2xl dark:bg-slate-800 dark:border dark:border-slate-700">
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-4 dark:border-slate-700 dark:bg-slate-800">
+      <div className="w-full max-w-3xl max-h-[88vh] overflow-y-auto scrollbar-custom rounded-2xl bg-white shadow-2xl dark:bg-[#141417] dark:border dark:border-slate-700">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-4 dark:border-slate-700 dark:bg-[#141417]">
           <div>
             <div className="text-xl font-extrabold dark:text-slate-100">Editar inmueble</div>
             <div className="text-sm text-slate-500 dark:text-slate-400">
@@ -458,7 +443,7 @@ export default function EditarInmuebleModal({ open, onClose, inmueble, caracteri
           <button
             type="button"
             onClick={onClose}
-            className="h-9 w-9 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+            className="h-9 w-9 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:text-slate-300 dark:hover:bg-[#1f1f24] cursor-pointer"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -473,23 +458,6 @@ export default function EditarInmuebleModal({ open, onClose, inmueble, caracteri
           {guardarError && (
             <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-300">
               {guardarError}
-            </div>
-          )}
-          {esAdmin && (
-            <div>
-              <label className={labelCls}>Corredor</label>
-              <select
-                className={inputCls}
-                value={corredorUsuarioId}
-                onChange={(e) => setCorredorUsuarioId(e.target.value)}
-              >
-                <option value="">Mantener el corredor actual</option>
-                {corredores.map((c) => (
-                  <option key={c.corredor_id || c.id} value={c.id}>
-                    {c.corredor_nombre || c.nombre || c.corredor_email || c.email}
-                  </option>
-                ))}
-              </select>
             </div>
           )}
           <div>
@@ -581,7 +549,7 @@ export default function EditarInmuebleModal({ open, onClose, inmueble, caracteri
                   return (
                     <div
                       key={id}
-                      className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-800"
+                      className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-[#141417]"
                     >
                       <span className="text-sm font-medium text-slate-700 dark:text-slate-200 flex-1">{c.nombre}</span>
                       {c.unidad_medicion ? (
@@ -592,7 +560,7 @@ export default function EditarInmuebleModal({ open, onClose, inmueble, caracteri
                             value={data.valor}
                             onChange={(e) => setCaracteristicaValor(Number(id), e.target.value)}
                             placeholder="Valor"
-                            className={`w-20 rounded-lg border px-2 py-1 text-xs text-right focus:border-blue-400 focus:outline-none dark:bg-slate-700 dark:text-slate-100 ${
+                            className={`w-20 rounded-lg border px-2 py-1 text-xs text-right focus:border-blue-400 focus:outline-none dark:bg-[#1f1f24] dark:text-slate-100 ${
                               caracteristicasErrs[id]
                                 ? "border-red-400 dark:border-red-700"
                                 : "border-slate-200 dark:border-slate-600"
@@ -658,7 +626,7 @@ export default function EditarInmuebleModal({ open, onClose, inmueble, caracteri
               <div className="mt-4">
                 <label className={labelCls}>Reglas</label>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 mt-2">
-                  <label className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-4 py-3 cursor-pointer select-none dark:border-slate-700 dark:bg-slate-800">
+                  <label className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-4 py-3 cursor-pointer select-none dark:border-slate-700 dark:bg-[#141417]">
                     <input
                       type="checkbox"
                       checked={form.permite_mascotas}
@@ -672,7 +640,7 @@ export default function EditarInmuebleModal({ open, onClose, inmueble, caracteri
                       ¿Se permitirán mascotas?
                     </span>
                   </label>
-                  <label className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-4 py-3 cursor-pointer select-none dark:border-slate-700 dark:bg-slate-800">
+                  <label className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-4 py-3 cursor-pointer select-none dark:border-slate-700 dark:bg-[#141417]">
                     <input
                       type="checkbox"
                       checked={form.permite_infantes}
@@ -711,7 +679,7 @@ export default function EditarInmuebleModal({ open, onClose, inmueble, caracteri
                         const mascota = mascotasDisponibles.find((m) => m.id === mascotaId) ||
                           (Array.isArray(inmueble?.mascotas) ? inmueble.mascotas.find((m) => Number(m.mascota_id) === mascotaId) : null);
                         return (
-                          <div key={mascotaId} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
+                          <div key={mascotaId} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-[#141417]">
                             <span className="text-sm font-medium text-slate-700 dark:text-slate-200 flex-1">{mascota?.nombre || `Mascota ${mascotaId}`}</span>
                             <button
                               type="button"
@@ -756,14 +724,14 @@ export default function EditarInmuebleModal({ open, onClose, inmueble, caracteri
                           ? { nombre: inmueble.costos_adicionales.find((c) => c.costo_adicional_id === cs.costo_adicional_id)?.costo_adicional_nombre }
                           : null);
                       return (
-                        <div key={cs.costo_adicional_id} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
+                        <div key={cs.costo_adicional_id} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-[#141417]">
                           <span className="text-sm font-medium text-slate-700 dark:text-slate-200 flex-1">{costo?.nombre || `Costo ${cs.costo_adicional_id}`}</span>
                           <input
                             type="number"
                             value={cs.monto}
                             onChange={(e) => setCostoField(cs.costo_adicional_id, "monto", e.target.value)}
                             placeholder="Monto"
-                            className="w-20 rounded-lg border border-slate-200 px-2 py-1 text-xs text-right focus:border-blue-400 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
+                            className="w-20 rounded-lg border border-slate-200 px-2 py-1 text-xs text-right focus:border-blue-400 focus:outline-none dark:border-slate-600 dark:bg-[#1f1f24] dark:text-slate-100"
                           />
                           <button
                             type="button"
@@ -901,7 +869,7 @@ export default function EditarInmuebleModal({ open, onClose, inmueble, caracteri
           <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
-              className="rounded-xl border border-slate-200 px-5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+              className="rounded-xl border border-slate-200 px-5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-[#1f1f24] cursor-pointer"
               onClick={onClose}
               disabled={guardando}
             >

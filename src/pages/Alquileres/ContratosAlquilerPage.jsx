@@ -98,16 +98,16 @@ export default function ContratosAlquilerPage() {
 
     if (active) {
       return (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/40">
+          <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
           {texto}
         </span>
       );
     }
 
     return (
-      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-        <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/40">
+        <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
         {texto}
       </span>
     );
@@ -118,7 +118,7 @@ export default function ContratosAlquilerPage() {
       {/* Encabezado */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 text-xs font-bold mb-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 text-xs font-bold mb-2">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0h4m-4 0v-4a2 2 0 012-2h2a2 2 0 012 2v4" />
             </svg>
@@ -137,17 +137,17 @@ export default function ContratosAlquilerPage() {
         {/* Resumen de contratos */}
         <div className="flex items-center gap-2 flex-wrap">
           {counts.vigentes > 0 && (
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-bold">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 text-xs font-bold">
+              <span className="w-2 h-2 rounded-full bg-blue-500" />
               {counts.vigentes} {esVistaAnfitrion ? "en alquiler" : "vigentes"}
             </div>
           )}
           {counts.finalizados > 0 && (
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 text-xs font-bold">
               {counts.finalizados} finalizados
             </div>
           )}
-          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 text-xs font-bold">
             Total: {contratos.length}
           </div>
         </div>
@@ -155,7 +155,7 @@ export default function ContratosAlquilerPage() {
 
       {/* Tabs para corredores: Inmuebles alquilados vs Mis rentas */}
       {isCorredor && (
-        <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl w-fit">
+        <div className="flex items-center p-1 bg-slate-100 dark:bg-[#18181c]/80 rounded-2xl w-fit">
           <button
             type="button"
             onClick={() => setTabTipo("alquiladas")}
@@ -222,11 +222,11 @@ export default function ContratosAlquilerPage() {
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
             <div key={i} className="animate-pulse bg-white dark:bg-[#141417] border border-slate-100 dark:border-slate-800/60 rounded-2xl p-4 flex gap-4">
-              <div className="w-32 h-24 bg-slate-200 dark:bg-slate-800 rounded-xl shrink-0" />
+              <div className="w-32 h-24 bg-slate-200 dark:bg-[#141417] rounded-xl shrink-0" />
               <div className="flex-1 space-y-2 py-1">
-                <div className="h-5 bg-slate-200 dark:bg-slate-800 rounded w-1/3" />
-                <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/4" />
-                <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/2" />
+                <div className="h-5 bg-slate-200 dark:bg-[#141417] rounded w-1/3" />
+                <div className="h-4 bg-slate-200 dark:bg-[#141417] rounded w-1/4" />
+                <div className="h-4 bg-slate-200 dark:bg-[#141417] rounded w-1/2" />
               </div>
             </div>
           ))}
@@ -271,7 +271,7 @@ export default function ContratosAlquilerPage() {
                 className="group bg-white dark:bg-[#141417] border border-slate-100 dark:border-slate-800/70 rounded-2xl p-4 sm:p-5 shadow-[0_4px_20px_rgb(0,0,0,0.02)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.25)] hover:shadow-md transition-all duration-200 flex flex-col sm:flex-row gap-4 sm:gap-5 items-start sm:items-center"
               >
                 {/* Box de Imagen */}
-                <div className="relative w-full sm:w-44 h-36 sm:h-28 shrink-0 overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                <div className="relative w-full sm:w-44 h-36 sm:h-28 shrink-0 overflow-hidden rounded-xl bg-slate-100 dark:bg-[#0c0c0e] border border-slate-100 dark:border-slate-800">
                   <img
                     src={
                       c.inmueble_imagen_url ||

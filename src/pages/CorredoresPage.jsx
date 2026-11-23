@@ -13,9 +13,7 @@ export default function CorredoresPage() {
   const [err, setErr] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [email, setEmail] = useState("");
-  const [comisionVenta, setComisionVenta] = useState("");
-  const [comisionVacacional, setComisionVacacional] = useState("");
-  const [comisionAlquilerFijo, setComisionAlquilerFijo] = useState("");
+  const [porcentaje, setPorcentaje] = useState("");
   const [showView, setShowView] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [resettingId, setResettingId] = useState(null);
@@ -40,9 +38,7 @@ export default function CorredoresPage() {
         email: item.corredor_email,
         telefonos: item.telefonos || [],
         licencia: item.licencia_nro || "-",
-        comisionVenta: item.comision_venta,
-        comisionVacacional: item.comision_vacacional,
-        comisionAlquilerFijo: item.comision_alquiler_fijo,
+        comisionBase: item.comision_base,
         activo: item.active,
       }));
       setRows(mapped);
@@ -59,20 +55,13 @@ export default function CorredoresPage() {
   }, []);
 
   async function handleCreate() {
-    if (!email || comisionVenta === "" || comisionVacacional === "" || comisionAlquilerFijo === "") return;
+    if (!email || !porcentaje) return;
     setLoading(true);
     setErr("");
     try {
-      await apiPost("/auth/register/corredor", {
-        email,
-        comision_venta: Number(comisionVenta),
-        comision_vacacional: Number(comisionVacacional),
-        comision_alquiler_fijo: Number(comisionAlquilerFijo),
-      });
+      await apiPost("/auth/register/corredor", { email, porcentaje: Number(porcentaje) });
       setEmail("");
-      setComisionVenta("");
-      setComisionVacacional("");
-      setComisionAlquilerFijo("");
+      setPorcentaje("");
       setShowModal(false);
       setPage(1);
       await load(search, 1);
@@ -113,11 +102,7 @@ export default function CorredoresPage() {
 
   function openEdit(r) {
     setEditTarget(r);
-    setEditForm({
-      comisionVenta: r.comisionVenta ?? "",
-      comisionVacacional: r.comisionVacacional ?? "",
-      comisionAlquilerFijo: r.comisionAlquilerFijo ?? "",
-    });
+    setEditForm({ comisionBase: r.comisionBase ?? "" });
   }
 
   async function handleUpdate() {
@@ -126,9 +111,7 @@ export default function CorredoresPage() {
     setErr("");
     try {
       await apiPut(`/corredores/${editTarget.id}`, {
-        comision_venta: editForm.comisionVenta !== "" ? Number(editForm.comisionVenta) : null,
-        comision_vacacional: editForm.comisionVacacional !== "" ? Number(editForm.comisionVacacional) : null,
-        comision_alquiler_fijo: editForm.comisionAlquilerFijo !== "" ? Number(editForm.comisionAlquilerFijo) : null,
+        comision_base: editForm.comisionBase !== "" ? Number(editForm.comisionBase) : null,
       });
       setEditTarget(null);
       await load(search, page);
@@ -164,7 +147,7 @@ export default function CorredoresPage() {
           <button
             onClick={() => load(search, page)}
             disabled={fetching}
-            className="rounded-xl border border-slate-200 p-2 text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 disabled:opacity-50 cursor-pointer"
+            className="rounded-xl border border-slate-200 p-2 text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-[#1f1f24] disabled:opacity-50 cursor-pointer"
             title="Recargar"
           >
             <svg className={`h-5 w-5 ${fetching ? "animate-spin" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -181,7 +164,7 @@ export default function CorredoresPage() {
 
       <div className="mt-6">
         <input
-          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900"
+          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-100 dark:focus:ring-blue-900"
           placeholder="Buscar por nombre, email o teléfono…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -194,7 +177,7 @@ export default function CorredoresPage() {
         />
       </div>
 
-      <div className="mt-4 bg-white border rounded-2xl p-4 shadow-sm dark:bg-slate-800 dark:border-slate-700">
+      <div className="mt-4 bg-white border rounded-2xl p-4 shadow-sm dark:bg-[#141417] dark:border-slate-700">
         <DataTable
           columns={[
             { key: "id", header: "ID" },
@@ -202,11 +185,11 @@ export default function CorredoresPage() {
               key: "nombre",
               header: "Nombre",
               render: (r) =>
-                r.usuario_uuid ? (
+                r.nombre !== "-" && r.telefonos?.length ? (
                   <Link
                     to={`/perfil/${r.usuario_uuid}`}
                     className="font-bold text-slate-800 dark:text-slate-100 hover:text-purple-750 dark:hover:text-purple-400 transition hover:underline"
-                    title="Editar teléfono, redes e inmuebles"
+                    title="Ver perfil completo e inmuebles del corredor"
                   >
                     {r.nombre}
                   </Link>
@@ -216,11 +199,7 @@ export default function CorredoresPage() {
             },
             { key: "email", header: "Email" },
             { key: "telefono", header: "Teléfono", render: (r) => r.telefonos?.length ? r.telefonos.map((t, i) => <div key={i}>{t}</div>) : "-" },
-            {
-              key: "comisiones",
-              header: "Comisiones",
-              render: (r) => `Venta ${r.comisionVenta ?? "-"}% · Vacacional ${r.comisionVacacional ?? "-"}% · Fijo ${r.comisionAlquilerFijo ?? "-"}%`,
-            },
+            { key: "comisionBase", header: "Comisión base", render: (r) => r.comisionBase != null ? `${r.comisionBase}%` : "-" },
             {
               key: "activo",
               header: "Estado",
@@ -228,8 +207,8 @@ export default function CorredoresPage() {
               render: (r) => (
                 <span
                   className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${r.activo
-                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
-                      : "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300"
+                      ? "bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300"
+                      : "bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300"
                     }`}
                 >
                   {r.activo ? "Activo" : "Inactivo"}
@@ -241,7 +220,7 @@ export default function CorredoresPage() {
               header: "Acciones",
               render: (r) => (
                 <div className="flex items-center justify-center gap-1">
-                  {r.usuario_uuid && (
+                  {r.nombre !== "-" && r.telefonos?.length && (
                     <Link
                       to={`/perfil/${r.usuario_uuid}`}
                       className="rounded-lg bg-purple-50 p-2 text-[#470A68] hover:bg-purple-100 dark:bg-purple-950/40 dark:text-purple-300 cursor-pointer"
@@ -329,14 +308,14 @@ export default function CorredoresPage() {
             <button
               disabled={page <= 1 || fetching}
               onClick={() => { const p = page - 1; setPage(p); load(search, p); }}
-              className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+              className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-[#1f1f24] cursor-pointer"
             >
               ← Anterior
             </button>
             <button
               disabled={rows.length < limit || fetching}
               onClick={() => { const p = page + 1; setPage(p); load(search, p); }}
-              className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+              className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-[#1f1f24] cursor-pointer"
             >
               Siguiente →
             </button>
@@ -344,7 +323,7 @@ export default function CorredoresPage() {
         </div>
       </div>
 
-      <Modal open={showModal} onClose={() => { setShowModal(false); setEmail(""); setComisionVenta(""); setComisionVacacional(""); setComisionAlquilerFijo(""); }} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg dark:bg-slate-800 dark:border dark:border-slate-700">
+      <Modal open={showModal} onClose={() => { setShowModal(false); setEmail(""); setPorcentaje(""); }} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg dark:bg-[#141417] dark:border dark:border-slate-700">
         <div className="flex items-start justify-between">
           <div>
             <div className="text-lg font-extrabold dark:text-slate-100">Crear corredor</div>
@@ -352,8 +331,8 @@ export default function CorredoresPage() {
           </div>
           <button
             type="button"
-            className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 cursor-pointer"
-            onClick={() => { if (!loading) { setShowModal(false); setEmail(""); setComisionVenta(""); setComisionVacacional(""); setComisionAlquilerFijo(""); } }}
+            className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-[#1f1f24] cursor-pointer"
+            onClick={() => { if (!loading) { setShowModal(false); setEmail(""); setPorcentaje(""); } }}
             aria-label="Cerrar"
           >
             ✕
@@ -367,35 +346,37 @@ export default function CorredoresPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900"
+              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-100 dark:focus:ring-blue-900"
               placeholder="corredor@correo.com"
             />
           </div>
           <div>
-            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Comisión venta (%)</label>
-            <input type="number" required min="0" max="100" step="0.01" value={comisionVenta} onChange={(e) => setComisionVenta(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900" placeholder="3.5" />
-          </div>
-          <div>
-            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Comisión alquiler vacacional (%)</label>
-            <input type="number" required min="0" max="100" step="0.01" value={comisionVacacional} onChange={(e) => setComisionVacacional(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900" placeholder="10" />
-          </div>
-          <div>
-            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Comisión alquiler fijo (%)</label>
-            <input type="number" required min="0" max="100" step="0.01" value={comisionAlquilerFijo} onChange={(e) => setComisionAlquilerFijo(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900" placeholder="8" />
+            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Porcentaje de comisión</label>
+            <input
+              type="number"
+              required
+              min="0"
+              max="100"
+              step="0.01"
+              value={porcentaje}
+              onChange={(e) => setPorcentaje(e.target.value)}
+              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-100 dark:focus:ring-blue-900"
+              placeholder="3.5"
+            />
           </div>
           <div className="flex justify-end gap-2">
             <button
               type="button"
-              className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-[#1f1f24] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={loading}
-              onClick={() => { if (!loading) { setShowModal(false); setEmail(""); setComisionVenta(""); setComisionVacacional(""); setComisionAlquilerFijo(""); } }}
+              onClick={() => { if (!loading) { setShowModal(false); setEmail(""); setPorcentaje(""); } }}
             >
               Cancelar
             </button>
             <button
               type="button"
               className="btn-primary disabled:opacity-60 inline-flex items-center justify-center gap-2"
-              disabled={!email || comisionVenta === "" || comisionVacacional === "" || comisionAlquilerFijo === "" || loading}
+              disabled={!email || !porcentaje || loading}
               onClick={handleCreate}
             >
               {loading && (
@@ -410,7 +391,7 @@ export default function CorredoresPage() {
         </div>
       </Modal>
 
-      <Modal open={!!showView} onClose={() => setShowView(null)} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg dark:bg-slate-800 dark:border dark:border-slate-700">
+      <Modal open={!!showView} onClose={() => setShowView(null)} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg dark:bg-[#141417] dark:border dark:border-slate-700">
         <div className="flex items-start justify-between">
           <div>
             <div className="text-lg font-extrabold dark:text-slate-100">Datos del corredor</div>
@@ -418,7 +399,7 @@ export default function CorredoresPage() {
           </div>
           <button
             type="button"
-            className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 cursor-pointer"
+            className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-[#1f1f24] cursor-pointer"
             onClick={() => setShowView(null)}
             aria-label="Cerrar"
           >
@@ -432,9 +413,7 @@ export default function CorredoresPage() {
             ["Email", showView?.email],
             ["Teléfono(s)", showView?.telefonos?.length ? showView.telefonos.map((t, i) => <div key={i}>{t}</div>) : "-"],
             ["Licencia", showView?.licencia],
-            ["Comisión venta", showView?.comisionVenta != null ? `${showView.comisionVenta}%` : "-"],
-            ["Comisión vacacional", showView?.comisionVacacional != null ? `${showView.comisionVacacional}%` : "-"],
-            ["Comisión alquiler fijo", showView?.comisionAlquilerFijo != null ? `${showView.comisionAlquilerFijo}%` : "-"],
+            ["Comisión base", showView?.comisionBase != null ? `${showView.comisionBase}%` : "-"],
             ["Estado", showView?.activo ? "Activo" : "Inactivo"],
           ].map(([label, value]) => (
             <div key={label} className="flex justify-between border-b border-slate-100 pb-2 dark:border-slate-700">
@@ -446,7 +425,7 @@ export default function CorredoresPage() {
         <div className="mt-5 flex justify-end">
           <button
             type="button"
-            className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+            className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-[#1f1f24] cursor-pointer"
             onClick={() => setShowView(null)}
           >
             Cerrar
@@ -454,7 +433,7 @@ export default function CorredoresPage() {
         </div>
       </Modal>
 
-      <Modal open={!!deleteTarget} onClose={() => setDeleteTarget(null)} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg dark:bg-slate-800 dark:border dark:border-slate-700">
+      <Modal open={!!deleteTarget} onClose={() => setDeleteTarget(null)} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg dark:bg-[#141417] dark:border dark:border-slate-700">
         <div className="text-lg font-extrabold dark:text-slate-100">¿Eliminar corredor?</div>
         <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
           Esta acción no se puede deshacer. Se eliminará a <strong>{deleteTarget?.nombre}</strong> ({deleteTarget?.email}) del sistema.
@@ -462,7 +441,7 @@ export default function CorredoresPage() {
         <div className="mt-5 flex justify-end gap-2">
           <button
             type="button"
-            className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+            className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-[#1f1f24] cursor-pointer"
             onClick={() => setDeleteTarget(null)}
           >
             Cancelar
@@ -484,7 +463,7 @@ export default function CorredoresPage() {
         </div>
       </Modal>
 
-      <Modal open={!!editTarget} onClose={() => setEditTarget(null)} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg dark:bg-slate-800 dark:border dark:border-slate-700">
+      <Modal open={!!editTarget} onClose={() => setEditTarget(null)} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg dark:bg-[#141417] dark:border dark:border-slate-700">
         <div className="flex items-start justify-between">
           <div>
             <div className="text-lg font-extrabold dark:text-slate-100">Editar corredor</div>
@@ -492,7 +471,7 @@ export default function CorredoresPage() {
           </div>
           <button
             type="button"
-            className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 cursor-pointer"
+            className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-[#1f1f24] cursor-pointer"
             onClick={() => setEditTarget(null)}
           >
             ✕
@@ -500,21 +479,21 @@ export default function CorredoresPage() {
         </div>
         <div className="mt-5 space-y-4">
           <div>
-            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Comisión venta (%)</label>
-            <input type="number" min="0" max="100" step="0.01" value={editForm.comisionVenta} onChange={(e) => setEditForm({ ...editForm, comisionVenta: e.target.value })} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900" />
-          </div>
-          <div>
-            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Comisión alquiler vacacional (%)</label>
-            <input type="number" min="0" max="100" step="0.01" value={editForm.comisionVacacional} onChange={(e) => setEditForm({ ...editForm, comisionVacacional: e.target.value })} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900" />
-          </div>
-          <div>
-            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Comisión alquiler fijo (%)</label>
-            <input type="number" min="0" max="100" step="0.01" value={editForm.comisionAlquilerFijo} onChange={(e) => setEditForm({ ...editForm, comisionAlquilerFijo: e.target.value })} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900" />
+            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Comisión base (%)</label>
+            <input
+              type="number"
+              min="0"
+              max="100"
+              step="0.01"
+              value={editForm.comisionBase}
+              onChange={(e) => setEditForm({ ...editForm, comisionBase: e.target.value })}
+              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-100 dark:focus:ring-blue-900"
+            />
           </div>
           <div className="flex justify-end gap-2">
             <button
               type="button"
-              className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+              className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-[#1f1f24] cursor-pointer"
               onClick={() => setEditTarget(null)}
             >
               Cancelar

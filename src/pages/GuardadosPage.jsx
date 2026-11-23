@@ -53,7 +53,7 @@ export default function GuardadosPage() {
       {loading ? (
         <div className="mt-6 flex flex-col gap-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="animate-pulse h-96 rounded-2xl bg-slate-200 dark:bg-slate-700" />
+            <div key={i} className="animate-pulse h-96 rounded-2xl bg-slate-200 dark:bg-[#1f1f24]" />
           ))}
         </div>
       ) : guardados.length === 0 ? (

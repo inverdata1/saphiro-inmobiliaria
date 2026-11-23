@@ -479,7 +479,7 @@ export default function MensualidadesInmueblePage() {
           <div className="flex items-center justify-center gap-2 pt-1">
             <button
               onClick={() => navigate(-1)}
-              className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+              className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#18181c] transition cursor-pointer"
             >
               Volver
             </button>
@@ -502,7 +502,7 @@ export default function MensualidadesInmueblePage() {
         <div className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400">
           <button
             onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-[#141417] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition active:scale-95 cursor-pointer shadow-xs"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-[#141417] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#18181c] transition active:scale-95 cursor-pointer shadow-xs"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -536,7 +536,7 @@ export default function MensualidadesInmueblePage() {
           {/* Lado izquierdo: Imagen + Datos descriptivos */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 w-full md:w-auto">
             {/* Box de Imagen con proporción y estilo adaptado */}
-            <div className="relative w-full sm:w-36 h-36 shrink-0 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 group shadow-inner">
+            <div className="relative w-full sm:w-36 h-36 shrink-0 rounded-2xl overflow-hidden bg-slate-100 dark:bg-[#0c0c0e] border border-slate-200 dark:border-slate-800 group shadow-inner">
               <img
                 src={contrato.imagen}
                 alt={contrato.titulo}
@@ -550,7 +550,7 @@ export default function MensualidadesInmueblePage() {
                 <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-50 tracking-tight">
                   {contrato.titulo}
                 </h2>
-                <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40">
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40">
                   {contrato.estadoContrato}
                 </span>
               </div>
@@ -621,7 +621,7 @@ export default function MensualidadesInmueblePage() {
                   {pagadasCuotas} de {totalCuotas} ({porcentajeProgreso}%)
                 </span>
               </div>
-              <div className="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden p-0.5">
+              <div className="w-full h-2.5 bg-slate-100 dark:bg-[#141417] rounded-full overflow-hidden p-0.5">
                 <div
                   className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500"
                   style={{ width: `${porcentajeProgreso}%` }}
@@ -642,7 +642,7 @@ export default function MensualidadesInmueblePage() {
           <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-slate-100">
             Historial de mensualidades
           </h2>
-          <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+          <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300">
             {pagination.total} {pagination.total === 1 ? "registro" : "registros"}
           </span>
         </div>
@@ -660,7 +660,7 @@ export default function MensualidadesInmueblePage() {
               className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
                 filterStatus === tab.id
                   ? "bg-[#470A68] text-white shadow-xs"
-                  : "bg-white dark:bg-[#141417] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800"
+                  : "bg-white dark:bg-[#141417] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-[#18181c]"
               }`}
             >
               <span>{tab.label}</span>
@@ -668,7 +668,7 @@ export default function MensualidadesInmueblePage() {
                 className={`px-1.5 py-0.2 rounded-full text-[10px] ${
                   filterStatus === tab.id
                     ? "bg-white/20 text-white"
-                    : "bg-slate-100 dark:bg-slate-800 text-slate-500"
+                    : "bg-slate-100 dark:bg-[#141417] text-slate-500"
                 }`}
               >
                 {tab.count}
@@ -768,7 +768,7 @@ export default function MensualidadesInmueblePage() {
                 setSelHastaAnio("");
                 setPage(1);
               }}
-              className="ml-auto px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-bold transition cursor-pointer"
+              className="ml-auto px-3 py-2 rounded-xl bg-slate-100 dark:bg-[#141417] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#1f1f24] text-xs font-bold transition cursor-pointer"
             >
               Limpiar periodo
             </button>
@@ -800,7 +800,7 @@ export default function MensualidadesInmueblePage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-900/40 text-[11px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                  <tr className="border-b border-slate-100 dark:border-slate-800/80 bg-slate-50 dark:bg-[#0c0c0e]/40 text-[11px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
                     <th className="py-4 px-6">Mes</th>
                     <th className="py-4 px-6">Vencimiento</th>
                     <th className="py-4 px-6 text-left">Importe</th>
@@ -817,7 +817,7 @@ export default function MensualidadesInmueblePage() {
                       {/* Columna: Mes */}
                       <td className="py-4 px-6 font-bold text-slate-900 dark:text-slate-100">
                         <div className="flex items-center gap-2.5">
-                          <span className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center text-xs font-black shrink-0 group-hover:bg-[#470A68] group-hover:text-white transition-colors">
+                          <span className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-[#141417] text-slate-600 dark:text-slate-300 flex items-center justify-center text-xs font-black shrink-0 group-hover:bg-[#470A68] group-hover:text-white transition-colors">
                             {cuota.numero}
                           </span>
                           <div>
@@ -869,13 +869,13 @@ export default function MensualidadesInmueblePage() {
                         <span
                           className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold border ${
                             cuota.estado === "Pagado"
-                              ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/40"
-                              : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/40"
+                              ? "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/40"
+                              : "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/40"
                           }`}
                         >
                           <span
                             className={`w-1.5 h-1.5 rounded-full ${
-                              cuota.estado === "Pagado" ? "bg-emerald-500" : "bg-amber-500"
+                              cuota.estado === "Pagado" ? "bg-blue-500" : "bg-blue-400"
                             }`}
                           />
                           {cuota.estado}
@@ -909,7 +909,7 @@ export default function MensualidadesInmueblePage() {
                             </Link>
                           ) : (
                             <span
-                              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 text-xs font-bold cursor-not-allowed"
+                              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-[#141417] text-slate-400 dark:text-slate-500 text-xs font-bold cursor-not-allowed"
                               title={
                                 bloqueoDePago(cuota, cuotaActual) === "requiere-cuota-actual"
                                   ? `Primero debes pagar la cuota de ${cuotaActual?.mes || "este mes"}.`
@@ -941,7 +941,7 @@ export default function MensualidadesInmueblePage() {
 
           {/* Controles de paginación (server-side) */}
           {!loadingCuotas && pagination.total > 0 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 sm:px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/30">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 sm:px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-[#0c0c0e]/30">
               <div className="text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400">
                 Mostrando {rangoDesde}-{rangoHasta} de {pagination.total} {pagination.total === 1 ? "cuota" : "cuotas"}
               </div>
@@ -950,7 +950,7 @@ export default function MensualidadesInmueblePage() {
                   type="button"
                   disabled={pagination.page <= 1}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  className="px-3 py-1.5 rounded-xl bg-white dark:bg-[#141417] border border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                  className="px-3 py-1.5 rounded-xl bg-white dark:bg-[#141417] border border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#18181c] transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                 >
                   Anterior
                 </button>
@@ -963,7 +963,7 @@ export default function MensualidadesInmueblePage() {
                   type="button"
                   disabled={!pagination.hasMore}
                   onClick={() => setPage((p) => p + 1)}
-                  className="px-3 py-1.5 rounded-xl bg-white dark:bg-[#141417] border border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                  className="px-3 py-1.5 rounded-xl bg-white dark:bg-[#141417] border border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#18181c] transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                 >
                   Siguiente
                 </button>

@@ -25,7 +25,7 @@ export default function UsuariosAdminPage() {
     setFetching(true);
     try {
       const offset = ((p || page) - 1) * limit;
-      const params = new URLSearchParams({ allUsuarios: "true", limit: String(limit), offset: String(offset) });
+      const params = new URLSearchParams({ isAdmin: "true", allUsuarios: "true", limit: String(limit), offset: String(offset) });
       if (q) params.set("q", q);
       const res = await apiGet(`/usuarios?${params}`);
       setRows(res.data || []);
@@ -101,7 +101,7 @@ export default function UsuariosAdminPage() {
           <button
             onClick={() => load(search, page)}
             disabled={fetching}
-            className="rounded-xl border border-slate-200 p-2 text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 disabled:opacity-50 cursor-pointer"
+            className="rounded-xl border border-slate-200 p-2 text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-[#1f1f24] disabled:opacity-50 cursor-pointer"
             title="Recargar"
           >
             <svg className={`h-5 w-5 ${fetching ? "animate-spin" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -118,7 +118,7 @@ export default function UsuariosAdminPage() {
 
       <div className="mt-6">
         <input
-          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900"
+          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-100 dark:focus:ring-blue-900"
           placeholder="Buscar por nombre o email…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -131,12 +131,11 @@ export default function UsuariosAdminPage() {
         />
       </div>
 
-      <div className="mt-4 bg-white border rounded-2xl p-4 shadow-sm dark:bg-slate-800 dark:border-slate-700">
+      <div className="mt-4 bg-white border rounded-2xl p-4 shadow-sm dark:bg-[#141417] dark:border-slate-700">
         <DataTable
           columns={[
             { key: "id", header: "ID" },
             { key: "nombre", header: "Nombre", render: (r) => r.nombre || "-" },
-            { key: "rol", header: "Rol", render: (r) => (r.rol === "cliente" ? "Cliente" : r.rol === "corredor" ? "Corredor" : r.rol === "admin" ? "Administrador" : r.rol || "-") },
             { key: "email", header: "Email" },
             {
               key: "fecha_registro",
@@ -198,14 +197,14 @@ export default function UsuariosAdminPage() {
             <button
               disabled={page <= 1 || fetching}
               onClick={() => { const p = page - 1; setPage(p); load(search, p); }}
-              className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+              className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-[#1f1f24] cursor-pointer"
             >
               ← Anterior
             </button>
             <button
               disabled={rows.length < limit || fetching}
               onClick={() => { const p = page + 1; setPage(p); load(search, p); }}
-              className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+              className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-[#1f1f24] cursor-pointer"
             >
               Siguiente →
             </button>
@@ -213,7 +212,7 @@ export default function UsuariosAdminPage() {
         </div>
       </div>
 
-      <Modal open={showCreate} onClose={() => { setShowCreate(false); setCreateEmail(""); }} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg dark:bg-slate-800 dark:border dark:border-slate-700">
+      <Modal open={showCreate} onClose={() => { setShowCreate(false); setCreateEmail(""); }} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg dark:bg-[#141417] dark:border dark:border-slate-700">
         <div className="flex items-start justify-between">
           <div>
             <div className="text-lg font-extrabold dark:text-slate-100">Crear administrador</div>
@@ -221,7 +220,7 @@ export default function UsuariosAdminPage() {
           </div>
           <button
             type="button"
-            className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 cursor-pointer"
+            className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-[#1f1f24] cursor-pointer"
             onClick={() => { if (!loading) { setShowCreate(false); setCreateEmail(""); } }}
             aria-label="Cerrar"
           >
@@ -236,14 +235,14 @@ export default function UsuariosAdminPage() {
               required
               value={createEmail}
               onChange={(e) => setCreateEmail(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900"
+              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-100 dark:focus:ring-blue-900"
               placeholder="admin@correo.com"
             />
           </div>
           <div className="flex justify-end gap-2">
             <button
               type="button"
-              className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-[#1f1f24] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={loading}
               onClick={() => { if (!loading) { setShowCreate(false); setCreateEmail(""); } }}
             >
@@ -267,7 +266,7 @@ export default function UsuariosAdminPage() {
         </div>
       </Modal>
 
-      <Modal open={!!showView} onClose={() => setShowView(null)} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg dark:bg-slate-800 dark:border dark:border-slate-700">
+      <Modal open={!!showView} onClose={() => setShowView(null)} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg dark:bg-[#141417] dark:border dark:border-slate-700">
         <div className="flex items-start justify-between">
           <div>
             <div className="text-lg font-extrabold dark:text-slate-100">Datos del usuario</div>
@@ -275,7 +274,7 @@ export default function UsuariosAdminPage() {
           </div>
           <button
             type="button"
-            className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 cursor-pointer"
+            className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-[#1f1f24] cursor-pointer"
             onClick={() => setShowView(null)}
             aria-label="Cerrar"
           >
@@ -298,7 +297,7 @@ export default function UsuariosAdminPage() {
         <div className="mt-5 flex justify-end">
           <button
             type="button"
-            className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+            className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-[#1f1f24] cursor-pointer"
             onClick={() => setShowView(null)}
           >
             Cerrar
@@ -306,7 +305,7 @@ export default function UsuariosAdminPage() {
         </div>
       </Modal>
 
-      <Modal open={!!deleteTarget} onClose={() => setDeleteTarget(null)} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg dark:bg-slate-800 dark:border dark:border-slate-700">
+      <Modal open={!!deleteTarget} onClose={() => setDeleteTarget(null)} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg dark:bg-[#141417] dark:border dark:border-slate-700">
         <div className="text-lg font-extrabold dark:text-slate-100">¿Eliminar usuario?</div>
         <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
           Esta acción no se puede deshacer. Se eliminará a <strong>{deleteTarget?.nombre}</strong> ({deleteTarget?.email}) del sistema.
@@ -314,7 +313,7 @@ export default function UsuariosAdminPage() {
         <div className="mt-5 flex justify-end gap-2">
           <button
             type="button"
-            className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+            className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-[#1f1f24] cursor-pointer"
             onClick={() => setDeleteTarget(null)}
           >
             Cancelar

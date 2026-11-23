@@ -120,7 +120,7 @@ export default function MisRecibosPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 py-8 px-4 sm:px-6 lg:px-8 text-slate-800 dark:text-slate-100 transition-colors">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0c0c0e] py-8 px-4 sm:px-6 lg:px-8 text-slate-800 dark:text-slate-100 transition-colors">
       <div className="max-w-6xl mx-auto space-y-6">
         
         {/* Encabezado Principal */}
@@ -138,7 +138,7 @@ export default function MisRecibosPage() {
             <button
               onClick={load}
               disabled={loading}
-              className="inline-flex items-center gap-2 text-xs font-bold px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#18181c] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer disabled:opacity-60"
+              className="inline-flex items-center gap-2 text-xs font-bold px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#18181c] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#18181c] transition cursor-pointer disabled:opacity-60"
             >
               <svg className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -149,7 +149,7 @@ export default function MisRecibosPage() {
         </div>
 
         {/* Buscador y Controles de Filtro */}
-        <div className="bg-white dark:bg-[#151518] p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm space-y-4">
+        <div className="bg-white dark:bg-[#141417] p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm space-y-4">
           <div className="flex flex-col md:flex-row gap-3">
             {/* Buscador */}
             <div className="relative flex-1">
@@ -158,7 +158,7 @@ export default function MisRecibosPage() {
                 placeholder="Buscar por inmueble, referencia o concepto..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-[#1d1d22] border border-slate-200 dark:border-slate-700/80 rounded-xl px-4 py-2.5 pl-10 text-sm focus:outline-none focus:ring-2 focus:ring-purple-600 dark:focus:ring-purple-400 transition"
+                className="w-full bg-slate-50 dark:bg-[#18181c] border border-slate-200 dark:border-slate-700/80 rounded-xl px-4 py-2.5 pl-10 text-sm focus:outline-none focus:ring-2 focus:ring-purple-600 dark:focus:ring-purple-400 transition"
               />
               <svg className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -173,12 +173,12 @@ export default function MisRecibosPage() {
         {/* Lista Principal de Recibos (Propuesta 1) */}
         <div className="space-y-3">
           {loading ? (
-            <div className="bg-white dark:bg-[#151518] rounded-2xl border border-slate-200 dark:border-slate-800 p-12 text-center space-y-3">
+            <div className="bg-white dark:bg-[#141417] rounded-2xl border border-slate-200 dark:border-slate-800 p-12 text-center space-y-3">
               <p className="font-bold text-slate-700 dark:text-slate-200 animate-pulse">Cargando recibos...</p>
             </div>
           ) : recibosFiltrados.length === 0 ? (
-            <div className="bg-white dark:bg-[#151518] rounded-2xl border border-slate-200 dark:border-slate-800 p-12 text-center space-y-3">
-              <div className="h-14 w-14 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 mx-auto flex items-center justify-center">
+            <div className="bg-white dark:bg-[#141417] rounded-2xl border border-slate-200 dark:border-slate-800 p-12 text-center space-y-3">
+              <div className="h-14 w-14 rounded-full bg-slate-100 dark:bg-[#141417] text-slate-400 mx-auto flex items-center justify-center">
                 <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
@@ -191,7 +191,7 @@ export default function MisRecibosPage() {
               <div
                 key={recibo.id}
                 onClick={() => setSelectedRecibo(recibo)}
-                className="group bg-white dark:bg-[#151518] hover:bg-purple-50/50 dark:hover:bg-purple-950/20 p-4 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 hover:border-purple-300 dark:hover:border-purple-800 shadow-sm transition-all duration-200 cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                className="group bg-white dark:bg-[#141417] hover:bg-purple-50/50 dark:hover:bg-purple-950/20 p-4 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 hover:border-purple-300 dark:hover:border-purple-800 shadow-sm transition-all duration-200 cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4"
               >
                 {/* Lado Izquierdo: Info Principal */}
                 <div className="flex items-center gap-4">
@@ -231,17 +231,17 @@ export default function MisRecibosPage() {
                     <span
                       className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold ${
                         recibo.estado === "Verificado"
-                          ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
-                          : "bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800"
+                          ? "bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+                          : "bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
                       }`}
                     >
-                      <span className={`w-1.5 h-1.5 rounded-full ${recibo.estado === "Verificado" ? "bg-emerald-500" : "bg-amber-500"}`}></span>
+                      <span className={`w-1.5 h-1.5 rounded-full ${recibo.estado === "Verificado" ? "bg-blue-500" : "bg-blue-400"}`}></span>
                       {recibo.estado}
                     </span>
 
                     <button
                       type="button"
-                      className="hidden sm:inline-flex items-center justify-center p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 group-hover:bg-[#470A68] group-hover:text-white transition"
+                      className="hidden sm:inline-flex items-center justify-center p-2 rounded-xl bg-slate-100 dark:bg-[#141417] text-slate-600 dark:text-slate-300 group-hover:bg-[#470A68] group-hover:text-white transition"
                     >
                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -264,7 +264,7 @@ export default function MisRecibosPage() {
               <button
                 onClick={() => goToPage(page - 1)}
                 disabled={page <= 1 || loading}
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-300 dark:hover:bg-[#1f1f24]"
               >
                 Anterior
               </button>
@@ -281,7 +281,7 @@ export default function MisRecibosPage() {
                     className={`min-w-[2.25rem] rounded-xl px-3 py-2 text-sm font-medium transition disabled:cursor-not-allowed ${
                       item.n === page
                         ? "bg-[#470A68] text-white shadow-sm dark:bg-[#5a0e82]"
-                        : "border border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                        : "border border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-50 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-300 dark:hover:bg-[#1f1f24]"
                     }`}
                   >
                     {item.n}
@@ -291,7 +291,7 @@ export default function MisRecibosPage() {
               <button
                 onClick={() => goToPage(page + 1)}
                 disabled={page >= totalPaginas || loading}
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-300 dark:hover:bg-[#1f1f24]"
               >
                 Siguiente
               </button>

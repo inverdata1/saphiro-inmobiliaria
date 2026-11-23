@@ -84,7 +84,7 @@ export default function ComisionesPage() {
           <div>
             <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Desde</div>
             <input
-              className="border rounded-xl px-3 py-2 bg-white dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600"
+              className="border rounded-xl px-3 py-2 bg-white dark:bg-[#141417] dark:text-slate-100 dark:border-slate-600"
               type="date"
               value={desde}
               onChange={(e) => setDesde(e.target.value)}
@@ -94,7 +94,7 @@ export default function ComisionesPage() {
           <div>
             <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Hasta</div>
             <input
-              className="border rounded-xl px-3 py-2 bg-white dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600"
+              className="border rounded-xl px-3 py-2 bg-white dark:bg-[#141417] dark:text-slate-100 dark:border-slate-600"
               type="date"
               value={hasta}
               onChange={(e) => setHasta(e.target.value)}
@@ -125,7 +125,7 @@ export default function ComisionesPage() {
 
       <ErrorBanner message={err} onClose={() => setErr("")} />
 
-      <div className="mt-5 bg-white border rounded-2xl p-4 shadow-sm dark:bg-slate-800 dark:border-slate-700">
+      <div className="mt-5 bg-white border rounded-2xl p-4 shadow-sm dark:bg-[#141417] dark:border-slate-700">
         <DataTable
           columns={[
             { key: "id", header: "ID" },
@@ -168,14 +168,14 @@ export default function ComisionesPage() {
             <button
               disabled={page <= 1 || loading}
               onClick={() => { const p = page - 1; setPage(p); load(p); }}
-              className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 cursor-pointer hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+              className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 cursor-pointer hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-[#1f1f24]"
             >
               ← Anterior
             </button>
             <button
               disabled={page >= Math.ceil(total / limit) || loading}
               onClick={() => { const p = page + 1; setPage(p); load(p); }}
-              className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 cursor-pointer hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+              className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 cursor-pointer hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-[#1f1f24]"
             >
               Siguiente →
             </button>

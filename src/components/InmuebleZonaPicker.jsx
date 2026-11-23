@@ -143,12 +143,12 @@ export default function InmuebleZonaPicker({ value, onChange, selectedItem, show
     <div className="flex flex-col sm:flex-row sm:items-center gap-2">
       {showZona && (
         <div className="flex gap-2">
-          <select className="border rounded-xl px-3 py-2 bg-white dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 text-sm flex-1 sm:flex-none" value={estadoId} onChange={(e) => setEstadoId(e.target.value)}>
+          <select className="border rounded-xl px-3 py-2 bg-white dark:bg-[#141417] dark:text-slate-100 dark:border-slate-600 text-sm flex-1 sm:flex-none" value={estadoId} onChange={(e) => setEstadoId(e.target.value)}>
             <option value="">Estado</option>
             {estados.map((x) => <option key={x.id} value={x.id}>{x.nombre}</option>)}
           </select>
 
-          <select className={`border rounded-xl px-3 py-2 bg-white dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 text-sm transition-opacity flex-1 sm:flex-none ${!estadoId ? "opacity-40" : ""}`} value={ciudadId} onChange={(e) => setCiudadId(e.target.value)} disabled={!estadoId}>
+          <select className={`border rounded-xl px-3 py-2 bg-white dark:bg-[#141417] dark:text-slate-100 dark:border-slate-600 text-sm transition-opacity flex-1 sm:flex-none ${!estadoId ? "opacity-40" : ""}`} value={ciudadId} onChange={(e) => setCiudadId(e.target.value)} disabled={!estadoId}>
             <option value="">Ciudad</option>
             {ciudades.map((x) => <option key={x.id} value={x.id}>{x.nombre}</option>)}
           </select>
@@ -160,7 +160,7 @@ export default function InmuebleZonaPicker({ value, onChange, selectedItem, show
           type="button"
           onClick={() => setShowModal(true)}
           disabled={!canOpenModal}
-          className="flex-1 text-left border rounded-xl px-3 py-2 bg-white dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 text-sm truncate cursor-pointer"
+          className="flex-1 text-left border rounded-xl px-3 py-2 bg-white dark:bg-[#141417] dark:text-slate-100 dark:border-slate-600 text-sm truncate cursor-pointer"
         >
           {effectiveSelected
             ? `#${effectiveSelected.id} - ${effectiveSelected.titulo} - ${formatPrice(effectiveSelected.precio, effectiveSelected.moneda, effectiveSelected.alquiler_vacacional)}`
@@ -180,7 +180,7 @@ export default function InmuebleZonaPicker({ value, onChange, selectedItem, show
         ) : null}
       </div>
 
-      <Modal open={showModal} onClose={() => { setShowModal(false); setSearch(""); }} backdropClassName="flex items-end justify-center sm:grid sm:place-items-center" className="w-full sm:max-w-3xl max-h-[85vh] flex flex-col rounded-t-2xl sm:rounded-2xl bg-white shadow-lg dark:bg-slate-800 dark:border dark:border-slate-700">
+      <Modal open={showModal} onClose={() => { setShowModal(false); setSearch(""); }} backdropClassName="flex items-end justify-center sm:grid sm:place-items-center" className="w-full sm:max-w-3xl max-h-[85vh] flex flex-col rounded-t-2xl sm:rounded-2xl bg-white shadow-lg dark:bg-[#141417] dark:border dark:border-slate-700">
             <div className="flex items-start justify-between p-4 sm:p-6 pb-0">
               <div>
                 <div className="text-lg font-extrabold dark:text-slate-100">Seleccionar inmueble</div>
@@ -188,7 +188,7 @@ export default function InmuebleZonaPicker({ value, onChange, selectedItem, show
               </div>
               <button
                 type="button"
-                className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 cursor-pointer"
+                className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-[#1f1f24] cursor-pointer"
                 onClick={() => { setShowModal(false); setSearch(""); }}
               >
                 ✕
@@ -197,7 +197,7 @@ export default function InmuebleZonaPicker({ value, onChange, selectedItem, show
 
             <div className="px-4 sm:px-6 pt-4">
               <input
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900"
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-100 dark:focus:ring-blue-900"
                 placeholder="Buscar por nombre o ID…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -209,7 +209,7 @@ export default function InmuebleZonaPicker({ value, onChange, selectedItem, show
               {loading ? (
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {Array.from({ length: 4 }).map((_, idx) => (
-                    <div key={idx} className="h-52 animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-700" />
+                    <div key={idx} className="h-52 animate-pulse rounded-2xl bg-slate-100 dark:bg-[#1f1f24]" />
                   ))}
                 </div>
               ) : inmuebles.length === 0 ? (
@@ -221,7 +221,7 @@ export default function InmuebleZonaPicker({ value, onChange, selectedItem, show
                       key={i.id}
                       type="button"
                       onClick={() => handleSelect(i)}
-                      className={`group relative flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:bg-slate-800 text-left cursor-pointer ${
+                      className={`group relative flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:bg-[#141417] text-left cursor-pointer ${
                         value == i.id
                           ? "border-blue-500 ring-2 ring-blue-200 dark:ring-blue-800"
                           : "border-slate-200 dark:border-slate-700"
@@ -263,7 +263,7 @@ export default function InmuebleZonaPicker({ value, onChange, selectedItem, show
 
                         <div className="mt-auto flex flex-wrap gap-1.5 text-[11px] text-slate-600 dark:text-slate-450">
                           {i.habitaciones ? (
-                            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2.5 py-0.5 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/40">
+                            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2.5 py-0.5 dark:border-slate-700 bg-slate-50/50 dark:bg-[#0c0c0e]/40">
                               <svg className="h-3 w-3 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 10V19M21 10V19M3 14H21M3 10H21M6 6H18V10H6V6Z" />
                               </svg>
@@ -271,7 +271,7 @@ export default function InmuebleZonaPicker({ value, onChange, selectedItem, show
                             </span>
                           ) : null}
                           {i.banos ? (
-                            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2.5 py-0.5 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/40">
+                            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2.5 py-0.5 dark:border-slate-700 bg-slate-50/50 dark:bg-[#0c0c0e]/40">
                               <svg className="h-3 w-3 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 4V16C4 17.1046 4.89543 18 6 18H18C19.1046 18 20 17.1046 20 16V4M2 8H22" />
                               </svg>
@@ -279,7 +279,7 @@ export default function InmuebleZonaPicker({ value, onChange, selectedItem, show
                             </span>
                           ) : null}
                           {i.area_m2 ? (
-                            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2.5 py-0.5 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/40">
+                            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2.5 py-0.5 dark:border-slate-700 bg-slate-50/50 dark:bg-[#0c0c0e]/40">
                               <svg className="h-3 w-3 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 19L20 3M8 15l2 2M11 12l2 2M14 9l2 2M17 6l2 2" />
                               </svg>
@@ -287,7 +287,7 @@ export default function InmuebleZonaPicker({ value, onChange, selectedItem, show
                             </span>
                           ) : null}
                           {Array.isArray(i.caracteristicas) && i.caracteristicas.slice(0, 2).map((c, idx) => (
-                            <span key={idx} className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2.5 py-0.5 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/40">
+                            <span key={idx} className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2.5 py-0.5 dark:border-slate-700 bg-slate-50/50 dark:bg-[#0c0c0e]/40">
                               {c.valor != null ? `${c.nombre}: ${c.valor}${c.unidad_medicion ? ` ${c.unidad_medicion}` : ""}` : c.nombre}
                             </span>
                           ))}

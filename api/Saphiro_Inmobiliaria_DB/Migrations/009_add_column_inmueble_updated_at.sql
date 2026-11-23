@@ -1,0 +1,1 @@
+ALTER TABLE inmuebles ADD COLUMN updated_at TIMESTAMP with time zone;

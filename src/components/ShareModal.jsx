@@ -27,14 +27,14 @@ export default function ShareModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="w-full max-w-md mx-4 rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-800 max-h-[85vh] overflow-y-auto scrollbar-custom">
+      <div className="w-full max-w-md mx-4 rounded-2xl bg-white p-6 shadow-2xl dark:bg-[#141417] max-h-[85vh] overflow-y-auto scrollbar-custom">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold text-slate-900 dark:text-white">
             {title}
           </h3>
           <button
             onClick={handleClose}
-            className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+            className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:text-slate-300 dark:hover:bg-[#1f1f24] cursor-pointer"
             aria-label="Cerrar"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -50,7 +50,7 @@ export default function ShareModal({
             type="text"
             readOnly
             value={url}
-            className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200"
+            className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 dark:border-slate-600 dark:bg-[#1f1f24] dark:text-slate-200"
             onFocus={(e) => e.target.select()}
           />
           <button
@@ -59,11 +59,6 @@ export default function ShareModal({
           >
             {copied ? "¡Copiado!" : "Copiar"}
           </button>
-        </div>
-        <div className="mt-4 grid grid-cols-3 gap-2">
-          <a className="rounded-xl bg-emerald-600 px-2 py-2 text-center text-xs font-bold text-white" href={`https://wa.me/?text=${encodeURIComponent(`${title || "Propiedad"} ${url}`)}`} target="_blank" rel="noreferrer">WhatsApp</a>
-          <a className="rounded-xl bg-blue-600 px-2 py-2 text-center text-xs font-bold text-white" href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`} target="_blank" rel="noreferrer">Facebook</a>
-          <a className="rounded-xl bg-slate-900 px-2 py-2 text-center text-xs font-bold text-white" href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title || "Propiedad")}`} target="_blank" rel="noreferrer">X</a>
         </div>
       </div>
     </div>

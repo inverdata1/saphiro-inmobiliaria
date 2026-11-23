@@ -45,7 +45,7 @@ export const DEFAULT_SETTINGS = {
   comisionAlquilerPct: 10.0,
   diasGraciaRenta: 5,
   plantillaMensajeWhatsApp:
-    "¡Hola! Vi tu interés en el inmueble publicado en Bienes Acuario. ¿Te gustaría agendar una visita o consultar detalles adicionales?",
+    "¡Hola! Vi tu interés en el inmueble publicado en Saphiro Inmobiliaria. ¿Te gustaría agendar una visita o consultar detalles adicionales?",
   metodosPagoAceptados: {
     pagoMovil: true,
     transferenciaNacional: true,

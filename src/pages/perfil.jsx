@@ -462,9 +462,9 @@ export default function Perfil() {
 
   // Color de badge según rol
   const roleBadgeConfig = {
-    admin: { label: "Administrador", bg: "bg-purple-100 dark:bg-purple-950/60 text-purple-900 dark:text-purple-300 border-purple-200 dark:border-purple-800" },
+    admin: { label: "Administrador", bg: "bg-blue-100 dark:bg-blue-950/60 text-blue-900 dark:text-blue-300 border-blue-200 dark:border-blue-800" },
     corredor: { label: "Corredor Inmobiliario", bg: "bg-blue-100 dark:bg-blue-950/60 text-blue-900 dark:text-blue-300 border-blue-200 dark:border-blue-800" },
-    cliente: { label: "Cliente", bg: "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-900 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800" },
+    cliente: { label: "Cliente", bg: "bg-blue-100 dark:bg-blue-950/60 text-blue-900 dark:text-blue-300 border-blue-200 dark:border-blue-800" },
   };
 
   const roleTooltipConfig = {
@@ -478,7 +478,7 @@ export default function Perfil() {
   const rolInfo = roleBadgeConfig[user?.rol] || roleBadgeConfig.cliente;
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-blue-50/45 dark:bg-slate-900 py-8 px-4 sm:px-6 lg:px-8 transition-colors">
+    <div className="min-h-[calc(100vh-4rem)] bg-slate-50 dark:bg-[#0c0c0e] py-8 px-4 sm:px-6 lg:px-8 transition-colors">
       <div className="max-w-4xl mx-auto space-y-6">
         
         {/* Barra superior con navegación hacia atrás */}
@@ -513,7 +513,7 @@ export default function Perfil() {
           </div>
           <Link
             to="/configuracion"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 transition shadow-sm w-fit"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-[#18181c] text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 transition shadow-sm w-fit"
           >
             <svg className="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -558,17 +558,17 @@ export default function Perfil() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
             <div className="lg:col-span-1">
               <div className="bg-white dark:bg-[#141417] rounded-2xl border border-slate-200/80 dark:border-slate-800/80 p-6 shadow-xs flex flex-col items-center text-center">
-                <div className="w-32 h-32 sm:w-36 sm:h-36 rounded-full bg-slate-200 dark:bg-slate-800 animate-pulse" />
-                <div className="w-32 h-5 mt-4 rounded bg-slate-200 dark:bg-slate-800 animate-pulse" />
-                <div className="w-24 h-4 mt-2 rounded bg-slate-200 dark:bg-slate-800 animate-pulse" />
+                <div className="w-32 h-32 sm:w-36 sm:h-36 rounded-full bg-slate-200 dark:bg-[#141417] animate-pulse" />
+                <div className="w-32 h-5 mt-4 rounded bg-slate-200 dark:bg-[#141417] animate-pulse" />
+                <div className="w-24 h-4 mt-2 rounded bg-slate-200 dark:bg-[#141417] animate-pulse" />
               </div>
             </div>
             <div className="lg:col-span-2">
               <div className="bg-white dark:bg-[#141417] rounded-2xl border border-slate-200/80 dark:border-slate-800/80 p-6 sm:p-7 shadow-xs">
                 <div className="space-y-5">
-                  <div className="w-full h-10 rounded-xl bg-slate-200 dark:bg-slate-800 animate-pulse" />
-                  <div className="w-full h-10 rounded-xl bg-slate-200 dark:bg-slate-800 animate-pulse" />
-                  <div className="w-32 h-10 rounded-xl bg-slate-200 dark:bg-slate-800 animate-pulse ml-auto" />
+                  <div className="w-full h-10 rounded-xl bg-slate-200 dark:bg-[#141417] animate-pulse" />
+                  <div className="w-full h-10 rounded-xl bg-slate-200 dark:bg-[#141417] animate-pulse" />
+                  <div className="w-32 h-10 rounded-xl bg-slate-200 dark:bg-[#141417] animate-pulse ml-auto" />
                 </div>
               </div>
             </div>
@@ -740,7 +740,7 @@ export default function Perfil() {
                     placeholder="Ej. Juan Pérez"
                     className={`w-full px-3.5 py-2.5 text-sm rounded-xl border transition-all ${
                       editingNombre
-                        ? "border-purple-300 dark:border-purple-700 bg-white dark:bg-[#1c1c21] text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-600/30 focus:border-purple-600"
+                        ? "border-purple-300 dark:border-purple-700 bg-white dark:bg-[#18181c] text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-600/30 focus:border-purple-600"
                         : "border-slate-200 dark:border-slate-800 bg-slate-100/70 dark:bg-[#18181c]/60 text-slate-500 dark:text-slate-400 cursor-not-allowed select-none"
                     }`}
                   />
@@ -860,7 +860,7 @@ export default function Perfil() {
                     {telefonos.map((t) => (
                       <li key={t.id} className="flex items-center gap-3">
                         {telefonoEditandoId === t.id ? (
-                          <div className="flex-1 flex flex-col gap-2 px-3 py-2.5 rounded-xl bg-slate-50/60 dark:bg-slate-900/40 border border-purple-300 dark:border-purple-700">
+                          <div className="flex-1 flex flex-col gap-2 px-3 py-2.5 rounded-xl bg-slate-50/60 dark:bg-[#0c0c0e]/40 border border-purple-300 dark:border-purple-700">
                             <div className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
                               Editar teléfono
                             </div>
@@ -868,7 +868,7 @@ export default function Perfil() {
                               <select
                                 value={iso2Editando}
                                 onChange={(e) => cambiarPaisEditando(e.target.value)}
-                                className="w-36 shrink-0 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1c1c21] px-2.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-600/30 focus:border-purple-600 transition-all"
+                                className="w-36 shrink-0 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#18181c] px-2.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-600/30 focus:border-purple-600 transition-all"
                               >
                                 {phoneFormats.map((c) => (
                                   <option key={c.iso2} value={c.iso2}>
@@ -901,7 +901,7 @@ export default function Perfil() {
                                 }}
                                 onKeyDown={(e) => e.key === "Enter" && guardarTelefonoEditado()}
                                 placeholder={paisEditandoSeleccionado?.example?.split(" ").slice(1).join("").replace(/-/g, "") || "Número"}
-                                className="flex-1 min-w-0 px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1c1c21] text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-600/30 focus:border-purple-600 transition-all"
+                                className="flex-1 min-w-0 px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#18181c] text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-600/30 focus:border-purple-600 transition-all"
                               />
                               {maxDigitosEditando ? (
                                 <span className="self-center text-xs text-slate-400 shrink-0">
@@ -1004,7 +1004,7 @@ export default function Perfil() {
                     )}
 
                     {agregandoTelefono && (
-                      <div className="mt-3 flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-50/60 dark:bg-slate-900/40 border border-purple-300 dark:border-purple-700">
+                      <div className="mt-3 flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-50/60 dark:bg-[#0c0c0e]/40 border border-purple-300 dark:border-purple-700">
                         <div className="flex-1 min-w-0">
                           <div className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
                             Número de teléfono
@@ -1013,7 +1013,7 @@ export default function Perfil() {
                             <select
                               value={iso2Actual}
                               onChange={(e) => cambiarPaisTelefono(e.target.value)}
-                              className="w-36 shrink-0 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1c1c21] px-2.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-600/30 focus:border-purple-600 transition-all"
+                              className="w-36 shrink-0 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#18181c] px-2.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-600/30 focus:border-purple-600 transition-all"
                             >
                               {phoneFormats.map((c) => (
                                 <option key={c.iso2} value={c.iso2}>
@@ -1046,7 +1046,7 @@ export default function Perfil() {
                               }}
                               onKeyDown={(e) => e.key === "Enter" && agregarTelefono()}
                               placeholder={paisSeleccionado?.example?.split(" ").slice(1).join("").replace(/-/g, "") || "Número"}
-                              className="flex-1 min-w-0 px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1c1c21] text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-600/30 focus:border-purple-600 transition-all"
+                              className="flex-1 min-w-0 px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#18181c] text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-600/30 focus:border-purple-600 transition-all"
                             />
                             {maxDigitos ? (
                               <span className="self-center text-xs text-slate-400 shrink-0">

@@ -9,7 +9,7 @@ import { buildDesglose } from "../../utils/desglose";
 const VARIANTES = {
   recibo: {
     titulo: "Comprobante Digital de Pago",
-    emisor: "RIF: J-50782227-3",
+    emisor: "RIF: J-50192841-0 • Inmobiliaria Digital",
     folioLabel: "Recibo N°",
     inmuebleLabel: "Emisor / Inmueble",
     clienteLabel: "Cliente / Pagador",
@@ -74,7 +74,7 @@ const ACENTOS = {
 function FilaDesglose({ linea, moneda }) {
   const { parcial } = linea;
   return (
-    <tr className={parcial ? "bg-slate-50 dark:bg-slate-900/40" : ""}>
+    <tr className={parcial ? "bg-slate-50 dark:bg-[#0c0c0e]/40" : ""}>
       <td
         className={
           parcial
@@ -172,7 +172,7 @@ export default function ComprobanteTransaccionModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
       <div
-        className="bg-white dark:bg-[#121215] text-slate-900 dark:text-slate-100 w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden max-h-[90vh] flex flex-col"
+        className="bg-white dark:bg-[#141417] text-slate-900 dark:text-slate-100 w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header del Modal */}
@@ -183,7 +183,7 @@ export default function ComprobanteTransaccionModal({
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition cursor-pointer"
+            className="p-2 rounded-xl text-slate-400 hover:bg-slate-200 dark:hover:bg-[#18181c] transition cursor-pointer"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -197,7 +197,7 @@ export default function ComprobanteTransaccionModal({
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-6 border-b border-dashed border-slate-300 dark:border-slate-700">
             <div>
               <h3 className="text-xl font-black text-[#470A68] dark:text-purple-400 tracking-tight">
-                BIENES ACUARIO 2025 C.A.
+                INVERDATA C.A.
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">{cfg.emisor}</p>
               <p className="text-xs text-slate-500 dark:text-slate-400">Caracas, Venezuela</p>
@@ -238,7 +238,7 @@ export default function ComprobanteTransaccionModal({
             </h4>
             <div className="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
               <table className="w-full text-xs text-left">
-                <thead className="bg-slate-100 dark:bg-[#1a1a20] text-slate-600 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-800">
+                <thead className="bg-slate-100 dark:bg-[#18181c] text-slate-600 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-800">
                   <tr>
                     <th className="p-3">{cfg.tablaHeader}</th>
                     <th className="p-3 text-right">Monto</th>
@@ -353,7 +353,7 @@ export default function ComprobanteTransaccionModal({
             </div>
 
             {/* Marcador de QR para verificacion */}
-            <div className="flex items-center gap-3 bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 shrink-0">
+            <div className="flex items-center gap-3 bg-white dark:bg-[#0c0c0e] p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 shrink-0">
               <QRCodeSVG
                 value={`TRANSFERENCIA:${data.id}|REF:${data.referenciaBancaria}`}
                 fgColor="#475569"
@@ -362,7 +362,7 @@ export default function ComprobanteTransaccionModal({
               />
               <div className="text-[10px] text-slate-400 leading-tight">
                 <p className="font-bold text-slate-700 dark:text-slate-300">{cfg.qrMarca}</p>
-                <p>Bienes Acuario 2025 C.A.</p>
+                <p>Firma digital Inverdata</p>
                 {esLiquidacion && (
                   <p className="font-mono mt-0.5 text-slate-500 dark:text-slate-400 break-all">
                     {data.id}
@@ -377,7 +377,7 @@ export default function ComprobanteTransaccionModal({
         <div className="px-6 py-4 bg-slate-50 dark:bg-[#18181c] border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-xl text-xs font-bold border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition cursor-pointer"
+            className="px-4 py-2 rounded-xl text-xs font-bold border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#18181c] transition cursor-pointer"
           >
             Cerrar
           </button>

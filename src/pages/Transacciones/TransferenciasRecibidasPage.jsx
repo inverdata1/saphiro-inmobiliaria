@@ -186,7 +186,7 @@ export default function TransferenciasRecibidasPage() {
                 setHasta(null);
                 setMetodo("");
               }}
-              className="inline-flex items-center gap-2 text-xs font-bold px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#18181c] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+              className="inline-flex items-center gap-2 text-xs font-bold px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#18181c] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#18181c] transition cursor-pointer"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -197,7 +197,7 @@ export default function TransferenciasRecibidasPage() {
         </div>
 
         {/* Buscador y Controles de Filtro */}
-        <div className="bg-white dark:bg-[#151518] p-4 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm space-y-4">
+        <div className="bg-white dark:bg-[#141417] p-4 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm space-y-4">
             {/* Campo de búsqueda */}
             <div className="relative flex-1">
               <input
@@ -205,7 +205,7 @@ export default function TransferenciasRecibidasPage() {
                 placeholder="Buscar por referencia bancaria, cliente o nombre de inmueble..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-[#1d1d22] border border-slate-200 dark:border-slate-700/80 rounded-xl px-4 py-2.5 pl-10 text-sm focus:outline-none focus:ring-2 focus:ring-purple-600 dark:focus:ring-purple-400 transition"
+                className="w-full bg-slate-50 dark:bg-[#18181c] border border-slate-200 dark:border-slate-700/80 rounded-xl px-4 py-2.5 pl-10 text-sm focus:outline-none focus:ring-2 focus:ring-purple-600 dark:focus:ring-purple-400 transition"
               />
               <svg className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -225,7 +225,7 @@ export default function TransferenciasRecibidasPage() {
                       className={`px-3 py-1.5 rounded-full text-xs font-bold transition cursor-pointer border ${
                         metodo === m
                           ? "bg-[#470A68] text-white border-[#470A68]"
-                          : "bg-slate-50 dark:bg-[#1d1d22] text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700/80 hover:bg-purple-50 dark:hover:bg-purple-950/40 hover:text-purple-800 dark:hover:text-purple-300"
+                          : "bg-slate-50 dark:bg-[#18181c] text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700/80 hover:bg-purple-50 dark:hover:bg-purple-950/40 hover:text-purple-800 dark:hover:text-purple-300"
                       }`}
                     >
                       {m}
@@ -267,12 +267,12 @@ export default function TransferenciasRecibidasPage() {
         {/* Lista de Transferencias Recibidas (Propuesta 1) */}
         <div className="space-y-3">
           {loading ? (
-            <div className="bg-white dark:bg-[#151518] rounded-2xl border border-slate-200 dark:border-slate-800 p-12 text-center space-y-3">
+            <div className="bg-white dark:bg-[#141417] rounded-2xl border border-slate-200 dark:border-slate-800 p-12 text-center space-y-3">
               <p className="font-bold text-slate-700 dark:text-slate-200 animate-pulse">Cargando transferencias...</p>
             </div>
           ) : transferenciasFiltradas.length === 0 ? (
-            <div className="bg-white dark:bg-[#151518] rounded-2xl border border-slate-200 dark:border-slate-800 p-12 text-center space-y-3">
-              <div className="h-14 w-14 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 mx-auto flex items-center justify-center">
+            <div className="bg-white dark:bg-[#141417] rounded-2xl border border-slate-200 dark:border-slate-800 p-12 text-center space-y-3">
+              <div className="h-14 w-14 rounded-full bg-slate-100 dark:bg-[#141417] text-slate-400 mx-auto flex items-center justify-center">
                 <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                 </svg>
@@ -285,7 +285,7 @@ export default function TransferenciasRecibidasPage() {
               <div
                 key={trf.id}
                 onClick={() => setSelectedTransfer(trf)}
-                className="group bg-white dark:bg-[#151518] hover:bg-purple-50/50 dark:hover:bg-purple-950/20 p-4 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 hover:border-purple-300 dark:hover:border-purple-800 shadow-sm transition-all duration-200 cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-4"
+                className="group bg-white dark:bg-[#141417] hover:bg-purple-50/50 dark:hover:bg-purple-950/20 p-4 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 hover:border-purple-300 dark:hover:border-purple-800 shadow-sm transition-all duration-200 cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-4"
               >
                 {/* Lado Izquierdo: Info Inmueble y Cliente */}
                 <div className="flex items-center gap-4">
@@ -331,11 +331,11 @@ export default function TransferenciasRecibidasPage() {
                     <span
                       className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold ${
                         trf.estado === "Aprobada"
-                          ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
-                          : "bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800"
+                          ? "bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+                          : "bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
                       }`}
                     >
-                      <span className={`w-1.5 h-1.5 rounded-full ${trf.estado === "Aprobada" ? "bg-emerald-500" : "bg-amber-500"}`}></span>
+                      <span className={`w-1.5 h-1.5 rounded-full ${trf.estado === "Aprobada" ? "bg-blue-500" : "bg-blue-400"}`}></span>
                       {trf.estado}
                     </span>
                   </div>
@@ -354,7 +354,7 @@ export default function TransferenciasRecibidasPage() {
               <button
                 onClick={() => goToPage(page - 1)}
                 disabled={page <= 1 || loading}
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-300 dark:hover:bg-[#1f1f24]"
               >
                 Anterior
               </button>
@@ -371,7 +371,7 @@ export default function TransferenciasRecibidasPage() {
                     className={`min-w-[2.25rem] rounded-xl px-3 py-2 text-sm font-medium transition disabled:cursor-not-allowed ${
                       item.n === page
                         ? "bg-[#470A68] text-white shadow-sm dark:bg-[#5a0e82]"
-                        : "border border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                        : "border border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-50 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-300 dark:hover:bg-[#1f1f24]"
                     }`}
                   >
                     {item.n}
@@ -381,7 +381,7 @@ export default function TransferenciasRecibidasPage() {
               <button
                 onClick={() => goToPage(page + 1)}
                 disabled={page >= totalPaginas || loading}
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-300 dark:hover:bg-[#1f1f24]"
               >
                 Siguiente
               </button>

@@ -5,7 +5,6 @@ import { useAuth } from "../context/useAuth";
 import PropertyCard from "../components/PropertyCard";
 import ShareModal from "../components/ShareModal";
 import SocialIcon from "../utils/socialIcons.jsx";
-import ContactoCorredorEditor from "../components/social/ContactoCorredorEditor";
 
 export default function PerfilUsuarioPage() {
   const { id } = useParams();
@@ -129,9 +128,6 @@ export default function PerfilUsuarioPage() {
     (Array.isArray(telefonosData) && telefonosData.length > 0) ||
     (Array.isArray(redesSociales) && redesSociales.length > 0);
 
-  const puedeEditarContacto =
-    currentUser?.rol === "admin" && esCorredor && Boolean(usuario?.uuid || usuario?.id);
-
   const esMiPropioPerfil = useMemo(() => {
     if (!currentUser || !usuario) return false;
     // La URL puede traer uuid o id: se comparan ambos segun lo disponible.
@@ -190,7 +186,7 @@ export default function PerfilUsuarioPage() {
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-slate-50/70 dark:bg-[#0c0c0e] py-8 px-4 sm:px-6 lg:px-8 transition-colors">
+    <div className="min-h-[calc(100vh-4rem)] bg-slate-50 dark:bg-[#0c0c0e] py-8 px-4 sm:px-6 lg:px-8 transition-colors">
       <div className="max-w-6xl mx-auto space-y-8">
         
         {/* Barra superior de navegación */}
@@ -248,7 +244,7 @@ export default function PerfilUsuarioPage() {
                 {/* Avatar circular */}
                 <div className="relative">
                   {loading ? (
-                    <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-full bg-slate-200 dark:bg-slate-700/60 animate-pulse border-4 border-white dark:border-[#141417]" />
+                    <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-full bg-slate-200 dark:bg-[#1f1f24]/60 animate-pulse border-4 border-white dark:border-[#141417]" />
                   ) : (
                     <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-full overflow-hidden bg-gradient-to-br from-[#470A68] to-[#5a0e82] text-white flex items-center justify-center text-3xl sm:text-4xl font-black shadow-xl border-4 border-white dark:border-[#141417]">
                       {usuario?.foto_perfil || usuario?.foto_url || usuario?.avatar ? (
@@ -267,8 +263,8 @@ export default function PerfilUsuarioPage() {
                 {/* Datos del usuario */}
                 {loading ? (
                   <div className="space-y-2.5 pb-1">
-                    <div className="h-8 w-48 bg-slate-200 dark:bg-slate-700/60 rounded-lg animate-pulse" />
-                    <div className="h-4 w-36 bg-slate-200 dark:bg-slate-700/60 rounded-lg animate-pulse" />
+                    <div className="h-8 w-48 bg-slate-200 dark:bg-[#1f1f24]/60 rounded-lg animate-pulse" />
+                    <div className="h-4 w-36 bg-slate-200 dark:bg-[#1f1f24]/60 rounded-lg animate-pulse" />
                   </div>
                 ) : (
                   <div className="space-y-1.5 pb-1">
@@ -284,13 +280,8 @@ export default function PerfilUsuarioPage() {
                     </div>
 
                     <p className="text-sm font-semibold text-purple-900 dark:text-purple-400">
-                      {esCorredor ? "Corredor Inmobiliario Autorizado" : usuario?.rol === "admin" ? "Administrador del Sistema" : "Cliente de Bienes Acuario"}
+                      {esCorredor ? "Corredor Inmobiliario Autorizado" : usuario?.rol === "admin" ? "Administrador del Sistema" : "Cliente de Saphiro Inmobiliaria"}
                     </p>
-                    {esCorredor && (
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Venta {corredorInfo?.comision_venta ?? "-"}% · Vacacional {corredorInfo?.comision_vacacional ?? "-"}% · Alquiler fijo {corredorInfo?.comision_alquiler_fijo ?? "-"}%
-                      </p>
-                    )}
                   </div>
                 )}
               </div>
@@ -303,19 +294,19 @@ export default function PerfilUsuarioPage() {
                 <>
                   {/* Skeleton Correo */}
                   <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-slate-50 dark:bg-[#18181c] border border-slate-100 dark:border-slate-800/60">
-                    <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-700/60 animate-pulse shrink-0" />
+                    <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-[#1f1f24]/60 animate-pulse shrink-0" />
                     <div className="min-w-0 flex-1 space-y-2">
-                      <div className="h-3 w-28 bg-slate-200 dark:bg-slate-700/60 rounded animate-pulse" />
-                      <div className="h-4 w-48 bg-slate-200 dark:bg-slate-700/60 rounded animate-pulse" />
+                      <div className="h-3 w-28 bg-slate-200 dark:bg-[#1f1f24]/60 rounded animate-pulse" />
+                      <div className="h-4 w-48 bg-slate-200 dark:bg-[#1f1f24]/60 rounded animate-pulse" />
                     </div>
                   </div>
 
                   {/* Skeleton Teléfono */}
                   <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-slate-50 dark:bg-[#18181c] border border-slate-100 dark:border-slate-800/60">
-                    <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-700/60 animate-pulse shrink-0" />
+                    <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-[#1f1f24]/60 animate-pulse shrink-0" />
                     <div className="min-w-0 flex-1 space-y-2">
-                      <div className="h-3 w-24 bg-slate-200 dark:bg-slate-700/60 rounded animate-pulse" />
-                      <div className="h-4 w-36 bg-slate-200 dark:bg-slate-700/60 rounded animate-pulse" />
+                      <div className="h-3 w-24 bg-slate-200 dark:bg-[#1f1f24]/60 rounded animate-pulse" />
+                      <div className="h-4 w-36 bg-slate-200 dark:bg-[#1f1f24]/60 rounded animate-pulse" />
                     </div>
                   </div>
                 </>
@@ -336,9 +327,8 @@ export default function PerfilUsuarioPage() {
                     </div>
                   </div>
 
-                  {puedeEditarContacto ? (
-                    <ContactoCorredorEditor usuarioId={usuario.uuid || usuario.id} />
-                  ) : esCorredor && (
+                  {/* Tarjeta Teléfono (solo corredores) */}
+                  {esCorredor && (
                     <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-slate-50 dark:bg-[#18181c] border border-slate-100 dark:border-slate-800/60">
                       <div className="p-2.5 rounded-xl bg-purple-100 dark:bg-purple-950/60 text-[#470A68] dark:text-purple-300">
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -368,12 +358,12 @@ export default function PerfilUsuarioPage() {
             </div>
 
             {/* Redes Sociales del Corredor */}
-            {puedeEditarContacto ? null : loading && esCorredor ? (
+            {loading && esCorredor ? (
               <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800/80">
-                <div className="h-3 w-28 bg-slate-200 dark:bg-slate-700/60 rounded animate-pulse mb-3" />
+                <div className="h-3 w-28 bg-slate-200 dark:bg-[#1f1f24]/60 rounded animate-pulse mb-3" />
                 <div className="flex flex-wrap gap-2.5">
                   {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-10 w-24 bg-slate-200 dark:bg-slate-800/60 rounded-xl animate-pulse" />
+                    <div key={i} className="h-10 w-24 bg-slate-200 dark:bg-[#18181c]/60 rounded-xl animate-pulse" />
                   ))}
                 </div>
               </div>
@@ -420,23 +410,23 @@ export default function PerfilUsuarioPage() {
               {/* Skeleton cabecera + filtros */}
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-2">
-                  <div className="h-8 w-52 bg-slate-200 dark:bg-slate-700/60 rounded-lg animate-pulse" />
-                  <div className="h-4 w-72 bg-slate-200 dark:bg-slate-700/60 rounded animate-pulse" />
+                  <div className="h-8 w-52 bg-slate-200 dark:bg-[#1f1f24]/60 rounded-lg animate-pulse" />
+                  <div className="h-4 w-72 bg-slate-200 dark:bg-[#1f1f24]/60 rounded animate-pulse" />
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="h-8 w-24 bg-slate-200 dark:bg-slate-800/60 rounded-xl animate-pulse" />
+                    <div key={i} className="h-8 w-24 bg-slate-200 dark:bg-[#18181c]/60 rounded-xl animate-pulse" />
                   ))}
                 </div>
               </div>
 
               {/* Skeleton buscador */}
-              <div className="h-9 w-full max-w-md bg-slate-200 dark:bg-slate-700/60 rounded-xl animate-pulse" />
+              <div className="h-9 w-full max-w-md bg-slate-200 dark:bg-[#1f1f24]/60 rounded-xl animate-pulse" />
 
               {/* Skeleton grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="animate-pulse rounded-2xl h-80 bg-slate-200 dark:bg-slate-800/60" />
+                  <div key={i} className="animate-pulse rounded-2xl h-80 bg-slate-200 dark:bg-[#18181c]/60" />
                 ))}
               </div>
             </>

@@ -9,9 +9,10 @@ export function formatPrice(inmueble) {
     return `$${formatted}`;
   };
 
-  const porNoche = inmueble?.precio_por_noche ?? inmueble?.alquiler_vacacional?.precio_por_noche;
-  if (porNoche != null && porNoche !== "") {
-    return `${fmt(porNoche)} / noche`;
+  const porNoche = inmueble?.precio_por_noche ?? inmueble?.alquiler_vacacional?.precio_por_noche ?? inmueble?.precio_por_noche;
+  if (porNoche != null) {
+    const noches = `${fmt(porNoche)} / noche`;
+    return num > 0 ? `${fmt(num)} + ${noches}` : noches;
   }
 
   const porMes = inmueble?.precio_por_mes ?? inmueble?.precio_mes ?? inmueble?.alquiler_fijo?.precio_mes;

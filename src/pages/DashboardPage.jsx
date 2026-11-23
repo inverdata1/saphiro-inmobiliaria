@@ -21,6 +21,12 @@ function MenuCard({ to, icon, title, subtitle, className = "" }) {
   );
 }
 
+const MOCK_LATEST = [
+  { id: 1, titulo: "Penthouse de Lujo en Piantini", tipo_inmueble: "Penthouse", estado_inmueble: "venta", estatus: "disponible", precio: 18500000, habitaciones: 4, banos: 3, area_m2: 320, sector: "Piantini", ciudad: "Santo Domingo", imagen_url: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80" },
+  { id: 2, titulo: "Apartamento en Bella Vista", tipo_inmueble: "Apartamento", estado_inmueble: "alquiler_fijo", estatus: "disponible", precio: 45000, habitaciones: 2, banos: 2, area_m2: 110, sector: "Bella Vista", ciudad: "Santo Domingo", imagen_url: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80" },
+  { id: 3, titulo: "Villa de Playa en Juan Dolio", tipo_inmueble: "Villa", estado_inmueble: "vacacional", estatus: "disponible", precio: 8500, habitaciones: 3, banos: 2, area_m2: 200, sector: "Juan Dolio", ciudad: "San Pedro de Macorís", imagen_url: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=800&q=80" },
+];
+
 export default function DashboardPage() {
   useEffect(() => { window.scrollTo(0, 0); }, []);
   const { user } = useAuth();
@@ -34,7 +40,7 @@ export default function DashboardPage() {
         const data = res?.data ?? [];
         setLatestInmuebles(Array.isArray(data) ? data : []);
       } catch {
-        setLatestInmuebles([]);
+        setLatestInmuebles(MOCK_LATEST);
       }
     })();
   }, []);

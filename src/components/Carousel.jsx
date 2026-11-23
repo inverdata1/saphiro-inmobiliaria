@@ -52,7 +52,7 @@ export default function Carousel({
   if (!loading && items.length === 0) return null;
 
   const arrowBtn =
-    "flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700";
+    "flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-[#141417] dark:text-slate-200 dark:hover:bg-[#1f1f24]";
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-12">
@@ -110,7 +110,7 @@ export default function Carousel({
           ? Array.from({ length: skeletonCount }).map((_, i) => (
               <div
                 key={`skeleton-${i}`}
-                className={`${CAROUSEL_SLIDE} h-80 animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800`}
+                className={`${CAROUSEL_SLIDE} h-80 animate-pulse rounded-2xl bg-slate-100 dark:bg-[#141417]`}
               />
             ))
           : items.map((item, i) => (

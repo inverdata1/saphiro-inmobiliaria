@@ -256,11 +256,11 @@ export default function TransaccionesPage() {
       <ErrorBanner message={err} onClose={() => setErr("")} />
 
       {/* Crear */}
-      <div className="mt-5 bg-white border rounded-2xl p-4 shadow-sm dark:bg-slate-800 dark:border-slate-700">
+      <div className="mt-5 bg-white border rounded-2xl p-4 shadow-sm dark:bg-[#141417] dark:border-slate-700">
         <div className="flex items-center justify-between mb-3">
           <div className="font-bold dark:text-slate-100">Crear transacción</div>
           <select
-            className="border rounded-xl px-3 py-1.5 text-sm bg-white dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600"
+            className="border rounded-xl px-3 py-1.5 text-sm bg-white dark:bg-[#141417] dark:text-slate-100 dark:border-slate-600"
             value={busquedaModo}
             onChange={(e) => {
               setBusquedaModo(e.target.value);
@@ -303,7 +303,7 @@ export default function TransaccionesPage() {
                 <button
                   type="button"
                   onClick={() => openCalendar("checkIn")}
-                  className="w-full text-left border rounded-xl px-3 py-2 bg-white dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 text-sm truncate cursor-pointer hover:border-slate-400 dark:hover:border-slate-500"
+                  className="w-full text-left border rounded-xl px-3 py-2 bg-white dark:bg-[#141417] dark:text-slate-100 dark:border-slate-600 text-sm truncate cursor-pointer hover:border-slate-400 dark:hover:border-slate-500"
                 >
                   {fechaEntrada ? formatDisplayDate(fechaEntrada) : "Seleccionar fecha"}
                 </button>
@@ -313,7 +313,7 @@ export default function TransaccionesPage() {
                 <button
                   type="button"
                   onClick={() => openCalendar("checkOut")}
-                  className="w-full text-left border rounded-xl px-3 py-2 bg-white dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 text-sm truncate cursor-pointer hover:border-slate-400 dark:hover:border-slate-500"
+                  className="w-full text-left border rounded-xl px-3 py-2 bg-white dark:bg-[#141417] dark:text-slate-100 dark:border-slate-600 text-sm truncate cursor-pointer hover:border-slate-400 dark:hover:border-slate-500"
                 >
                   {fechaSalida ? formatDisplayDate(fechaSalida) : "Seleccionar fecha"}
                 </button>
@@ -346,14 +346,14 @@ export default function TransaccionesPage() {
       </div>
 
       {/* Filtros */}
-      <div className="mt-5 bg-white border rounded-2xl p-4 shadow-sm dark:bg-slate-800 dark:border-slate-700">
+      <div className="mt-5 bg-white border rounded-2xl p-4 shadow-sm dark:bg-[#141417] dark:border-slate-700">
         <div className="font-bold mb-3 dark:text-slate-100">Filtros</div>
 
         <div className="flex flex-wrap gap-2 items-end">
           <div>
             <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Desde</div>
             <input
-              className="border rounded-xl px-3 py-2 bg-white dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600"
+              className="border rounded-xl px-3 py-2 bg-white dark:bg-[#141417] dark:text-slate-100 dark:border-slate-600"
               type="date"
               value={desde}
               onChange={(e) => setDesde(e.target.value)}
@@ -363,7 +363,7 @@ export default function TransaccionesPage() {
           <div>
             <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Hasta</div>
             <input
-              className="border rounded-xl px-3 py-2 bg-white dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600"
+              className="border rounded-xl px-3 py-2 bg-white dark:bg-[#141417] dark:text-slate-100 dark:border-slate-600"
               type="date"
               value={hasta}
               onChange={(e) => setHasta(e.target.value)}
@@ -373,7 +373,7 @@ export default function TransaccionesPage() {
           <div>
             <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Tipo</div>
             <select
-              className="border rounded-xl px-3 py-2 bg-white dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600"
+              className="border rounded-xl px-3 py-2 bg-white dark:bg-[#141417] dark:text-slate-100 dark:border-slate-600"
               value={tipoOperacionFiltro}
               onChange={(e) => setTipoOperacionFiltro(e.target.value)}
             >
@@ -407,7 +407,7 @@ export default function TransaccionesPage() {
       </div>
 
       {/* Tabla */}
-      <div className="mt-5 bg-white border rounded-2xl p-4 shadow-sm dark:bg-slate-800 dark:border-slate-700">
+      <div className="mt-5 bg-white border rounded-2xl p-4 shadow-sm dark:bg-[#141417] dark:border-slate-700">
 
         <DataTable
           columns={[
@@ -419,24 +419,7 @@ export default function TransaccionesPage() {
             },
             { key: "tipo_operacion", header: "Tipo" },
             { key: "monto_total", header: "Monto", render: (r) => money(r.monto_total, r.moneda) },
-            {
-              key: "inmueble_titulo",
-              header: "Inmueble",
-              render: (r) => {
-                const cliente = r.cliente_nombre || "Cliente";
-                const lugar = (r.edificio_nombre || "").trim() || String(r.inmueble_titulo || "").slice(0, 48);
-                const apto = r.numero_apto ? `Apto ${r.numero_apto}` : "";
-                const fecha = (iso) => {
-                  const [y, m, d] = String(iso || "").slice(0, 10).split("-");
-                  return y && m && d ? `${d}/${m}/${y}` : "";
-                };
-                const fechas = r.fecha_entrada && r.fecha_salida
-                  ? `${fecha(r.fecha_entrada)} al ${fecha(r.fecha_salida)}`
-                  : "";
-                const texto = [cliente, lugar, apto, fechas, money(r.monto_total, r.moneda)].filter(Boolean).join(" · ");
-                return <span className="block max-w-xs text-xs leading-snug" title={texto}>{texto}</span>;
-              },
-            },
+            { key: "inmueble_titulo", header: "Inmueble" },
             { key: "corredor_id", header: "ID Corredor", render: (r) => r.corredor_id || "-" },
             { key: "corredor_nombre", header: "Corredor", render: (r) => r.corredor_nombre || "-" },
             { key: "cliente_nombre", header: "Cliente" },
@@ -454,14 +437,14 @@ export default function TransaccionesPage() {
             <button
               disabled={page <= 1 || loading}
               onClick={() => { const p = page - 1; setPage(p); load(p); }}
-              className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+              className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-[#1f1f24] cursor-pointer"
             >
               ← Anterior
             </button>
             <button
               disabled={page >= Math.ceil(total / limit) || loading}
               onClick={() => { const p = page + 1; setPage(p); load(p); }}
-              className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+              className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-[#1f1f24] cursor-pointer"
             >
               Siguiente →
             </button>

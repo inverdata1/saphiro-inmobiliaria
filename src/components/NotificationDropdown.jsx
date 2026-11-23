@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import { apiGet, apiPatch } from "../api";
 
@@ -40,11 +40,11 @@ const ICON_MAP = {
 };
 
 const TIPO_COLORS = {
-  Transaccion: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-  Inmueble: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-  Sistema: "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300",
-  Corredor: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-  Comision: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+  Transaccion: "bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300",
+  Inmueble: "bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300",
+  Sistema: "bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300",
+  Corredor: "bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300",
+  Comision: "bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300",
 };
 
 function timeAgo(fecha) {
@@ -60,9 +60,7 @@ function timeAgo(fecha) {
 
 export default function NotificationDropdown() {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const usuarioId = user?.id;
-  const [alerta, setAlerta] = useState(null);
 
   const [open, setOpen] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -83,75 +81,8 @@ export default function NotificationDropdown() {
     }
   }
 
-  function pitar() {
-    try {
-      const Ctx = window.AudioContext || window.webkitAudioContext;
-      if (!Ctx) return;
-      const audio = new Ctx();
-      const osc = audio.createOscillator();
-      const gain = audio.createGain();
-      osc.frequency.value = 880;
-      osc.connect(gain);
-      gain.connect(audio.destination);
-      gain.gain.setValueAtTime(0.08, audio.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.16);
-      osc.start();
-      osc.stop(audio.currentTime + 0.16);
-      const osc2 = audio.createOscillator();
-      osc2.frequency.value = 1175;
-      osc2.connect(gain);
-      gain.gain.setValueAtTime(0.08, audio.currentTime + 0.2);
-      gain.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.4);
-      osc2.start(audio.currentTime + 0.2);
-      osc2.stop(audio.currentTime + 0.4);
-    } catch {
-      // silent
-    }
-  }
-
-  function avisarTelefono(titulo, cuerpo) {
-    pitar();
-    if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
-    try {
-      new Notification(titulo, { body: cuerpo });
-    } catch {
-      // silent
-    }
-  }
-
   useEffect(() => {
-    if (!usuarioId) return;
-    if (typeof Notification !== "undefined" && Notification.permission === "default") {
-      Notification.requestPermission().catch(() => {});
-    }
-    let activo = true;
-    const primera = { current: true };
-    const conocidos = new Set();
-    async function tick() {
-      try {
-        const r = await apiGet(`/notificaciones/${usuarioId}`);
-        const lista = Array.isArray(r?.data) ? r.data : [];
-        if (!primera.current) {
-          const nuevas = lista.filter((n) => !n.leida && !conocidos.has(n.id));
-          if (nuevas.length) {
-            avisarTelefono(nuevas[0].titulo, nuevas[0].descripcion);
-            setAlerta(nuevas[0]);
-          }
-        }
-        primera.current = false;
-        conocidos.clear();
-        lista.forEach((n) => conocidos.add(n.id));
-        if (activo) setNotificaciones(lista);
-      } catch {
-        // silent
-      }
-    }
-    tick();
-    const timer = setInterval(tick, 20000);
-    return () => {
-      activo = false;
-      clearInterval(timer);
-    };
+    load();
   }, [usuarioId]);
 
   useEffect(() => {
@@ -208,33 +139,11 @@ export default function NotificationDropdown() {
     apiPatch(`/notificaciones/${n.id}/read`).catch(() => {});
   }
 
-  function abrir(n) {
-    marcarLeida(n);
-    setAlerta(null);
-    setOpen(false);
-    if (typeof n.enlace === "string" && n.enlace.startsWith("/") && !n.enlace.startsWith("//")) {
-      navigate(n.enlace);
-      return;
-    }
-    if (/reserva/i.test(String(n.titulo || ""))) navigate("/reservaciones");
-  }
-
   return (
-    <>
-    {alerta && (
-      <div className="fixed bottom-4 right-4 z-[80] w-80 rounded-2xl border border-amber-300 bg-white p-4 shadow-2xl dark:border-amber-700 dark:bg-slate-900">
-        <p className="text-sm font-bold text-slate-900 dark:text-white">{alerta.titulo || "Aviso"}</p>
-        <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">{alerta.descripcion}</p>
-        <p className="mt-1 text-xs font-medium text-amber-700 dark:text-amber-300">Entra a revisarla.</p>
-        <button type="button" className="mt-3 rounded-lg bg-purple-800 px-3 py-1.5 text-xs font-semibold text-white" onClick={() => abrir(alerta)}>
-          Ver
-        </button>
-      </div>
-    )}
     <div className="relative" ref={ref}>
       <button
         onClick={handleToggle}
-        className="relative inline-flex h-9 w-9 sm:h-9.5 sm:w-9.5 items-center justify-center rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-700 transition active:scale-95 cursor-pointer"
+        className="relative inline-flex h-9 w-9 sm:h-9.5 sm:w-9.5 items-center justify-center rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-700 transition active:scale-95 cursor-pointer dark:border-slate-850 dark:text-slate-400 dark:hover:bg-[#18181c] dark:hover:border-slate-800 dark:hover:text-slate-200"
         aria-label="Notificaciones"
       >
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -248,7 +157,7 @@ export default function NotificationDropdown() {
       </button>
 
       {open && (
-        <div className={`absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-800 z-50 overflow-hidden transition-all duration-200 ease-out ${visible ? "translate-y-0 opacity-100" : "-translate-y-2 opacity-0"}`}>
+        <div className={`absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-[#141417] z-50 overflow-hidden transition-all duration-200 ease-out ${visible ? "translate-y-0 opacity-100" : "-translate-y-2 opacity-0"}`}>
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-700">
             <h3 className="text-sm font-bold text-slate-800 dark:text-white">Notificaciones</h3>
             {noLeidas > 0 && (
@@ -278,8 +187,8 @@ export default function NotificationDropdown() {
                 return (
                   <div
                     key={n.id}
-                    onClick={() => abrir(n)}
-                    className={`flex gap-3 px-4 py-3 transition hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer ${
+                    onClick={() => marcarLeida(n)}
+                    className={`flex gap-3 px-4 py-3 transition hover:bg-slate-50 dark:hover:bg-[#1f1f24]/50 cursor-pointer ${
                       !n.leida ? "bg-purple-50/50 dark:bg-purple-900/10" : ""
                     }`}
                   >
@@ -316,6 +225,5 @@ export default function NotificationDropdown() {
         </div>
       )}
     </div>
-    </>
   );
 }

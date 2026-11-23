@@ -12,7 +12,6 @@ function buildCtx(req) {
 
   return {
     usuario_id: req.user?.id ?? null,
-    rol: req.user?.rol ?? null,
     ip_address: ip || null,
     user_agent: req.headers["user-agent"] || null,
   };

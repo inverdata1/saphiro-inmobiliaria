@@ -3,7 +3,7 @@ import { apiGet, apiPost, apiPut, apiDelete } from "../../api";
 import SocialIcon from "../../utils/socialIcons.jsx";
 
 const INPUT_STYLE =
-  "w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1c1c21] text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-600/30 focus:border-purple-600 transition-all";
+  "w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#18181c] text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-600/30 focus:border-purple-600 transition-all";
 
 export default function SocialLinksEditor({ usuarioId }) {
   const [catalogo, setCatalogo] = useState([]);
@@ -229,10 +229,10 @@ export default function SocialLinksEditor({ usuarioId }) {
         <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, idx) => (
             <div key={idx} className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-800 animate-pulse shrink-0" />
+              <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-[#141417] animate-pulse shrink-0" />
               <div className="flex-1 space-y-2">
-                <div className="h-3 w-24 rounded bg-slate-200 dark:bg-slate-800 animate-pulse" />
-                <div className="h-4 w-48 rounded bg-slate-200 dark:bg-slate-800 animate-pulse" />
+                <div className="h-3 w-24 rounded bg-slate-200 dark:bg-[#141417] animate-pulse" />
+                <div className="h-4 w-48 rounded bg-slate-200 dark:bg-[#141417] animate-pulse" />
               </div>
             </div>
           ))}
@@ -246,7 +246,7 @@ export default function SocialLinksEditor({ usuarioId }) {
           {redes.map((r) => (
             <li key={r.record.id} className="space-y-2">
               {editando && editandoId === r.record.id ? (
-                <div className="flex-1 flex flex-col gap-2 px-3 py-2.5 rounded-xl bg-slate-50/60 dark:bg-slate-900/40 border border-purple-300 dark:border-purple-700">
+                <div className="flex-1 flex flex-col gap-2 px-3 py-2.5 rounded-xl bg-slate-50/60 dark:bg-[#0c0c0e]/40 border border-purple-300 dark:border-purple-700">
                   <div className="flex items-center gap-3">
                     <div
                       className="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center text-white shadow-xs"
@@ -373,13 +373,13 @@ export default function SocialLinksEditor({ usuarioId }) {
           </button>
 
           {showSelector && (
-            <div className="mt-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/40 p-3 space-y-2">
+            <div className="mt-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-[#0c0c0e]/40 p-3 space-y-2">
               {disponibles.length ? (
                 disponibles.map((p) =>
                   agregando === p.id ? (
                     <div
                       key={p.id}
-                      className="flex items-center gap-3 px-3 py-2 rounded-lg bg-white dark:bg-[#1c1c21] border border-purple-300 dark:border-purple-700"
+                      className="flex items-center gap-3 px-3 py-2 rounded-lg bg-white dark:bg-[#18181c] border border-purple-300 dark:border-purple-700"
                     >
                       <span
                         className="w-8 h-8 shrink-0 rounded-lg flex items-center justify-center text-white"
@@ -443,7 +443,7 @@ export default function SocialLinksEditor({ usuarioId }) {
                       key={p.id}
                       type="button"
                       onClick={() => abrirInput(p.id)}
-                      className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left hover:bg-white dark:hover:bg-[#1c1c21] border border-transparent hover:border-slate-200 dark:hover:border-slate-800 transition-colors cursor-pointer group"
+                      className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left hover:bg-white dark:hover:bg-[#18181c] border border-transparent hover:border-slate-200 dark:hover:border-slate-800 transition-colors cursor-pointer group"
                     >
                       <span
                         className="w-8 h-8 shrink-0 rounded-lg flex items-center justify-center text-white"

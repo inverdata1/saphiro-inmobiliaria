@@ -42,15 +42,15 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-white text-slate-900 shadow-sm border-b border-slate-100">
+      <header className="sticky top-0 z-40 bg-white text-slate-900 shadow-sm border-b border-slate-100 dark:bg-[#0c0c0e] dark:text-slate-100 dark:border-slate-850">
         {/* Fila superior: logo + acciones */}
-        <div className="flex items-center justify-between gap-2 px-2 py-1 sm:px-3">
-          <div className="flex min-w-0 items-center">
+        <div className="px-3 sm:px-5 py-3 sm:py-4 flex items-center justify-between gap-2 sm:gap-4 max-w-7xl mx-auto">
+          <div className="flex items-center min-w-0">
             {/* Hamburger (oculto en desktop para invitados: en lg+ ya están Inicio e Inmuebles) */}
             <button
               type="button"
               onClick={() => setOpen(true)}
-              className={`inline-flex items-center justify-center rounded-xl border border-slate-200 p-2 sm:p-2.5 text-slate-800 hover:bg-slate-50 active:scale-95 shrink-0 cursor-pointer ${user ? "" : "lg:hidden"}`}
+              className={`inline-flex items-center justify-center rounded-xl border border-slate-200 p-2 sm:p-2.5 text-slate-800 hover:bg-slate-50 active:scale-95 shrink-0 cursor-pointer dark:border-slate-850 dark:text-slate-200 dark:hover:bg-[#18181c] ${user ? "" : "lg:hidden"}`}
               aria-label="Abrir menú"
             >
               <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -61,21 +61,29 @@ export default function Navbar() {
             </button>
 
             {/* Logo */}
-            <NavLink to="/" className="order-first flex shrink-0 items-center">
+            <NavLink
+              to="/"
+              className={`flex shrink-0 items-center ${user ? "ml-3 sm:ml-6 lg:ml-8" : "ml-3 sm:ml-6"}`}
+            >
               <img
-                src="/bienes-acuario-logo.jpg"
-                alt="Bienes Acuario"
-                className="h-11 w-auto rounded-md bg-white object-contain object-left sm:h-12"
+                src="/saphiro-inmobiliaria-logo.png"
+                alt="Saphiro Inmobiliaria"
+                className="h-6 w-auto object-contain sm:h-8 md:h-9 lg:h-10 dark:brightness-0 dark:invert"
               />
             </NavLink>
           </div>
 
           {/* Acciones derecha */}
           <div className="flex items-center gap-1 sm:gap-2">
+            {/* Opciones de navegación (desktop) */}
+            <div className="hidden lg:flex min-w-0 items-center gap-1.5 mr-2">
+              <Item to="/" label="Inicio" variant="nav" />
+              <Item to="/inmuebles" label="Inmuebles" variant="nav" />
+            </div>
             <button
               type="button"
               onClick={toggleDark}
-              className="relative inline-flex h-9 w-9 sm:h-9.5 sm:w-9.5 items-center justify-center rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition active:scale-95 cursor-pointer"
+              className="relative inline-flex h-9 w-9 sm:h-9.5 sm:w-9.5 items-center justify-center rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition active:scale-95 cursor-pointer dark:border-slate-850 dark:text-slate-300 dark:hover:bg-[#18181c] dark:hover:border-slate-800"
               aria-label="Cambiar modo oscuro/claro"
             >
               <svg
@@ -99,25 +107,21 @@ export default function Navbar() {
                 <Link
                   to="/perfil"
                   title="Ver mi perfil"
-                  className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 py-1 pl-1 pr-2 sm:pr-3 hover:ring-2 hover:ring-slate-300 transition-all cursor-pointer"
+                  className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-700 border border-slate-200 text-xs font-extrabold overflow-hidden hover:ring-2 hover:ring-slate-300 hover:scale-105 transition-all cursor-pointer dark:bg-[#18181c] dark:text-slate-200 dark:border-slate-850 dark:hover:ring-slate-800"
                 >
-                  <span className="flex min-w-0 flex-col items-end leading-tight">
-                    <span className="max-w-36 truncate text-xs font-bold text-slate-800">{user.nombre || user.name || "Usuario"}</span>
-                    <span className="text-[10px] font-semibold text-slate-500">{user.rol === "cliente" ? "Cliente" : user.rol === "corredor" ? "Corredor" : user.rol === "admin" ? "Administrador" : user.rol}</span>
-                  </span>
                   {user.foto_perfil || user.avatar ? (
                     <img
                       src={user.foto_perfil || user.avatar}
                       alt={user.nombre || "Perfil"}
-                      className="h-8 w-8 rounded-full object-cover"
+                      className="h-full w-full object-cover"
                     />
                   ) : (
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-xs font-extrabold text-slate-700">{initials}</span>
+                    initials
                   )}
                 </Link>
                 <button
                   onClick={() => { logout(); navigate("/"); }}
-                  className="hidden sm:inline-flex whitespace-nowrap items-center justify-center rounded-full border border-slate-200 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all cursor-pointer"
+                  className="hidden sm:inline-flex whitespace-nowrap items-center justify-center rounded-full border border-slate-200 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all cursor-pointer dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 dark:border-white"
                 >
                   Salir
                 </button>
@@ -125,7 +129,7 @@ export default function Navbar() {
             ) : (
               <Link
                 to="/login"
-                className="inline-flex whitespace-nowrap items-center justify-center rounded-full bg-slate-900 hover:bg-slate-800 px-3 sm:px-5 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-white transition active:scale-95 shadow-sm"
+                className="inline-flex whitespace-nowrap items-center justify-center rounded-full bg-slate-900 hover:bg-slate-800 px-3 sm:px-5 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-white transition active:scale-95 shadow-sm dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
               >
                 {tr("signIn")}
               </Link>
@@ -133,48 +137,6 @@ export default function Navbar() {
           </div>
         </div>
 
-
-        <div className="hidden lg:block border-t border-slate-100">
-          <div className="overflow-x-auto px-2 py-0.5 sm:px-3">
-            <div className="flex w-max min-w-full flex-nowrap items-center gap-1">
-              {(user?.rol === "admin"
-                ? [
-                    ["/", "Inicio"],
-                    ["/inmuebles", "Inmuebles"],
-                    ["/inmuebles/crear", "Cargar inmueble"],
-                    ["/consulta-alquileres", "Alquileres"],
-                    ["/transacciones", "Transacciones"],
-                    ["/planes", "Planes"],
-                    ["/reservaciones", "Reservas"],
-                    ["/corredores", "Corredores"],
-                    ["/administradores", "Administradores"],
-                    ["/comisiones", "Comisiones"],
-                    ["/bitacora", "Bitácora"],
-                  ]
-                : user?.rol === "corredor"
-                  ? [
-                      ["/", "Inicio"],
-                      ["/inmuebles", "Inmuebles"],
-                      ["/mis-inmuebles", "Mis inmuebles"],
-                      ["/inmuebles/crear", "Cargar inmueble"],
-                      ["/mi-plan", "Mi plan"],
-                      ["/precios", "Planes"],
-                      ["/rentas-contratadas", "Contratos"],
-                      ["/reservaciones", "Reservas"],
-                      ["/guardados", "Guardados"],
-                    ]
-                  : [
-                      ["/", "Inicio"],
-                      ["/inmuebles", "Inmuebles"],
-                      ["/precios", "Planes"],
-                      ...(user ? [["/guardados", "Guardados"]] : []),
-                    ]
-              ).map(([to, label]) => (
-                <Item key={to} to={to} label={label} variant="nav" />
-              ))}
-            </div>
-          </div>
-        </div>
       </header>
 
       {/* Overlay */}
@@ -196,9 +158,9 @@ export default function Navbar() {
             className="flex items-center"
           >
             <img
-              src="/bienes-acuario-logo.jpg"
-              alt="Bienes Acuario"
-              className="h-24 w-auto rounded-xl border border-slate-200 bg-white object-contain p-1 sm:h-28"
+              src="/inverdata-logo.png"
+              alt="Inverdata"
+              className="h-14 sm:h-20 lg:h-24 w-auto object-contain rounded-xl border border-slate-200 p-1 sm:p-1.5 bg-white"
             />
           </NavLink>
           <button
@@ -249,7 +211,7 @@ export default function Navbar() {
               </Link>
               <button
                 onClick={() => { logout(); navigate("/"); setOpen(false); }}
-                className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold text-red-650 hover:bg-red-50/60 dark:text-red-400 dark:hover:bg-red-950/20 transition active:scale-98 cursor-pointer"
+                className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold text-red-650 hover:bg-red-50/60 dark:bg-[#18181c] dark:text-red-400 dark:hover:bg-[#1f1f24] transition active:scale-98 cursor-pointer"
               >
                 <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -261,7 +223,7 @@ export default function Navbar() {
             <Link
               to="/login"
               onClick={() => setOpen(false)}
-              className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white transition active:scale-98 shadow-sm" style={{ backgroundColor: "#5a0e82" }} onMouseEnter={e => e.currentTarget.style.backgroundColor = "#470A68"} onMouseLeave={e => e.currentTarget.style.backgroundColor = "#5a0e82"}
+              className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition active:scale-98 shadow-sm bg-[#5a0e82] hover:bg-[#470A68] text-white dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
             >
               Iniciar sesión
             </Link>

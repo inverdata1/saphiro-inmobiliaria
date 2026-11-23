@@ -14,7 +14,6 @@ L.Icon.Default.mergeOptions({
 });
 
 const UMBRAL_REVERSE_M = 100;
-const BORRADOR_KEY = "bienes-acuario-inmueble-borrador";
 
 function distanciaMetros(a, b) {
   const R = 6371000;
@@ -35,17 +34,6 @@ export default function InmuebleForm({
 }) {
   const navigate = useNavigate();
   const { user } = useAuth();
-
-  const [corredores, setCorredores] = useState([]);
-  const [corredorUsuarioId, setCorredorUsuarioId] = useState("");
-  const esAdmin = user?.rol === "admin";
-
-  useEffect(() => {
-    if (!esAdmin) return;
-    apiGet("/corredores?limit=200")
-      .then((r) => setCorredores(Array.isArray(r?.data) ? r.data : []))
-      .catch(() => setCorredores([]));
-  }, [esAdmin]);
 
   const [tipos, setTipos] = useState([]);
   const [estados, setEstados] = useState([]);
@@ -72,17 +60,10 @@ export default function InmuebleForm({
     estado_id: "",
     ciudad_id: "",
     direccion_exacta: "",
-    numero_apto: "",
-    edificio_nombre: "",
-    piso: "",
-    codigo_interno: "",
     punto_referencia: "",
     latitud: "10.4806",
     longitud: "-66.9036",
     precio_por_noche: "",
-    porcentaje_reserva: "50",
-    limpieza_final: "",
-    deposito_garantia: "",
     capacidad_personas: "",
     noches_minimas: "1",
     hora_checkin: "",
@@ -125,22 +106,8 @@ export default function InmuebleForm({
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
-  const sucioRef = useRef(false);
-  const permitirSalida = useRef(false);
-  const sentinel = useRef(false);
-  const [salida, setSalida] = useState(null);
-  const [avisoBorrador, setAvisoBorrador] = useState("");
-
-  function marcarSucio() {
-    sucioRef.current = true;
-    if (!sentinel.current) {
-      window.history.pushState({ guardaInmueble: 1 }, "");
-      sentinel.current = true;
-    }
-  }
 
   function set(k, v) {
-    marcarSucio();
     setForm((p) => ({ ...p, [k]: v }));
     setFieldErrors((p) => ({ ...p, [k]: "" }));
   }
@@ -183,7 +150,6 @@ export default function InmuebleForm({
   }
 
   function handleFiles(e) {
-    marcarSucio();
     const files = Array.from(e.target.files || []);
     const items = files.map((f) => ({
       id: (crypto?.randomUUID?.() || Math.random().toString(36).slice(2)),
@@ -195,7 +161,6 @@ export default function InmuebleForm({
   }
 
   function removeFile(id) {
-    marcarSucio();
     setSelectedFiles((p) => p.filter((it) => it.id !== id));
     setPreviews((p) => {
       const target = p.find((it) => it.id === id);
@@ -237,7 +202,7 @@ export default function InmuebleForm({
       descripcion: inmueble.descripcion || "",
       tipo_inmueble_id: String(inmueble.tipo_inmueble_id || ""),
       estado_inmueble: inmueble.estado_inmueble || "venta",
-      montoInicial: inmueble.estado_inmueble === "vacacional" ? false : Number(inmueble.precio) > 0,
+      montoInicial: Number(inmueble.precio) > 0,
       moneda: inmueble.moneda || "BS",
       precio: inmueble.precio ?? "",
       precio_por_mes: inmueble.alquiler_fijo?.precio_mes ?? inmueble.precio_por_mes ?? "",
@@ -248,17 +213,10 @@ export default function InmuebleForm({
       estado_id: estadoId ? String(estadoId) : "",
       ciudad_id: String(inmueble.ciudad_id || ""),
       direccion_exacta: inmueble.direccion_exacta || "",
-      numero_apto: inmueble.numero_apto || "",
-      edificio_nombre: inmueble.edificio_nombre || "",
-      piso: inmueble.piso || "",
-      codigo_interno: inmueble.codigo_interno || "",
       punto_referencia: inmueble.punto_referencia || "",
       latitud: inmueble.latitud || "10.4806",
       longitud: inmueble.longitud || "-66.9036",
       precio_por_noche: vac.precio_por_noche ?? "",
-      porcentaje_reserva: vac.porcentaje_reserva ?? "50",
-      limpieza_final: "",
-      deposito_garantia: "",
       capacidad_personas: vac.capacidad_personas ?? "",
       noches_minimas: vac.noches_minimas ?? "1",
       hora_checkin: vac.hora_checkin || "",
@@ -274,21 +232,14 @@ export default function InmuebleForm({
     });
     setCaracteristicasSel(sel);
 
-    const costosCargados = Array.isArray(inmueble.costos_adicionales) ? inmueble.costos_adicionales : [];
-    const esLimpieza = (nombre) => /limpieza/i.test(String(nombre || ""));
-    const esDeposito = (nombre) => /dep[oó]sito de garant/i.test(String(nombre || ""));
-    const limpieza = costosCargados.find((c) => esLimpieza(c.costo_adicional_nombre));
-    const deposito = costosCargados.find((c) => esDeposito(c.costo_adicional_nombre));
-    if (limpieza) set("limpieza_final", String(limpieza.monto ?? ""));
-    if (deposito) set("deposito_garantia", String(deposito.monto ?? ""));
     setCostosSel(
-      costosCargados
-        .filter((c) => !esLimpieza(c.costo_adicional_nombre) && !esDeposito(c.costo_adicional_nombre))
-        .map((c) => ({
-          costo_adicional_id: c.costo_adicional_id,
-          descripcion: "",
-          monto: String(c.monto ?? ""),
-        }))
+      Array.isArray(inmueble.costos_adicionales)
+        ? inmueble.costos_adicionales.map((c) => ({
+            costo_adicional_id: c.costo_adicional_id,
+            descripcion: "",
+            monto: String(c.monto ?? ""),
+          }))
+        : []
     );
 
     setMascotasSel(
@@ -310,7 +261,6 @@ export default function InmuebleForm({
   }, [edit, inmueble, estados, caracteristicasIniciales]);
 
   function agregarCaracteristica(id) {
-    marcarSucio();
     const c = caracteristicas.find((x) => x.id === id);
     if (!c || caracteristicasSel[id]) return;
     setCaracteristicasSel((prev) => ({
@@ -320,7 +270,6 @@ export default function InmuebleForm({
   }
 
   function quitarCaracteristica(id) {
-    marcarSucio();
     setCaracteristicasSel((prev) => {
       const next = { ...prev };
       delete next[id];
@@ -334,7 +283,6 @@ export default function InmuebleForm({
   }
 
   function setCaracteristicaValor(id, valor) {
-    marcarSucio();
     setCaracteristicasSel((prev) => ({
       ...prev,
       [id]: { ...prev[id], valor },
@@ -343,29 +291,24 @@ export default function InmuebleForm({
   }
 
   function agregarCosto(id) {
-    marcarSucio();
     if (costosSel.some((c) => c.costo_adicional_id === id)) return;
     setCostosSel((prev) => [...prev, { costo_adicional_id: id, descripcion: "", monto: "" }]);
   }
 
   function quitarCosto(id) {
-    marcarSucio();
     setCostosSel((prev) => prev.filter((c) => c.costo_adicional_id !== id));
   }
 
   function setCostoField(id, field, value) {
-    marcarSucio();
     setCostosSel((prev) => prev.map((c) => c.costo_adicional_id === id ? { ...c, [field]: value } : c));
   }
 
   function agregarMascota(id) {
-    marcarSucio();
     if (mascotasSel.includes(Number(id))) return;
     setMascotasSel((prev) => [...prev, Number(id)]);
   }
 
   function quitarMascota(id) {
-    marcarSucio();
     setMascotasSel((prev) => prev.filter((m) => m !== Number(id)));
   }
 
@@ -383,9 +326,7 @@ export default function InmuebleForm({
       return;
     }
     const dir = (form.direccion_exacta || "").trim();
-    const ref = (form.punto_referencia || "").trim();
-    const consulta = [dir, ref].filter(Boolean).join(", ");
-    if (consulta.length < 4) {
+    if (dir.length < 4) {
       setGeoStatus("idle");
       setGeoOpciones([]);
       return;
@@ -396,7 +337,7 @@ export default function InmuebleForm({
       const estado = estados.find((e) => e.id === Number(form.estado_id))?.nombre;
       const ciudad = ciudades.find((c) => c.id === Number(form.ciudad_id))?.nombre;
       try {
-        const r = await apiGet("/geocoding/forward", { direccion: consulta, ciudad, estado });
+        const r = await apiGet("/geocoding/forward", { direccion: dir, ciudad, estado });
         if (secuenciaGeocode.current !== miSeq) return;
         const resultados = r.data || [];
         if (!resultados.length) {
@@ -416,93 +357,7 @@ export default function InmuebleForm({
     }, 500);
     return () => clearTimeout(debounceGeoRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.direccion_exacta, form.punto_referencia, form.estado_id, form.ciudad_id]);
-
-  useEffect(() => {
-    const avisar = (e) => {
-      if (!sucioRef.current || permitirSalida.current) return;
-      e.preventDefault();
-      e.returnValue = "";
-    };
-    window.addEventListener("beforeunload", avisar);
-    return () => window.removeEventListener("beforeunload", avisar);
-  }, []);
-
-  useEffect(() => {
-    if (edit) return;
-    try {
-      const raw = sessionStorage.getItem(BORRADOR_KEY);
-      if (!raw) return;
-      const d = JSON.parse(raw);
-      if (!d?.form) return;
-      setForm((p) => ({ ...p, ...d.form }));
-      if (d.caracteristicasSel) setCaracteristicasSel(d.caracteristicasSel);
-      if (Array.isArray(d.costosSel)) setCostosSel(d.costosSel);
-      if (Array.isArray(d.mascotasSel)) setMascotasSel(d.mascotasSel);
-      sucioRef.current = true;
-      if (!sentinel.current) {
-        window.history.pushState({ guardaInmueble: 1 }, "");
-        sentinel.current = true;
-      }
-      setAvisoBorrador("Recuperamos la carga anterior. Vuelve a elegir las fotos.");
-    } catch {
-      sessionStorage.removeItem(BORRADOR_KEY);
-    }
-  }, [edit]);
-
-  useEffect(() => {
-    if (edit || !sucioRef.current) return;
-    const t = setTimeout(() => {
-      sessionStorage.setItem(BORRADOR_KEY, JSON.stringify({
-        form,
-        caracteristicasSel,
-        costosSel,
-        mascotasSel,
-      }));
-    }, 300);
-    return () => clearTimeout(t);
-  }, [edit, form, caracteristicasSel, costosSel, mascotasSel]);
-
-  useEffect(() => {
-    const onClick = (e) => {
-      if (permitirSalida.current || !sucioRef.current) return;
-      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
-      const salir = e.target.closest?.("[data-salir]");
-      if (salir) {
-        e.preventDefault();
-        e.stopPropagation();
-        setSalida({ back: true });
-        return;
-      }
-      const a = e.target.closest?.("a[href]");
-      if (!a || a.target === "_blank") return;
-      const href = a.getAttribute("href");
-      if (!href || href.startsWith("#") || href.startsWith("mailto:") || href.startsWith("tel:")) return;
-      let destino;
-      try {
-        destino = new URL(href, window.location.origin);
-      } catch {
-        return;
-      }
-      if (destino.origin !== window.location.origin) return;
-      if (destino.pathname === window.location.pathname && destino.search === window.location.search) return;
-      e.preventDefault();
-      e.stopPropagation();
-      setSalida({ href: `${destino.pathname}${destino.search}${destino.hash}` });
-    };
-    const onPop = () => {
-      if (!sucioRef.current || permitirSalida.current) return;
-      window.history.pushState({ guardaInmueble: 1 }, "");
-      sentinel.current = true;
-      setSalida({ back: true });
-    };
-    document.addEventListener("click", onClick, true);
-    window.addEventListener("popstate", onPop);
-    return () => {
-      document.removeEventListener("click", onClick, true);
-      window.removeEventListener("popstate", onPop);
-    };
-  }, []);
+  }, [form.direccion_exacta, form.estado_id, form.ciudad_id]);
 
   useEffect(() => {
     const onMouseDown = (e) => {
@@ -572,7 +427,6 @@ export default function InmuebleForm({
   function validate() {
     const errs = {};
     if (!form.titulo?.trim()) errs.titulo = "El título es obligatorio";
-    if (esAdmin && !edit && !corredorUsuarioId) errs.corredorUsuarioId = "Selecciona el corredor";
     if (!form.tipo_inmueble_id) errs.tipo_inmueble_id = "Selecciona un tipo de inmueble";
     const precioNum = Number(form.precio);
     if (
@@ -604,16 +458,10 @@ export default function InmuebleForm({
     }
 
     if (!form.direccion_exacta?.trim()) errs.direccion_exacta = "La dirección es obligatoria";
-    if (!form.edificio_nombre?.trim()) errs.edificio_nombre = "Indica el edificio o conjunto residencial";
-    else if (form.edificio_nombre.trim().length > 120) errs.edificio_nombre = "El nombre del edificio no puede pasar de 120 caracteres";
-    if ((form.piso || "").trim().length > 20) errs.piso = "El piso no puede pasar de 20 caracteres";
-    if (!/^[A-Za-z0-9]{4}$/.test((form.codigo_interno || "").trim())) errs.codigo_interno = "El código interno debe tener 4 letras o números";
     if (!form.latitud || !form.longitud) errs.ubicacion = "Señala la ubicación en el mapa";
     if (form.estado_inmueble === "vacacional") {
       
       if (!form.precio_por_noche || Number(form.precio_por_noche) <= 0) errs.precio_por_noche = "Precio por noche requerido";
-      const pct = Number(form.porcentaje_reserva);
-      if (!Number.isFinite(pct) || pct < 0 || pct > 100) errs.porcentaje_reserva = "El porcentaje para reservar va de 0 a 100";
 
       if (!form.capacidad_personas || Number(form.capacidad_personas) <= 0) errs.capacidad_personas = "Capacidad requerida";
 
@@ -654,7 +502,7 @@ export default function InmuebleForm({
   }
 
   async function handleSubmit(e) {
-    e?.preventDefault();
+    e.preventDefault();
     setErr("");
     if (!validate()) return;
     setLoading(true);
@@ -669,19 +517,15 @@ export default function InmuebleForm({
         descripcion: form.descripcion || null,
         tipo_inmueble_id: form.tipo_inmueble_id ? Number(form.tipo_inmueble_id) : null,
         estado_inmueble: form.estado_inmueble,
-        precio: form.estado_inmueble === "vacacional" || (esAlquilerFijo && !form.montoInicial) ? 0 : form.precio ? Number(form.precio) : null,
+        precio: esAlquilerFijo && !form.montoInicial ? 0 : form.precio ? Number(form.precio) : null,
         moneda: form.moneda,
         area_m2: form.area_m2 ? Number(form.area_m2) : null,
         area_construccion_m2: form.area_construccion_m2 ? Number(form.area_construccion_m2) : 0,
         terminos_y_condiciones: form.terminos_y_condiciones?.trim() || null,
         ciudad_id: form.ciudad_id ? Number(form.ciudad_id) : null,
         direccion_exacta: form.direccion_exacta || null,
-        numero_apto: form.numero_apto?.trim() || null,
-        edificio_nombre: form.edificio_nombre?.trim() || null,
-        piso: form.piso?.trim() || null,
-        codigo_interno: form.codigo_interno?.trim().toUpperCase() || null,
         punto_referencia: form.punto_referencia || null,
-        usuario_id: esAdmin ? Number(corredorUsuarioId) : user?.id ? Number(user.id) : null,
+        usuario_id: user?.id ? Number(user.id) : null,
         latitud: form.latitud ? Number(form.latitud) : null,
         longitud: form.longitud ? Number(form.longitud) : null,
         caracteristicas,
@@ -689,25 +533,14 @@ export default function InmuebleForm({
 
       if (form.estado_inmueble === "vacacional") {
         payload.precio_por_noche = Number(form.precio_por_noche);
-        payload.porcentaje_reserva = Number(form.porcentaje_reserva);
         payload.capacidad_personas = Number(form.capacidad_personas);
         payload.noches_minimas = form.noches_minimas ? Number(form.noches_minimas) : 1;
         payload.hora_checkin = form.hora_checkin || null;
         payload.hora_checkout = form.hora_checkout || null;
-        const porNombre = (re) => costosDisponibles.find((c) => re.test(String(c.nombre || "")));
-        const limpiezaCat = porNombre(/^limpieza$/i) || porNombre(/limpieza/i);
-        const depositoCat = porNombre(/dep[oó]sito de garant/i);
-        const extras = costosSel
-          .filter((c) => c.costo_adicional_id !== limpiezaCat?.id && c.costo_adicional_id !== depositoCat?.id)
-          .map((c) => ({
-            costo_adicional_id: c.costo_adicional_id,
-            monto: c.monto ? Number(c.monto) : 0,
-          }));
-        const limpiezaMonto = Number(form.limpieza_final);
-        const depositoMonto = Number(form.deposito_garantia);
-        if (limpiezaCat && limpiezaMonto > 0) extras.push({ costo_adicional_id: limpiezaCat.id, monto: limpiezaMonto });
-        if (depositoCat && depositoMonto > 0) extras.push({ costo_adicional_id: depositoCat.id, monto: depositoMonto });
-        payload.costos_adicionales = extras;
+        payload.costos_adicionales = costosSel.map((c) => ({
+          costo_adicional_id: c.costo_adicional_id,
+          monto: c.monto ? Number(c.monto) : 0,
+        }));
         payload.mascotas = mascotasSel.map((id) => ({ mascota_id: id }));
         payload.permiso_infantes = form.permite_infantes;
         payload.cantidad_mascotas_permitidas = form.numero_mascotas ? Number(form.numero_mascotas) : 0;
@@ -732,14 +565,9 @@ export default function InmuebleForm({
 
       if (edit) {
         await apiUpload(`/inmuebles/${inmueble?.id}`, fd, "PUT");
-        permitirSalida.current = true;
-        sucioRef.current = false;
         await onSaved?.();
       } else {
         await apiUpload("/inmuebles", fd);
-        permitirSalida.current = true;
-        sucioRef.current = false;
-        sessionStorage.removeItem(BORRADOR_KEY);
         navigate("/inmuebles");
       }
     } catch (e) {
@@ -749,19 +577,7 @@ export default function InmuebleForm({
     }
   }
 
-  function salirSinGuardar() {
-    const destino = salida;
-    permitirSalida.current = true;
-    sucioRef.current = false;
-    if (!edit) sessionStorage.removeItem(BORRADOR_KEY);
-    setSalida(null);
-    if (destino?.href) navigate(destino.href);
-    else if (destino?.back && sentinel.current) window.history.go(-2);
-    else if (edit) onCancel?.();
-    else navigate("/inmuebles");
-  }
-
-  const inputCls = "mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900";
+  const inputCls = "mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-100 dark:focus:ring-blue-900";
   const inputClsErr = "border-red-300 focus:border-red-400 focus:ring-red-100 dark:border-red-700 dark:focus:ring-red-900";
   const labelCls = "text-xs font-semibold text-slate-500 dark:text-slate-400";
   const errMsgCls = "mt-1 text-xs text-red-600 dark:text-red-400";
@@ -769,33 +585,8 @@ export default function InmuebleForm({
   return (
     <>
       <ErrorMessage message={err} onClose={() => setErr("")} />
-      {avisoBorrador ? (
-        <p className="mb-3 rounded-xl bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-800">{avisoBorrador}</p>
-      ) : null}
 
       <form onSubmit={handleSubmit} className="p-6 space-y-5">
-        {esAdmin && !edit ? (
-          <div>
-            <label className={labelCls}>Corredor *</label>
-            <select
-              className={`${inputCls} ${fieldErrors.corredorUsuarioId ? inputClsErr : ""}`}
-              value={corredorUsuarioId}
-              onChange={(e) => {
-                setCorredorUsuarioId(e.target.value);
-                setFieldErrors((p) => ({ ...p, corredorUsuarioId: "" }));
-              }}
-            >
-              <option value="">Seleccionar corredor…</option>
-              {corredores.map((c) => (
-                <option key={c.corredor_id || c.id} value={c.id}>
-                  {c.corredor_nombre || c.nombre || c.corredor_email || c.email}
-                </option>
-              ))}
-            </select>
-            {fieldErrors.corredorUsuarioId ? <p className={errMsgCls}>{fieldErrors.corredorUsuarioId}</p> : null}
-          </div>
-        ) : null}
-
         <div>
           <label className={labelCls}>Título *</label>
           <input className={`${inputCls} ${fieldErrors.titulo ? inputClsErr : ""}`} value={form.titulo} onChange={(e) => { set("titulo", e.target.value); setFieldErrors((p) => ({ ...p, titulo: "" })); }} placeholder="Ej: Apartamento en Bella Vista" />
@@ -832,7 +623,7 @@ export default function InmuebleForm({
               <select className={inputCls} value={form.estado_inmueble} onChange={(e) => {
                 const op = e.target.value;
                 set("estado_inmueble", op);
-                if (op === "alquiler_fijo" || op === "vacacional") {
+                if (op === "alquiler_fijo") {
                   set("montoInicial", false);
                   set("precio", "0");
                 }
@@ -848,9 +639,20 @@ export default function InmuebleForm({
         <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
           <div className={form.estado_inmueble === "vacacional" || esAlquilerFijo ? "md:col-span-4" : ""}>
             {form.estado_inmueble === "vacacional" && (
-              <p className="mb-2 text-xs text-slate-500 dark:text-slate-400">
-                En la publicación solo se muestra la tarifa por noche.
-              </p>
+              <label className="flex items-center gap-2 mb-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={form.montoInicial}
+                  onChange={(e) => {
+                    set("montoInicial", e.target.checked);
+                    if (!e.target.checked) set("precio", "0");
+                  }}
+                  className="h-4 w-4 rounded border-slate-300 text-purple-900 focus:ring-purple-900 accent-purple-900"
+                />
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  ¿El vacacional tiene un monto inicial?
+                </span>
+              </label>
             )}
             {esAlquilerFijo && (
               <label className="flex items-center gap-2 mb-2 cursor-pointer select-none">
@@ -944,7 +746,7 @@ export default function InmuebleForm({
                 return (
                   <div
                     key={id}
-                    className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-800"
+                    className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-[#141417]"
                   >
                     <span className="text-sm font-medium text-slate-700 dark:text-slate-200 flex-1">{c.nombre}</span>
 
@@ -956,7 +758,7 @@ export default function InmuebleForm({
                             value={data.valor}
                             onChange={(e) => setCaracteristicaValor(Number(id), e.target.value)}
                             placeholder="Valor"
-                            className={`w-20 rounded-lg border px-2 py-1 text-xs text-right focus:border-blue-400 focus:outline-none dark:bg-slate-700 dark:text-slate-100 ${
+                            className={`w-20 rounded-lg border px-2 py-1 text-xs text-right focus:border-blue-400 focus:outline-none dark:bg-[#1f1f24] dark:text-slate-100 ${
                               caracteristicasErrs[id]
                                 ? "border-red-400 dark:border-red-700"
                                 : "border-slate-200 dark:border-slate-600"
@@ -994,25 +796,9 @@ export default function InmuebleForm({
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div>
-                <label className={labelCls}>Tarifa por noche *</label>
-                <input className={`${inputCls} ${fieldErrors.precio_por_noche ? inputClsErr : ""}`} type="number" value={form.precio_por_noche} onChange={(e) => { set("precio_por_noche", e.target.value); setFieldErrors((p) => ({ ...p, precio_por_noche: "" })); }} placeholder="60" />
+                <label className={labelCls}>Precio por noche *</label>
+                <input className={`${inputCls} ${fieldErrors.precio_por_noche ? inputClsErr : ""}`} type="number" value={form.precio_por_noche} onChange={(e) => { set("precio_por_noche", e.target.value); setFieldErrors((p) => ({ ...p, precio_por_noche: "" })); }} placeholder="0" />
                 {fieldErrors.precio_por_noche && <p className={errMsgCls}>{fieldErrors.precio_por_noche}</p>}
-              </div>
-              <div>
-                <label className={labelCls}>Porcentaje para reservar</label>
-                <input className={`${inputCls} ${fieldErrors.porcentaje_reserva ? inputClsErr : ""}`} type="number" min="0" max="100" value={form.porcentaje_reserva} onChange={(e) => { set("porcentaje_reserva", e.target.value); setFieldErrors((p) => ({ ...p, porcentaje_reserva: "" })); }} placeholder="50" />
-                <p className="mt-1 text-xs text-slate-400">Porcentaje del total de la estadía. No se muestra en la publicación.</p>
-                {fieldErrors.porcentaje_reserva && <p className={errMsgCls}>{fieldErrors.porcentaje_reserva}</p>}
-              </div>
-              <div>
-                <label className={labelCls}>Limpieza final</label>
-                <input className={inputCls} type="number" min="0" value={form.limpieza_final} onChange={(e) => set("limpieza_final", e.target.value)} placeholder="30" />
-                <p className="mt-1 text-xs text-slate-400">Un solo monto al final, no por noche. Se puede cambiar al reservar.</p>
-              </div>
-              <div>
-                <label className={labelCls}>Depósito de garantía</label>
-                <input className={inputCls} type="number" min="0" value={form.deposito_garantia} onChange={(e) => set("deposito_garantia", e.target.value)} placeholder="100" />
-                <p className="mt-1 text-xs text-slate-400">Reembolsable. Un solo monto, no por noche.</p>
               </div>
               <div>
                 <label className={labelCls}>Capacidad personas *</label>
@@ -1039,7 +825,7 @@ export default function InmuebleForm({
             <div className="mt-4">
               <label className={labelCls}>Reglas</label>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 mt-2">
-                <label className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-4 py-3 cursor-pointer select-none dark:border-slate-700 dark:bg-slate-800">
+                <label className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-4 py-3 cursor-pointer select-none dark:border-slate-700 dark:bg-[#141417]">
                   <input
                     type="checkbox"
                     checked={form.permite_mascotas}
@@ -1053,7 +839,7 @@ export default function InmuebleForm({
                     ¿Se permitirán mascotas?
                   </span>
                 </label>
-                <label className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-4 py-3 cursor-pointer select-none dark:border-slate-700 dark:bg-slate-800">
+                <label className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-4 py-3 cursor-pointer select-none dark:border-slate-700 dark:bg-[#141417]">
                   <input
                     type="checkbox"
                     checked={form.permite_infantes}
@@ -1097,7 +883,7 @@ export default function InmuebleForm({
                         mascotasDisponibles.find((m) => m.id === mascotaId) ||
                         (Array.isArray(inmueble?.mascotas) ? inmueble.mascotas.find((m) => Number(m.mascota_id) === mascotaId) : null);
                       return (
-                        <div key={mascotaId} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
+                        <div key={mascotaId} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-[#141417]">
                           <span className="text-sm font-medium text-slate-700 dark:text-slate-200 flex-1">{mascota?.nombre || `Mascota ${mascotaId}`}</span>
                           <button
                             type="button"
@@ -1143,14 +929,14 @@ export default function InmuebleForm({
                         ? { nombre: inmueble.costos_adicionales.find((c) => c.costo_adicional_id === cs.costo_adicional_id)?.costo_adicional_nombre }
                         : null);
                     return (
-                      <div key={cs.costo_adicional_id} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
+                      <div key={cs.costo_adicional_id} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-[#141417]">
                         <span className="text-sm font-medium text-slate-700 dark:text-slate-200 flex-1">{costo?.nombre || `Costo ${cs.costo_adicional_id}`}</span>
                         <input
                           type="number"
                           value={cs.monto}
                           onChange={(e) => setCostoField(cs.costo_adicional_id, "monto", e.target.value)}
                           placeholder="Monto"
-                          className="w-20 rounded-lg border border-slate-200 px-2 py-1 text-xs text-right focus:border-blue-400 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
+                          className="w-20 rounded-lg border border-slate-200 px-2 py-1 text-xs text-right focus:border-blue-400 focus:outline-none dark:border-slate-600 dark:bg-[#1f1f24] dark:text-slate-100"
                         />
                         <button
                           type="button"
@@ -1198,25 +984,6 @@ export default function InmuebleForm({
             </div>
             <textarea className={`${inputCls} ${fieldErrors.direccion_exacta ? inputClsErr : ""} min-h-[60px]`} value={form.direccion_exacta} onChange={(e) => { set("direccion_exacta", e.target.value); setFieldErrors((p) => ({ ...p, direccion_exacta: "" })); }} placeholder="Calle, avenida, número, edificio, apto…" />
             {fieldErrors.direccion_exacta && <p className={errMsgCls}>{fieldErrors.direccion_exacta}</p>}
-            <label className={labelCls + " mt-4 block"}>Número de apartamento</label>
-            <input className={inputCls} value={form.numero_apto} onChange={(e) => set("numero_apto", e.target.value)} placeholder="Ej: 8-N" maxLength={40} />
-            <div className="mt-4 grid gap-3 sm:grid-cols-3">
-              <div>
-                <label className={labelCls}>Edificio o conjunto *</label>
-                <input className={`${inputCls} ${fieldErrors.edificio_nombre ? inputClsErr : ""}`} value={form.edificio_nombre} onChange={(e) => { set("edificio_nombre", e.target.value); setFieldErrors((p) => ({ ...p, edificio_nombre: "" })); }} placeholder="Ej: Residencias Acuario" maxLength={120} />
-                {fieldErrors.edificio_nombre && <p className={errMsgCls}>{fieldErrors.edificio_nombre}</p>}
-              </div>
-              <div>
-                <label className={labelCls}>Piso</label>
-                <input className={`${inputCls} ${fieldErrors.piso ? inputClsErr : ""}`} value={form.piso} onChange={(e) => { set("piso", e.target.value); setFieldErrors((p) => ({ ...p, piso: "" })); }} placeholder="Ej: 8" maxLength={20} />
-                {fieldErrors.piso && <p className={errMsgCls}>{fieldErrors.piso}</p>}
-              </div>
-              <div>
-                <label className={labelCls}>Código interno *</label>
-                <input className={`${inputCls} uppercase ${fieldErrors.codigo_interno ? inputClsErr : ""}`} value={form.codigo_interno} onChange={(e) => { set("codigo_interno", e.target.value.toUpperCase().replace(/[^A-Za-z0-9]/g, "").slice(0, 4)); setFieldErrors((p) => ({ ...p, codigo_interno: "" })); }} placeholder="AB12" maxLength={4} />
-                {fieldErrors.codigo_interno && <p className={errMsgCls}>{fieldErrors.codigo_interno}</p>}
-              </div>
-            </div>
             {geoStatus === "buscando" && (
               <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
                 <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-purple-900 border-t-transparent dark:border-purple-400" />
@@ -1230,13 +997,11 @@ export default function InmuebleForm({
             )}
             {geoStatus === "sin_resultados" && (
               <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
-                No se ubicó sola. Márcala en el mapa: el inmueble se puede guardar igual.
+                No se encontró esa dirección. Señálala manualmente en el mapa.
               </p>
             )}
             {geoStatus === "error" && (
-              <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
-                El buscador de direcciones no está disponible. Márcala en el mapa: el inmueble se puede guardar igual.
-              </p>
+              <p className="mt-1 text-xs text-red-600 dark:text-red-400">{geoError}</p>
             )}
             {geoOpciones.length > 1 && (
               <div className="mt-2">
@@ -1256,11 +1021,7 @@ export default function InmuebleForm({
 
           <div className="mt-4">
             <label className={labelCls}>Punto de referencia</label>
-            <input className={inputCls} value={form.punto_referencia} onChange={(e) => set("punto_referencia", e.target.value)} placeholder="Ej: Frente al centro comercial Sambil" />
-            <p className="mt-1 text-xs text-slate-400">Al escribirlo, el mapa busca ese punto.</p>
-            {geoStatus === "buscando" && form.punto_referencia?.trim() && (
-              <p className="mt-1 text-xs text-slate-400">Buscando el punto de referencia…</p>
-            )}
+            <input className={inputCls} value={form.punto_referencia} onChange={(e) => set("punto_referencia", e.target.value)} placeholder="Ej: Cerca del centro comercial" />
           </div>
 
           {/* Map */}
@@ -1276,7 +1037,7 @@ export default function InmuebleForm({
                   title="Haz clic para activar el mapa"
                   className="absolute inset-0 z-[1001] flex items-end justify-center bg-transparent pb-3 cursor-pointer"
                 >
-                  <span className="rounded-full bg-black/70 px-3 py-1 text-xs font-medium text-white shadow-lg">
+                  <span className="rounded-full bg-blue-600/90 px-3 py-1 text-xs font-medium text-white shadow-lg">
                     Haz clic para activar el mapa…
                   </span>
                 </button>
@@ -1303,7 +1064,7 @@ export default function InmuebleForm({
                 {imagenesExistentes.map((img) => (
                   <div key={img.id} className="group relative h-20 w-20 overflow-hidden rounded-lg border border-slate-200 dark:border-slate-600">
                     <img src={img.url} alt="" className="h-full w-full object-cover" />
-                    {imagenesExistentes[0]?.id === img.id ? <span className="absolute left-0 top-0 rounded-br bg-purple-900 px-1 text-[10px] text-white">Portada</span> : null}
+                    {imagenesExistentes[0]?.id === img.id ? <span className="absolute left-0 top-0 rounded-br bg-blue-700 px-1 text-[10px] text-white">Portada</span> : null}
                     <button
                       type="button"
                       onClick={() => {
@@ -1340,7 +1101,7 @@ export default function InmuebleForm({
               {previews.map((p) => (
                 <div key={p.id} className="group relative h-20 w-20 overflow-hidden rounded-lg border border-slate-200 dark:border-slate-600">
                   <img src={p.url} alt="" className="h-full w-full object-cover" />
-                  {previews[0]?.id === p.id ? <span className="absolute left-0 top-0 rounded-br bg-purple-900 px-1 text-[10px] text-white">Portada</span> : null}
+                  {previews[0]?.id === p.id ? <span className="absolute left-0 top-0 rounded-br bg-blue-700 px-1 text-[10px] text-white">Portada</span> : null}
                   <button
                     type="button"
                     onClick={() => removeFile(p.id)}
@@ -1358,14 +1119,7 @@ export default function InmuebleForm({
         </div>
 
         <div className="flex justify-end gap-3 pt-2">
-          <button type="button" className="rounded-xl border border-slate-200 px-5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer" onClick={() => {
-            if (sucioRef.current && !permitirSalida.current) {
-              setSalida({ cancel: true });
-              return;
-            }
-            if (edit) onCancel?.();
-            else navigate("/inmuebles");
-          }}>
+          <button type="button" className="rounded-xl border border-slate-200 px-5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-[#1f1f24] cursor-pointer" onClick={() => (edit ? onCancel?.() : navigate("/inmuebles"))}>
             Cancelar
           </button>
           <button type="submit" disabled={loading} className="btn-primary disabled:opacity-50">
@@ -1373,19 +1127,6 @@ export default function InmuebleForm({
           </button>
         </div>
       </form>
-      {salida && (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-            <h3 className="text-lg font-black text-slate-900">Hay datos sin guardar</h3>
-            <p className="mt-2 text-sm text-slate-600">Si sales ahora se pierde lo que ya cargaste. Puedes guardar el inmueble o seguir en el formulario.</p>
-            <div className="mt-5 flex flex-wrap justify-end gap-2">
-              <button type="button" className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700" onClick={() => setSalida(null)}>Seguir cargando</button>
-              <button type="button" className="rounded-xl border border-rose-200 px-4 py-2 text-sm font-bold text-rose-700" onClick={salirSinGuardar}>Salir sin guardar</button>
-              <button type="button" className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-bold text-white" onClick={() => { setSalida(null); handleSubmit(); }}>Guardar</button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }

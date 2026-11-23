@@ -34,7 +34,6 @@ export default function DatePickerCalendarModal({
   title = "Selecciona una fecha",
   subtitle,
   reservas,
-  rangeStart = "",
 }) {
   const [calHeight, setCalHeight] = useState(0);
   const calendarRef = useRef(null);
@@ -77,7 +76,7 @@ export default function DatePickerCalendarModal({
       onClick={onClose}
     >
       <div
-        className="w-full sm:max-w-2xl max-h-[92vh] sm:max-h-[96vh] overflow-hidden rounded-t-2xl sm:rounded-2xl bg-white shadow-2xl dark:bg-slate-800 dark:border dark:border-slate-700 animate-[slideup_0.3s_ease-out]"
+        className="w-full sm:max-w-2xl max-h-[92vh] sm:max-h-[96vh] overflow-hidden rounded-t-2xl sm:rounded-2xl bg-white shadow-2xl dark:bg-[#141417] dark:border dark:border-slate-700 animate-[slideup_0.3s_ease-out]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between p-3 sm:p-4 pb-0">
@@ -92,7 +91,7 @@ export default function DatePickerCalendarModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 cursor-pointer shrink-0"
+            className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-[#1f1f24] cursor-pointer shrink-0"
             aria-label="Cerrar calendario"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -149,12 +148,6 @@ export default function DatePickerCalendarModal({
 
               if (selectedDate && dateStr === selectedDate) {
                 classes.push("fc-date-selected");
-              }
-              if (ocupadas.has(dateStr)) {
-                classes.push("fc-day-ocupada");
-              }
-              if (rangeStart && selectedDate && dateStr >= rangeStart && dateStr <= selectedDate) {
-                classes.push("fc-day-range");
               }
 
               return classes;

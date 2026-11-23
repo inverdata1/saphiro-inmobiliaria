@@ -12,6 +12,8 @@ export default function RegisterPage() {
   const [registeredEmail, setRegisteredEmail] = useState("");
   const [resending, setResending] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
+  const [aceptaTerminos, setAceptaTerminos] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
   function handleChange(e) {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -23,6 +25,11 @@ export default function RegisterPage() {
 
     if (form.password !== form.confirmPassword) {
       setErr("Las contraseñas no coinciden");
+      return;
+    }
+
+    if (!aceptaTerminos) {
+      setErr("Debes aceptar los acuerdos y condiciones para continuar");
       return;
     }
 
@@ -132,7 +139,7 @@ export default function RegisterPage() {
               autoComplete="name"
               value={form.nombre}
               onChange={handleChange}
-              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900"
+              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-100 dark:focus:ring-blue-900"
               placeholder="Tu nombre"
             />
           </div>
@@ -148,7 +155,7 @@ export default function RegisterPage() {
               autoComplete="email"
               value={form.email}
               onChange={handleChange}
-              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900"
+              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-100 dark:focus:ring-blue-900"
               placeholder="ejemplo@correo.com"
             />
           </div>
@@ -165,7 +172,7 @@ export default function RegisterPage() {
                 autoComplete="new-password"
                 value={form.password}
                 onChange={handleChange}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 pr-10 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 pr-10 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-100 dark:focus:ring-blue-900"
                 placeholder="••••••••"
               />
               <button
@@ -200,7 +207,7 @@ export default function RegisterPage() {
                 autoComplete="new-password"
                 value={form.confirmPassword}
                 onChange={handleChange}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 pr-10 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 pr-10 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-100 dark:focus:ring-blue-900"
                 placeholder="••••••••"
               />
               <button
@@ -223,9 +230,44 @@ export default function RegisterPage() {
             </div>
           </div>
 
+          {/* Checkbox de Acuerdos y Condiciones */}
+          <div className="flex items-start gap-2.5 pt-1">
+            <input
+              type="checkbox"
+              id="aceptaTerminos"
+              name="aceptaTerminos"
+              required
+              checked={aceptaTerminos}
+              onChange={(e) => setAceptaTerminos(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-600 dark:bg-[#141417] cursor-pointer"
+            />
+            <label
+              htmlFor="aceptaTerminos"
+              className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed cursor-pointer select-none"
+            >
+              He leído y acepto los{" "}
+              <button
+                type="button"
+                onClick={() => setShowTermsModal(true)}
+                className="font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 underline hover:no-underline cursor-pointer"
+              >
+                acuerdos y condiciones
+              </button>{" "}
+              y la{" "}
+              <Link
+                to="/privacidad"
+                target="_blank"
+                rel="noreferrer"
+                className="font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 underline hover:no-underline cursor-pointer"
+              >
+                política de privacidad
+              </Link>
+            </label>
+          </div>
+
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !aceptaTerminos}
             className="btn-primary w-full justify-center disabled:opacity-50"
           >
             {loading ? "Registrando…" : "Crear cuenta"}
@@ -242,6 +284,126 @@ export default function RegisterPage() {
           </p>
         </form>
       </div>
+
+      {/* Modal de Acuerdos y Condiciones */}
+      {showTermsModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn"
+          onClick={() => setShowTermsModal(false)}
+        >
+          <div
+            className="bg-white dark:bg-[#141417] border border-slate-200 dark:border-slate-800 rounded-3xl max-w-xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                    Acuerdos y Condiciones
+                  </h3>
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                    Términos de servicio y políticas de uso
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowTermsModal(false)}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Body (Lorem Ipsum) */}
+            <div className="p-6 overflow-y-auto space-y-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+              <div>
+                <h4 className="font-bold text-slate-900 dark:text-slate-100 mb-1">
+                  1. Aceptación de los Términos
+                </h4>
+                <p>
+                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-slate-900 dark:text-slate-100 mb-1">
+                  2. Uso de la Cuenta y Plataforma Inmobiliaria
+                </h4>
+                <p>
+                  Curabitur pretium tincidunt lacus. Nulla gravida orci a odio. Nullam varius, turpis et commodo pharetra, est eros bibendum elit, nec luctus magna felis sollicitudin mauris. Integer in mauris eu nibh euismod gravida. Duis ac tellus et risus vulputate vehicula. Donec lobortis risus a elit.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-slate-900 dark:text-slate-100 mb-1">
+                  3. Transacciones, Reservas y Pagos
+                </h4>
+                <p>
+                  Pellentesque in ipsum id orci porta dapibus. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Donec velit neque, auctor sit amet aliquam vel, ullamcorper sit amet ligula. Proin eget tortor risus. Vivamus suscipit tortor eget felis porttitor volutpat.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-slate-900 dark:text-slate-100 mb-1">
+                  4. Privacidad y Protección de Datos
+                </h4>
+                <p>
+                  Mauris blandit aliquet elit, eget tincidunt nibh pulvinar a. Sed porttitor lectus nibh. Praesent sapien massa, convallis a pellentesque nec, egestas non nisi. Cras ultricies ligula sed magna dictum porta. Donec sollicitudin molestie malesuada.
+                </p>
+                <div className="mt-2">
+                  <Link
+                    to="/privacidad"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+                  >
+                    Ver Política de Privacidad completa →
+                  </Link>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-slate-900 dark:text-slate-100 mb-1">
+                  5. Limitación de Responsabilidad
+                </h4>
+                <p>
+                  Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Nulla quis lorem ut libero malesuada feugiat. Curabitur aliquet quam id dui posuere blandit. Vivamus magna justo, lacinia eget consectetur sed, convallis at tellus.
+                </p>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+              <button
+                type="button"
+                onClick={() => setShowTermsModal(false)}
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+              >
+                Cerrar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAceptaTerminos(true);
+                  setShowTermsModal(false);
+                }}
+                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-sm cursor-pointer"
+              >
+                Aceptar acuerdos
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

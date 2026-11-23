@@ -57,7 +57,7 @@ export default function PropertyCard({ property, className = "", tall = false })
           <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/40 to-transparent" />
           
           {/* Tag */}
-          <div className="absolute left-4 top-4 rounded-full bg-black/60 backdrop-blur-md px-3 py-1.5 text-[11px] font-bold text-white uppercase tracking-wider">
+          <div className="absolute left-4 top-4 rounded-full bg-blue-600/90 backdrop-blur-md px-3 py-1.5 text-[11px] font-bold text-white uppercase tracking-wider">
             {property.estado_inmueble || property.type || "Venta"}
           </div>
         </div>
@@ -82,7 +82,7 @@ export default function PropertyCard({ property, className = "", tall = false })
                 <div className="text-base font-extrabold text-slate-900 dark:text-slate-50 tracking-tight" style={{ fontVariantNumeric: "tabular-nums" }}>
                   {price}
                 </div>
-                <span className="inline-flex items-center rounded-full bg-purple-50/70 px-2 py-0.5 text-[10px] font-bold text-purple-600 dark:bg-purple-950/40 dark:text-purple-400">
+                <span className="inline-flex items-center rounded-full bg-blue-50/70 px-2 py-0.5 text-[10px] font-bold text-blue-600 dark:bg-blue-950/40 dark:text-blue-400">
                   {property.estatus || property.status || "Disponible"}
                 </span>
               </div>
@@ -92,7 +92,7 @@ export default function PropertyCard({ property, className = "", tall = false })
           {/* Features badge list */}
           <div className="flex flex-wrap gap-1.5 text-xs text-slate-600 dark:text-slate-450 border-t border-slate-100 dark:border-slate-800/60 pt-3">
             {property.habitaciones ? (
-              <span className="inline-flex items-center gap-1 rounded-lg border border-slate-100 bg-slate-50/50 px-2 py-1 dark:border-slate-800/60 dark:bg-slate-900/40">
+              <span className="inline-flex items-center gap-1 rounded-lg border border-slate-100 bg-slate-50/50 px-2 py-1 dark:border-slate-800/60 dark:bg-[#0c0c0e]/40">
                 <svg className="h-3.5 w-3.5 text-blue-500 dark:text-blue-450" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 10V19M21 10V19M3 14H21M3 10H21M6 6H18V10H6V6Z" />
                 </svg>
@@ -100,7 +100,7 @@ export default function PropertyCard({ property, className = "", tall = false })
               </span>
             ) : null}
             {property.banos ? (
-              <span className="inline-flex items-center gap-1 rounded-lg border border-slate-100 bg-slate-50/50 px-2 py-1 dark:border-slate-800/60 dark:bg-slate-900/40">
+              <span className="inline-flex items-center gap-1 rounded-lg border border-slate-100 bg-slate-50/50 px-2 py-1 dark:border-slate-800/60 dark:bg-[#0c0c0e]/40">
                 <svg className="h-3.5 w-3.5 text-blue-500 dark:text-blue-450" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 4V16C4 17.1046 4.89543 18 6 18H18C19.1046 18 20 17.1046 20 16V4M2 8H22" />
                 </svg>
@@ -108,7 +108,7 @@ export default function PropertyCard({ property, className = "", tall = false })
               </span>
             ) : null}
             {property.area_m2 ? (
-              <span className="inline-flex items-center gap-1 rounded-lg border border-slate-100 bg-slate-50/50 px-2 py-1 dark:border-slate-800/60 dark:bg-slate-900/40">
+              <span className="inline-flex items-center gap-1 rounded-lg border border-slate-100 bg-slate-50/50 px-2 py-1 dark:border-slate-800/60 dark:bg-[#0c0c0e]/40">
                 <svg className="h-3.5 w-3.5 text-blue-500 dark:text-blue-450" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 19L20 3M8 15l2 2M11 12l2 2M14 9l2 2M17 6l2 2" />
                 </svg>
@@ -116,7 +116,7 @@ export default function PropertyCard({ property, className = "", tall = false })
               </span>
             ) : null}
             {Array.isArray(property.caracteristicas) && property.caracteristicas.map((c, i) => (
-              <span key={i} className="inline-flex items-center gap-1 rounded-lg border border-slate-100 bg-slate-50/50 px-2 py-1 dark:border-slate-800/60 dark:bg-slate-900/40">
+              <span key={i} className="inline-flex items-center gap-1 rounded-lg border border-slate-100 bg-slate-50/50 px-2 py-1 dark:border-slate-800/60 dark:bg-[#0c0c0e]/40">
                 {c.valor != null ? `${c.nombre}: ${c.valor}${c.unidad_medicion ? ` ${c.unidad_medicion}` : ""}` : c.nombre}
               </span>
             ))}

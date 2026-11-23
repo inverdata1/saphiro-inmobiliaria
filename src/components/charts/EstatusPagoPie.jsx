@@ -9,7 +9,7 @@ export default function EstatusPagoPie({ data }) {
   const total = safe.reduce((acc, x) => acc + x.comision_total_sum, 0);
 
   return (
-    <div className="bg-white border rounded-2xl p-4 shadow-sm min-w-0 dark:bg-slate-800 dark:border-slate-700">
+    <div className="bg-white border rounded-2xl p-4 shadow-sm min-w-0 dark:bg-[#141417] dark:border-slate-700">
       <div className="font-bold mb-3 dark:text-slate-100">Estatus de pago (comisión)</div>
 
       {total <= 0 ? (

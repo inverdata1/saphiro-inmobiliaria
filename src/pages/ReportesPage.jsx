@@ -121,7 +121,7 @@ export default function ReportesPage() {
                   className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold border transition-all duration-200 cursor-pointer select-none ${
                     isActive
                       ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-500 dark:border-emerald-600 shadow-sm"
-                      : "bg-white dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
+                      : "bg-white dark:bg-[#0c0c0e]/60 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-[#18181c] hover:text-slate-900 dark:hover:text-slate-200"
                   }`}
                 >
                   <span className={isActive ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400"}>

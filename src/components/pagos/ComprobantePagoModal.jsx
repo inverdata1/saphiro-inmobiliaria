@@ -71,7 +71,7 @@ export default function ComprobantePagoModal({
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/75 backdrop-blur-md animate-fade-in">
         <div
           id="comprobante-print"
-          className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full max-h-[92dvh] overflow-y-auto p-6 sm:p-7 shadow-2xl border border-slate-200 dark:border-slate-800 relative overflow-x-hidden text-slate-900 dark:text-white"
+          className="bg-white dark:bg-[#141417] rounded-3xl max-w-md w-full max-h-[92dvh] overflow-y-auto p-6 sm:p-7 shadow-2xl border border-slate-200 dark:border-slate-800 relative overflow-x-hidden text-slate-900 dark:text-white"
         >
           {/* Top Decorative Gradient Accent */}
           <div
@@ -124,8 +124,8 @@ export default function ComprobantePagoModal({
                 Secure Pay
               </span>
             </div>
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-[10px] font-extrabold uppercase tracking-wider">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 text-[10px] font-extrabold uppercase tracking-wider">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
               Aprobado
             </span>
           </div>
@@ -149,7 +149,7 @@ export default function ComprobantePagoModal({
           </div>
 
           {/* Receipt Details Card */}
-          <div className="bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-700/80 space-y-2.5 text-xs sm:text-sm">
+          <div className="bg-slate-50 dark:bg-[#18181c]/60 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-700/80 space-y-2.5 text-xs sm:text-sm">
 
             <div className="flex justify-between items-center gap-3 pb-2 border-b border-slate-200 dark:border-slate-700/60">
               <span className="text-slate-500 dark:text-slate-400 font-medium">
@@ -222,7 +222,7 @@ export default function ComprobantePagoModal({
             <button
               onClick={handlePrint}
               type="button"
-              className="flex-1 inline-flex justify-center items-center gap-2 px-4 py-3 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 font-bold text-sm transition-colors shadow-sm cursor-pointer"
+              className="flex-1 inline-flex justify-center items-center gap-2 px-4 py-3 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#141417] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1f1f24] font-bold text-sm transition-colors shadow-sm cursor-pointer"
             >
               <svg className="w-4 h-4 text-slate-600 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />

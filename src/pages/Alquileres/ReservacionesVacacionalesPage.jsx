@@ -1,99 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { apiGet, apiPost } from "../../api";
-import ReservacionAcciones from "./ReservacionAcciones";
+import { Link } from "react-router-dom";
+import { apiGet } from "../../api";
 import { useAuth } from "../../context/useAuth";
 import { formatDate } from "../../utils/date";
-
-function tonoReserva(r) {
-  if (r.estatus_pago === "cancelado" || r.estado_estancia === "cancelada") return "bg-rose-200 text-rose-950";
-  if (r.estado_estancia === "en_curso") return "bg-emerald-200 text-emerald-950";
-  if (r.estado_estancia === "por_autorizar") return "bg-amber-200 text-amber-950";
-  if (r.estado_estancia === "proxima") return "bg-sky-200 text-sky-950";
-  return "bg-slate-200 text-slate-800";
-}
-
-function etiquetaReserva(r) {
-  const nombre = r.cliente_nombre || "Huésped";
-  const entra = String(r.fecha_entrada || "").slice(0, 10);
-  const sale = String(r.fecha_salida || "").slice(0, 10);
-  const monto = Number(r.precio_total || r.monto_total || 0);
-  const moneda = r.moneda || "";
-  const montoTxt = Number.isFinite(monto)
-    ? `${monto.toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${moneda}`.trim()
-    : "";
-  return `${nombre}, ${entra} al ${sale}${montoTxt ? `, ${montoTxt}` : ""}`;
-}
-
-function CalendarioOcupacion({ isCorredor, tabTipo }) {
-  const [cursor, setCursor] = useState(() => new Date());
-  const [rows, setRows] = useState([]);
-  const y = cursor.getFullYear();
-  const m = cursor.getMonth();
-
-  useEffect(() => {
-    const desde = `${y}-${String(m + 1).padStart(2, "0")}-01`;
-    const last = new Date(y, m + 1, 0).getDate();
-    const hasta = `${y}-${String(m + 1).padStart(2, "0")}-${String(last).padStart(2, "0")}`;
-    const params = { desde, hasta, limit: 200, page: 1 };
-    if (isCorredor) params.tipo = tabTipo;
-    apiGet("/reservas", params)
-      .then((r) => setRows(Array.isArray(r?.data) ? r.data : []))
-      .catch(() => setRows([]));
-  }, [y, m, isCorredor, tabTipo]);
-
-  const firstDow = new Date(y, m, 1).getDay();
-  const days = new Date(y, m + 1, 0).getDate();
-  const cells = [...Array(firstDow).fill(null), ...Array.from({ length: days }, (_, i) => i + 1)];
-  const tituloMes = cursor.toLocaleDateString("es-VE", { month: "long", year: "numeric" });
-
-  const ocupacion = (day) => {
-    const iso = `${y}-${String(m + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    return rows.filter((r) => {
-      const entra = String(r.fecha_entrada).slice(0, 10);
-      const sale = String(r.fecha_salida).slice(0, 10);
-      return entra <= iso && iso < sale;
-    });
-  };
-
-  return (
-    <section className="rounded-3xl border border-sky-100 bg-sky-50 p-4">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 className="text-sm font-black capitalize text-slate-900">{tituloMes}</h2>
-        <div className="flex gap-1">
-          <button type="button" className="rounded-lg border border-sky-200 bg-white px-2 py-1 text-xs font-bold text-slate-800" onClick={() => setCursor(new Date(y, m - 1, 1))}>Anterior</button>
-          <button type="button" className="rounded-lg border border-sky-200 bg-white px-2 py-1 text-xs font-bold text-slate-800" onClick={() => setCursor(new Date(y, m + 1, 1))}>Siguiente</button>
-        </div>
-      </div>
-      <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold uppercase text-sky-800">
-        {["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"].map((d) => <div key={d}>{d}</div>)}
-      </div>
-      <div className="mt-1 grid grid-cols-7 gap-1">
-        {cells.map((day, i) => {
-          const stays = day ? ocupacion(day) : [];
-          return (
-            <div key={i} className={`min-h-16 rounded-lg border p-1 text-left ${day ? "border-sky-100 bg-white" : "border-transparent"}`}>
-              {day && <div className="text-[11px] font-black text-slate-900">{day}</div>}
-              {stays.slice(0, 2).map((r) => (
-                <div key={r.reserva_id || r.id} className={`mt-0.5 truncate rounded px-1 text-[10px] font-semibold ${tonoReserva(r)}`} title={etiquetaReserva(r)}>
-                  {etiquetaReserva(r)}
-                </div>
-              ))}
-              {stays.length > 2 && <div className="text-[10px] font-bold text-slate-700">+{stays.length - 2}</div>}
-            </div>
-          );
-        })}
-      </div>
-      <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-bold">
-        <span className="rounded bg-amber-200 px-2 py-1 text-amber-950">Por autorizar</span>
-        <span className="rounded bg-sky-200 px-2 py-1 text-sky-950">Próxima</span>
-        <span className="rounded bg-emerald-200 px-2 py-1 text-emerald-950">En curso</span>
-        <span className="rounded bg-slate-200 px-2 py-1 text-slate-800">Finalizada</span>
-        <span className="rounded bg-rose-200 px-2 py-1 text-rose-950">Cancelada</span>
-      </div>
-    </section>
-  );
-}
 
 export default function ReservacionesVacacionalesPage() {
   const { user } = useAuth();
@@ -116,10 +25,6 @@ export default function ReservacionesVacacionalesPage() {
 
   // Modal para ver el detalle completo de la reserva
   const [selectedReserva, setSelectedReserva] = useState(null);
-  const [reservaParams] = useSearchParams();
-  const reservaId = reservaParams.get("reserva");
-  const [recarga, setRecarga] = useState(0);
-  const [autorizando, setAutorizando] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -177,20 +82,7 @@ export default function ReservacionesVacacionalesPage() {
     return () => {
       cancelled = true;
     };
-  }, [user?.id, tabTipo, tabEstado, page, isCorredor, recarga]);
-
-  useEffect(() => {
-    if (!reservaId || !user?.id) return;
-    let vivo = true;
-    apiGet(`/reservas/${reservaId}`)
-      .then((res) => {
-        if (vivo && res?.data) setSelectedReserva(res.data);
-      })
-      .catch(() => {});
-    return () => {
-      vivo = false;
-    };
-  }, [user?.id, reservaId]);
+  }, [user?.id, tabTipo, tabEstado, page, isCorredor]);
 
   // Volver arriba al cambiar de página
   useEffect(() => {
@@ -241,19 +133,10 @@ export default function ReservacionesVacacionalesPage() {
 
   // Badge del estado de estancia
   const renderEstadoBadge = (estado, estatusPago) => {
-    if (estado === "por_autorizar") {
-      return (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/40">
-          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-          Por autorizar
-        </span>
-      );
-    }
-
     if (estatusPago === "cancelado" || estado === "cancelada") {
       return (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40">
-          <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/40">
+          <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
           Cancelada
         </span>
       );
@@ -261,8 +144,8 @@ export default function ReservacionesVacacionalesPage() {
 
     if (estado === "en_curso") {
       return (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 animate-pulse">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/40 animate-pulse">
+          <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping" />
           En curso
         </span>
       );
@@ -278,8 +161,8 @@ export default function ReservacionesVacacionalesPage() {
     }
 
     return (
-      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-        <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/40">
+        <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
         Finalizada
       </span>
     );
@@ -290,7 +173,7 @@ export default function ReservacionesVacacionalesPage() {
       {/* Encabezado */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 text-xs font-bold mb-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 text-xs font-bold mb-2">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
             </svg>
@@ -311,8 +194,8 @@ export default function ReservacionesVacacionalesPage() {
         {/* Resumen de estancias */}
         <div className="flex items-center gap-2 flex-wrap">
           {counts.en_curso > 0 && (
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-bold">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 text-xs font-bold">
+              <span className="w-2 h-2 rounded-full bg-blue-500" />
               {counts.en_curso} en curso
             </div>
           )}
@@ -322,16 +205,15 @@ export default function ReservacionesVacacionalesPage() {
               {counts.proximas} próximas
             </div>
           )}
-          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 text-xs font-bold">
             Total: {pagination?.total ?? reservas.length}
           </div>
         </div>
       </div>
 
-
       {/* Tabs para corredores: Recibidas vs Mis viajes */}
       {isCorredor && (
-        <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl w-fit">
+        <div className="flex items-center p-1 bg-slate-100 dark:bg-[#18181c]/80 rounded-2xl w-fit">
           <button
             type="button"
             onClick={() => changeTabTipo("recibidas")}
@@ -363,11 +245,8 @@ export default function ReservacionesVacacionalesPage() {
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
           {[
             { id: "todas", label: "Todas" },
-            { id: "por_autorizar", label: "Por autorizar" },
-            { id: "proxima", label: "Próximas" },
             { id: "en_curso", label: "En curso" },
             { id: "finalizada", label: "Finalizadas" },
-            { id: "cancelada", label: "Canceladas" },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -376,7 +255,7 @@ export default function ReservacionesVacacionalesPage() {
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                 tabEstado === tab.id
                   ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-sm"
-                  : "bg-white dark:bg-[#141417] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800"
+                  : "bg-white dark:bg-[#141417] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-[#18181c]"
               }`}
             >
               {tab.label}
@@ -430,12 +309,12 @@ export default function ReservacionesVacacionalesPage() {
               key={i}
               className="animate-pulse bg-white dark:bg-[#141417] border border-slate-100 dark:border-slate-800/60 rounded-2xl p-5 flex flex-col sm:flex-row gap-5"
             >
-              <div className="w-full sm:w-52 h-44 sm:h-36 bg-slate-200 dark:bg-slate-800 rounded-xl shrink-0" />
+              <div className="w-full sm:w-52 h-44 sm:h-36 bg-slate-200 dark:bg-[#141417] rounded-xl shrink-0" />
               <div className="flex-1 space-y-3 py-1">
-                <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded w-1/3" />
-                <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/4" />
-                <div className="h-14 bg-slate-100 dark:bg-slate-800/60 rounded-xl" />
-                <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/2" />
+                <div className="h-6 bg-slate-200 dark:bg-[#141417] rounded w-1/3" />
+                <div className="h-4 bg-slate-200 dark:bg-[#141417] rounded w-1/4" />
+                <div className="h-14 bg-slate-100 dark:bg-[#18181c]/60 rounded-xl" />
+                <div className="h-4 bg-slate-200 dark:bg-[#141417] rounded w-1/2" />
               </div>
             </div>
           ))}
@@ -487,7 +366,7 @@ export default function ReservacionesVacacionalesPage() {
                 className="group bg-white dark:bg-[#141417] border border-slate-100 dark:border-slate-800/70 rounded-2xl p-4 sm:p-5 shadow-[0_4px_20px_rgb(0,0,0,0.02)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.25)] hover:shadow-md transition-all duration-200 flex flex-col md:flex-row gap-5 items-start md:items-center"
               >
                 {/* Imagen del Inmueble */}
-                <div className="relative w-full md:w-52 h-44 md:h-36 shrink-0 overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                <div className="relative w-full md:w-52 h-44 md:h-36 shrink-0 overflow-hidden rounded-xl bg-slate-100 dark:bg-[#0c0c0e] border border-slate-100 dark:border-slate-800">
                   <img
                     src={
                       reserva.inmueble_imagen_url ||
@@ -526,14 +405,14 @@ export default function ReservacionesVacacionalesPage() {
                     </div>
 
                     {reserva.numero_factura && (
-                      <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800/60 px-2.5 py-1 rounded-lg border border-slate-100 dark:border-slate-800 w-fit shrink-0">
+                      <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-[#18181c]/60 px-2.5 py-1 rounded-lg border border-slate-100 dark:border-slate-800 w-fit shrink-0">
                         Recibo: {reserva.numero_factura}
                       </span>
                     )}
                   </div>
 
                   {/* Bloque de Fechas de la Estancia */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/60 rounded-xl p-2.5 text-xs">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-slate-50 dark:bg-[#0c0c0e]/60 border border-slate-100 dark:border-slate-800/60 rounded-xl p-2.5 text-xs">
                     <div>
                       <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
                         Entrada
@@ -639,10 +518,7 @@ export default function ReservacionesVacacionalesPage() {
         </div>
       )}
 
-      <CalendarioOcupacion isCorredor={isCorredor} tabTipo={tabTipo} />
-
       {/* Controles de Paginación */}
-
       {!loading && !error && pagination && reservas.length > 0 && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-slate-800/60">
           <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
@@ -655,7 +531,7 @@ export default function ReservacionesVacacionalesPage() {
               type="button"
               disabled={page <= 1}
               onClick={() => setPage((p) => Math.max(p - 1, 1))}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white dark:bg-[#141417] border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white dark:bg-[#141417] border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#18181c] disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -695,7 +571,7 @@ export default function ReservacionesVacacionalesPage() {
                   Comprobante de Reserva Vacacional
                 </span>
                 <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-slate-50 mt-0.5">
-                  {`Edificio ${selectedReserva.edificio_nombre || "—"} · Apto ${selectedReserva.numero_apto || "—"} · Huésped ${selectedReserva.cliente_nombre || "—"}`}
+                  {selectedReserva.inmueble_titulo}
                 </h3>
                 <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">
                   {selectedReserva.inmueble_ciudad}, {selectedReserva.inmueble_region} • {selectedReserva.inmueble_direccion}
@@ -704,7 +580,7 @@ export default function ReservacionesVacacionalesPage() {
               <button
                 type="button"
                 onClick={() => setSelectedReserva(null)}
-                className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition cursor-pointer"
+                className="p-2 rounded-xl bg-slate-100 dark:bg-[#141417] text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition cursor-pointer"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -712,40 +588,8 @@ export default function ReservacionesVacacionalesPage() {
               </button>
             </div>
 
-            {(isAdmin || Number(user?.id) === Number(selectedReserva.corredor_usuario_id)) && selectedReserva.estado_estancia === "por_autorizar" && (
-              <button
-                type="button"
-                disabled={autorizando}
-                onClick={async () => {
-                  setAutorizando(true);
-                  try {
-                    const res = await apiPost(`/reservas/${selectedReserva.reserva_id || selectedReserva.id}/autorizar`, {});
-                    setSelectedReserva(res?.data || selectedReserva);
-                    setRecarga((n) => n + 1);
-                  } catch (err) {
-                    setError(err.message || "No se pudo autorizar la reserva");
-                  } finally {
-                    setAutorizando(false);
-                  }
-                }}
-                className="w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-black text-white disabled:opacity-60 dark:bg-slate-100 dark:text-slate-900"
-              >
-                {autorizando ? "Autorizando..." : "Autorizar pago"}
-              </button>
-            )}
-
-            <ReservacionAcciones
-              reserva={selectedReserva}
-              user={user}
-              isAdmin={isAdmin}
-              onChange={(data) => {
-                setSelectedReserva(data);
-                setRecarga((n) => n + 1);
-              }}
-            />
-
             {/* Estado y Folio */}
-            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 dark:bg-[#0c0c0e]/60 border border-slate-100 dark:border-slate-800">
               <div className="space-y-0.5">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
                   Estado de la estancia
@@ -826,43 +670,40 @@ export default function ReservacionesVacacionalesPage() {
                 Desglose del Costo
               </h4>
               <div className="space-y-1.5 text-xs">
-                {(() => {
-                  const nochesReserva = Number(selectedReserva.total_noches || 0);
-                  const precioNoche = Number(selectedReserva.precio_por_noche || 0);
-                  const montoReserva = nochesReserva * precioNoche;
-                  const porcentaje = Number(selectedReserva.porcentaje_reserva ?? 50);
-                  const mitad = Math.round(montoReserva * porcentaje) / 100;
-                  const limpieza = Array.isArray(selectedReserva.detalles)
-                    ? selectedReserva.detalles.find((d) => /limpieza/i.test(String(d.concepto || "")))
-                    : null;
-                  const limpiezaMonto = Number(limpieza?.monto || 0);
-                  const totalPagar = montoReserva + limpiezaMonto;
-                  const fila = (nombre, monto) => (
-                    <div className="flex items-center justify-between gap-3 py-1 text-slate-600 dark:text-slate-300">
-                      <span>{nombre}</span>
-                      <span className="font-bold">{formatMonto(monto, selectedReserva.moneda)}</span>
+                {Array.isArray(selectedReserva.detalles) && selectedReserva.detalles.length > 0 ? (
+                  selectedReserva.detalles.map((d, idx) => (
+                    <div key={idx} className="flex items-center justify-between py-1 text-slate-600 dark:text-slate-300">
+                      <span>{d.concepto}</span>
+                      <span className="font-bold">{formatMonto(d.monto, selectedReserva.moneda)}</span>
                     </div>
-                  );
-                  return (
-                    <>
-                      {fila(`${nochesReserva} ${nochesReserva === 1 ? "noche" : "noches"} × ${formatMonto(precioNoche, selectedReserva.moneda)}`, montoReserva)}
-                      {limpiezaMonto > 0 && fila("Limpieza", limpiezaMonto)}
-                      {fila(`${porcentaje}% de la reserva`, mitad)}
-                      {fila("Depósito de garantía", montoReserva)}
-                      <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-slate-800 text-sm font-black text-slate-900 dark:text-slate-50">
-                        <span>Monto total a pagar</span>
-                        <span className="text-purple-600 dark:text-purple-400">
-                          {formatMonto(totalPagar, selectedReserva.moneda)}
-                        </span>
-                      </div>
-                    </>
-                  );
-                })()}
+                  ))
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between py-1 text-slate-600 dark:text-slate-300">
+                      <span>
+                        {selectedReserva.total_noches} noche(s) × {formatMonto(selectedReserva.precio_por_noche, selectedReserva.moneda)}
+                      </span>
+                      <span className="font-bold">
+                        {formatMonto(
+                          Number(selectedReserva.total_noches || 1) * Number(selectedReserva.precio_por_noche || 0),
+                          selectedReserva.moneda
+                        )}
+                      </span>
+                    </div>
+                  </>
+                )}
+
+                <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-slate-800 text-sm font-black text-slate-900 dark:text-slate-50">
+                  <span>Total Pagado</span>
+                  <span className="text-purple-600 dark:text-purple-400">
+                    {formatMonto(selectedReserva.precio_total || selectedReserva.monto_total, selectedReserva.moneda)}
+                  </span>
+                </div>
               </div>
             </div>
 
             {/* Anfitrión y Contacto */}
-            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#0c0c0e]/60 border border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 font-bold flex items-center justify-center overflow-hidden">
                   {selectedReserva.corredor_foto_url ? (
@@ -896,7 +737,7 @@ export default function ReservacionesVacacionalesPage() {
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
               <Link
                 to={`/inmuebles/${selectedReserva.inmueble_uuid || selectedReserva.inmueble_id}`}
-                className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+                className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-[#141417] text-slate-700 dark:text-slate-300 text-xs font-bold hover:bg-slate-200 dark:hover:bg-[#1f1f24] transition"
               >
                 Ver Inmueble
               </Link>

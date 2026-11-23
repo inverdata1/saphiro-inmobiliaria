@@ -1,0 +1,1 @@
+ALTER TABLE inmuebles ADD COLUMN deleted_at TYPE TIMESTAMP with time zone;

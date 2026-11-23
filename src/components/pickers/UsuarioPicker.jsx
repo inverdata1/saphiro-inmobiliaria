@@ -57,7 +57,7 @@ export default function UsuarioPicker({ value, onChange, selectedItem, includeAd
         <button
           type="button"
           onClick={() => setShowModal(true)}
-          className="flex-1 text-left border rounded-xl px-3 py-2 bg-white dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 text-sm truncate cursor-pointer"
+          className="flex-1 text-left border rounded-xl px-3 py-2 bg-white dark:bg-[#141417] dark:text-slate-100 dark:border-slate-600 text-sm truncate cursor-pointer"
         >
           {effectiveSelected
             ? `#${effectiveSelected.id} - ${effectiveSelected.nombre} - ${effectiveSelected.email}`
@@ -77,7 +77,7 @@ export default function UsuarioPicker({ value, onChange, selectedItem, includeAd
         ) : null}
       </div>
 
-      <Modal open={showModal} onClose={() => { setShowModal(false); setSearch(""); }} backdropClassName="flex items-end justify-center sm:grid sm:place-items-center" className="w-full sm:max-w-xl max-h-[85vh] flex flex-col rounded-t-2xl sm:rounded-2xl bg-white shadow-lg dark:bg-slate-800 dark:border dark:border-slate-700">
+      <Modal open={showModal} onClose={() => { setShowModal(false); setSearch(""); }} backdropClassName="flex items-end justify-center sm:grid sm:place-items-center" className="w-full sm:max-w-xl max-h-[85vh] flex flex-col rounded-t-2xl sm:rounded-2xl bg-white shadow-lg dark:bg-[#141417] dark:border dark:border-slate-700">
             <div className="flex items-start justify-between p-4 sm:p-6 pb-0">
               <div>
                 <div className="text-lg font-extrabold dark:text-slate-100">{includeAdmins ? "Seleccionar usuario" : "Seleccionar cliente"}</div>
@@ -85,7 +85,7 @@ export default function UsuarioPicker({ value, onChange, selectedItem, includeAd
               </div>
               <button
                 type="button"
-                className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 cursor-pointer"
+                className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-[#1f1f24] cursor-pointer"
                 onClick={() => { setShowModal(false); setSearch(""); }}
               >
                 ✕
@@ -94,7 +94,7 @@ export default function UsuarioPicker({ value, onChange, selectedItem, includeAd
 
             <div className="px-4 sm:px-6 pt-4">
               <input
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900"
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-100 dark:focus:ring-blue-900"
                 placeholder="Buscar por nombre, email o ID…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -106,7 +106,7 @@ export default function UsuarioPicker({ value, onChange, selectedItem, includeAd
               {loading ? (
                 <div className="space-y-3">
                   {Array.from({ length: 5 }).map((_, idx) => (
-                    <div key={idx} className="h-16 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-700" />
+                    <div key={idx} className="h-16 animate-pulse rounded-xl bg-slate-100 dark:bg-[#1f1f24]" />
                   ))}
                 </div>
               ) : usuarios.length === 0 ? (
@@ -118,7 +118,7 @@ export default function UsuarioPicker({ value, onChange, selectedItem, includeAd
                       key={u.id}
                       type="button"
                       onClick={() => handleSelect(u)}
-                      className={`w-full flex items-center gap-3 rounded-xl border p-3 text-left transition hover:-translate-y-0.5 hover:shadow-md dark:bg-slate-800 cursor-pointer ${
+                      className={`w-full flex items-center gap-3 rounded-xl border p-3 text-left transition hover:-translate-y-0.5 hover:shadow-md dark:bg-[#141417] cursor-pointer ${
                         value == u.id
                           ? "border-blue-500 ring-2 ring-blue-200 dark:ring-blue-800"
                           : "border-slate-200 dark:border-slate-700"

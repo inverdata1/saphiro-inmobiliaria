@@ -1,35 +1,35 @@
 const pool = require("../db/pool");
 const AppError = require("../utils/AppError");
 
-exports.create = async ({ usuario_id, titulo, descripcion, tipo_notificacion, enlace }) => {
+exports.create = async ({ usuario_id, titulo, descripcion, tipo_notificacion }) => {
   if (!usuario_id || !titulo || !descripcion) {
     throw new AppError("usuario_id, titulo y descripcion son requeridos", 400);
   }
 
   const { rows } = await pool.query(
-    `INSERT INTO notificaciones (usuario_id, titulo, descripcion, tipo_notificacion, enlace)
-     VALUES ($1, $2, $3, $4, $5)
+    `INSERT INTO notificaciones (usuario_id, titulo, descripcion, tipo_notificacion)
+     VALUES ($1, $2, $3, $4)
      RETURNING *;`,
-    [usuario_id, titulo, descripcion, tipo_notificacion || null, enlace || null]
+    [usuario_id, titulo, descripcion, tipo_notificacion || null]
   );
   return rows[0];
 };
 
 /* Notifica a todos los administradores activos en una sola sentencia.
    Devuelve las notificaciones creadas. */
-exports.createToAllAdmins = async ({ titulo, descripcion, tipo_notificacion, enlace }) => {
+exports.createToAllAdmins = async ({ titulo, descripcion, tipo_notificacion }) => {
 
   if (!titulo || !descripcion) {
     throw new AppError("titulo y descripcion son requeridos", 400);
   }
 
   const { rows } = await pool.query(
-    `INSERT INTO notificaciones (usuario_id, titulo, descripcion, tipo_notificacion, enlace)
-     SELECT u.id, $1, $2, $3, $4
+    `INSERT INTO notificaciones (usuario_id, titulo, descripcion, tipo_notificacion)
+     SELECT u.id, $1, $2, $3
      FROM usuarios u
      WHERE u.rol = 'admin' AND u.active = TRUE AND u.deleted_at IS NULL
      RETURNING *;`,
-    [titulo, descripcion, tipo_notificacion || null, enlace || null]
+    [titulo, descripcion, tipo_notificacion || null]
   );
 
   return rows;

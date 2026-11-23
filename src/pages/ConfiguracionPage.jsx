@@ -156,7 +156,7 @@ export default function ConfiguracionPage() {
             </div>
 
             {/* Versión desktop: Tarjeta lateral */}
-            <div className="hidden lg:block bg-white dark:bg-[#111116] border border-slate-200 dark:border-slate-800/80 rounded-2xl p-2.5 shadow-sm space-y-1">
+            <div className="hidden lg:block bg-white dark:bg-[#141417] border border-slate-200 dark:border-slate-800/80 rounded-2xl p-2.5 shadow-sm space-y-1">
               {tabs.map((tab) => {
                 const isActive = activeTab === tab.id;
                 return (
@@ -166,7 +166,7 @@ export default function ConfiguracionPage() {
                     className={`w-full flex items-start gap-3.5 px-4 py-3 rounded-xl text-left transition-all cursor-pointer ${
                       isActive
                         ? "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 font-bold border-l-4 border-purple-600 dark:border-purple-400"
-                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900/50 font-medium"
+                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#0c0c0e]/50 font-medium"
                     }`}
                   >
                     <div className={`mt-0.5 shrink-0 ${isActive ? "text-purple-600 dark:text-purple-400" : "text-slate-400"}`}>
@@ -176,7 +176,7 @@ export default function ConfiguracionPage() {
                       <div className="flex items-center justify-between gap-1">
                         <span className="text-sm font-semibold truncate">{tab.label}</span>
                         {tab.badge && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wide bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wide bg-blue-100 text-blue-800 dark:bg-blue-950/50 dark:text-blue-300">
                             {tab.badge}
                           </span>
                         )}
@@ -214,7 +214,7 @@ export default function ConfiguracionPage() {
             {activeTab === "general" && (
               <div className="space-y-6 animate-fadeIn">
                 {/* Sección Apariencia */}
-                <div className="bg-white dark:bg-[#111116] border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-5">
+                <div className="bg-white dark:bg-[#141417] border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-5">
                   <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
                     <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-purple-600"></span>
@@ -266,7 +266,7 @@ export default function ConfiguracionPage() {
                         className={`p-4 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-3 ${
                           settings.tema === mode.key
                             ? "border-purple-600 bg-purple-50/60 dark:bg-purple-950/30 text-purple-900 dark:text-purple-200 ring-2 ring-purple-600/20"
-                            : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-[#16161c]"
+                            : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-[#141417]"
                         }`}
                       >
                         <div className="flex items-center justify-between">
@@ -287,7 +287,7 @@ export default function ConfiguracionPage() {
                 </div>
 
                 {/* Sección Formato Numérico */}
-                <div className="bg-white dark:bg-[#111116] border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-5">
+                <div className="bg-white dark:bg-[#141417] border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-5">
                   <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
                     <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-indigo-600"></span>
@@ -307,7 +307,7 @@ export default function ConfiguracionPage() {
                       <select
                         value={settings.formatoNumero}
                         onChange={(e) => updateSetting("formatoNumero", e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm font-medium focus:ring-2 focus:ring-purple-600 outline-none"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#18181c] text-sm font-medium focus:ring-2 focus:ring-purple-600 outline-none"
                       >
                         <option value="coma_decimal">1.250,00 (Punto miles, coma decimales)</option>
                         <option value="punto_decimal">1,250.00 (Coma miles, punto decimales)</option>
@@ -322,7 +322,7 @@ export default function ConfiguracionPage() {
             {/* ══════════════ TAB 2: NOTIFICACIONES Y ALERTAS ══════════════ */}
             {activeTab === "notificaciones" && (
               <div className="space-y-6 animate-fadeIn">
-                <div className="bg-white dark:bg-[#111116] border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-6">
+                <div className="bg-white dark:bg-[#141417] border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-6">
                   <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
                     <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-amber-500"></span>
@@ -364,7 +364,7 @@ export default function ConfiguracionPage() {
                     ].map((item) => (
                       <div
                         key={item.key}
-                        className="flex items-center justify-between p-3.5 rounded-xl border border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/30 hover:bg-slate-50 dark:hover:bg-slate-900/60 transition"
+                        className="flex items-center justify-between p-3.5 rounded-xl border border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-[#0c0c0e]/30 hover:bg-slate-50 dark:hover:bg-[#0c0c0e]/60 transition"
                       >
                         <div className="pr-4">
                           <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{item.title}</p>
@@ -377,7 +377,7 @@ export default function ConfiguracionPage() {
                             onChange={(e) => updateSetting(item.key, e.target.checked)}
                             className="sr-only peer"
                           />
-                          <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                          <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-[#1f1f24] peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
                         </label>
                       </div>
                     ))}
@@ -389,7 +389,7 @@ export default function ConfiguracionPage() {
             {/* ══════════════ TAB 3: SEGURIDAD Y ACCESOS ══════════════ */}
             {activeTab === "seguridad" && (
               <div className="space-y-6 animate-fadeIn">
-                <div className="bg-white dark:bg-[#111116] border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-6">
+                <div className="bg-white dark:bg-[#141417] border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-6">
                   <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
                     <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-rose-500"></span>
@@ -401,7 +401,7 @@ export default function ConfiguracionPage() {
                   </div>
 
                   {/* Cambio de Contraseña */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-[#0c0c0e]/40">
                     <div>
                       <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Contraseña de Acceso</p>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -411,7 +411,7 @@ export default function ConfiguracionPage() {
                     <button
                       type="button"
                       onClick={() => setModalPasswordOpen(true)}
-                      className="px-4 py-2.5 rounded-xl bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 text-white text-xs font-bold transition shadow-sm cursor-pointer shrink-0"
+                      className="px-4 py-2.5 rounded-xl bg-slate-900 dark:bg-[#141417] hover:bg-slate-800 text-white text-xs font-bold transition shadow-sm cursor-pointer shrink-0"
                     >
                       Actualizar Contraseña
                     </button>
@@ -444,7 +444,7 @@ export default function ConfiguracionPage() {
 
       {/* ══════════════ MODAL: CAMBIO DE CONTRASEÑA ══════════════ */}
       <Modal open={modalPasswordOpen} onClose={() => setModalPasswordOpen(false)}>
-        <div className="bg-white dark:bg-[#16161c] border border-slate-200 dark:border-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+        <div className="bg-white dark:bg-[#141417] border border-slate-200 dark:border-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
             <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <svg className="w-5 h-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -481,7 +481,7 @@ export default function ConfiguracionPage() {
                 required
                 value={passwordForm.actual}
                 onChange={(e) => setPasswordForm({ ...passwordForm, actual: e.target.value })}
-                className="mt-1 w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm outline-none focus:ring-2 focus:ring-purple-600"
+                className="mt-1 w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#18181c] text-sm outline-none focus:ring-2 focus:ring-purple-600"
               />
             </div>
 
@@ -493,7 +493,7 @@ export default function ConfiguracionPage() {
                 minLength={8}
                 value={passwordForm.nueva}
                 onChange={(e) => setPasswordForm({ ...passwordForm, nueva: e.target.value })}
-                className="mt-1 w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm outline-none focus:ring-2 focus:ring-purple-600"
+                className="mt-1 w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#18181c] text-sm outline-none focus:ring-2 focus:ring-purple-600"
               />
               <p className="text-[10px] text-slate-400 mt-1">Mínimo 8 caracteres, combinando números y letras.</p>
             </div>
@@ -505,7 +505,7 @@ export default function ConfiguracionPage() {
                 required
                 value={passwordForm.confirmar}
                 onChange={(e) => setPasswordForm({ ...passwordForm, confirmar: e.target.value })}
-                className="mt-1 w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm outline-none focus:ring-2 focus:ring-purple-600"
+                className="mt-1 w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#18181c] text-sm outline-none focus:ring-2 focus:ring-purple-600"
               />
             </div>
 
@@ -513,7 +513,7 @@ export default function ConfiguracionPage() {
               <button
                 type="button"
                 onClick={() => setModalPasswordOpen(false)}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#18181c] transition"
               >
                 Cancelar
               </button>
@@ -531,7 +531,7 @@ export default function ConfiguracionPage() {
 
       {/* ══════════════ MODAL: ELIMINAR CUENTA ══════════════ */}
       <Modal open={modalDeleteOpen} onClose={() => setModalDeleteOpen(false)}>
-        <div className="bg-white dark:bg-[#16161c] border border-slate-200 dark:border-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+        <div className="bg-white dark:bg-[#141417] border border-slate-200 dark:border-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
           <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center mx-auto">
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -547,7 +547,7 @@ export default function ConfiguracionPage() {
             <button
               type="button"
               onClick={() => setModalDeleteOpen(false)}
-              className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+              className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#18181c] transition"
             >
               Cancelar
             </button>

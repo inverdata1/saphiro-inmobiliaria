@@ -137,7 +137,7 @@ export default function PasarelaPagoPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 py-8 px-4 sm:px-6 lg:px-8 transition-colors">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0c0c0e] py-8 px-4 sm:px-6 lg:px-8 transition-colors">
       <div className="max-w-6xl mx-auto">
         {/* Navigation Breadcrumb */}
         <div className="mb-6 flex items-center justify-between">
@@ -170,7 +170,7 @@ export default function PasarelaPagoPage() {
             </div>
 
             {/* Supported Networks Banner */}
-            <div className="flex items-center justify-around py-3 px-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div className="flex items-center justify-around py-3 px-4 bg-white dark:bg-[#141417] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
               <div className="flex items-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity">
                 <span className="text-lg font-black italic tracking-wider text-blue-700 dark:text-blue-400">
                   VISA
@@ -179,7 +179,7 @@ export default function PasarelaPagoPage() {
                   Verified
                 </span>
               </div>
-              <div className="h-6 w-px bg-slate-200 dark:bg-slate-800" />
+              <div className="h-6 w-px bg-slate-200 dark:bg-[#141417]" />
               <div className="flex items-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity">
                 <div className="flex items-center -space-x-2">
                   <div className="w-5 h-5 rounded-full bg-[#EB001B]" />
@@ -189,7 +189,7 @@ export default function PasarelaPagoPage() {
                   ID Check
                 </span>
               </div>
-              <div className="h-6 w-px bg-slate-200 dark:bg-slate-800" />
+              <div className="h-6 w-px bg-slate-200 dark:bg-[#141417]" />
               <div className="flex items-center gap-1 opacity-80 hover:opacity-100 transition-opacity">
                 <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -201,7 +201,7 @@ export default function PasarelaPagoPage() {
             </div>
 
             {/* Transaction Summary Card */}
-            <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+            <div className="bg-white dark:bg-[#141417] rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
               <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 <span>Resumen de la Transacción</span>
                 {!esBs && (

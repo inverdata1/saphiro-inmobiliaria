@@ -79,6 +79,9 @@ const ICONS = {
   reservasVacacionales: (
     <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
   ),
+  privacidad: (
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+  ),
 };
 
 export function ClienteSidebar({ onClick }) {
@@ -88,10 +91,10 @@ export function ClienteSidebar({ onClick }) {
       <SideLink to="/inmuebles" onClick={onClick} icon={ICONS.inmuebles} className="lg:hidden">Inmuebles</SideLink>
       <SideLink to="/rentas-contratadas" onClick={onClick} icon={ICONS.rentasContratadas}>Contratos de alquiler</SideLink>
       <SideLink to="/reservaciones" onClick={onClick} icon={ICONS.reservasVacacionales}>Reservas vacacionales</SideLink>
-      <SideLink to="/citas" onClick={onClick} icon={ICONS.reservasVacacionales}>Citas</SideLink>
       <SideLink to="/guardados" onClick={onClick} icon={ICONS.guardados}>Guardados</SideLink>
       <SideLink to="/mis-recibos" onClick={onClick} icon={ICONS.recibos}>Mis recibos</SideLink>
       <SideLink to="/configuracion" onClick={onClick} icon={ICONS.config}>Configuración</SideLink>
+      <SideLink to="/privacidad" onClick={onClick} icon={ICONS.privacidad}>Privacidad de datos</SideLink>
     </>
   );
 }
@@ -102,16 +105,14 @@ export function CorredorSidebar({ onClick }) {
       <SideLink to="/" onClick={onClick} icon={ICONS.inicio} end className="lg:hidden">Inicio</SideLink>
       <SideLink to="/inmuebles" onClick={onClick} icon={ICONS.inmuebles} className="lg:hidden">Inmuebles</SideLink>
       <SideLink to="/mis-inmuebles" onClick={onClick} icon={ICONS.misInmuebles}>Mis inmuebles</SideLink>
-      <SideLink to="/mi-plan" onClick={onClick} icon={ICONS.reportes}>Mi plan</SideLink>
-      <SideLink to="/precios" onClick={onClick} icon={ICONS.reportes}>Planes</SideLink>
       <SideLink to="/rentas-contratadas" onClick={onClick} icon={ICONS.inmueblesAlquilados}>Contratos de alquiler</SideLink>
       <SideLink to="/reservaciones" onClick={onClick} icon={ICONS.reservasVacacionales}>Reservas vacacionales</SideLink>
-      <SideLink to="/citas" onClick={onClick} icon={ICONS.reservasVacacionales}>Citas</SideLink>
       <SideLink to="/guardados" onClick={onClick} icon={ICONS.guardados}>Guardados</SideLink>
       <SideLink to="/recibos" onClick={onClick} icon={ICONS.recibos}>Mis recibos</SideLink>
       <SideLink to="/mis-transferencias" onClick={onClick} icon={ICONS.transferencias}>Transferencias recibidas</SideLink>
       <SideLink to="/reportes" onClick={onClick} icon={ICONS.reportes}>Reportes</SideLink>
       <SideLink to="/configuracion" onClick={onClick} icon={ICONS.config}>Configuración</SideLink>
+      <SideLink to="/privacidad" onClick={onClick} icon={ICONS.privacidad}>Privacidad de datos</SideLink>
     </>
   );
 }
@@ -121,17 +122,14 @@ export function AdminSidebar({ onClick }) {
     <>
       <SideLink to="/" onClick={onClick} icon={ICONS.inicio} end className="lg:hidden">Inicio</SideLink>
       <SideLink to="/inmuebles" onClick={onClick} icon={ICONS.inmuebles} className="lg:hidden">Inmuebles</SideLink>
-      <SideLink to="/inmuebles/crear" onClick={onClick} icon={ICONS.inmuebles}>Cargar inmueble</SideLink>
-      <SideLink to="/consulta-alquileres" onClick={onClick} icon={ICONS.inmueblesAlquilados}>Alquileres</SideLink>
       <SideLink to="/transacciones" onClick={onClick} icon={ICONS.transacciones}>Transacciones</SideLink>
-      <SideLink to="/planes" onClick={onClick} icon={ICONS.comisiones}>Planes</SideLink>
       <SideLink to="/reservaciones" onClick={onClick} icon={ICONS.reservasVacacionales}>Reservas vacacionales</SideLink>
-      <SideLink to="/citas" onClick={onClick} icon={ICONS.reservasVacacionales}>Citas</SideLink>
       <SideLink to="/corredores" onClick={onClick} icon={ICONS.corredores}>Corredores</SideLink>
       <SideLink to="/administradores" onClick={onClick} icon={ICONS.administradores}>Administradores</SideLink>
       <SideLink to="/comisiones" onClick={onClick} icon={ICONS.comisiones}>Comisiones</SideLink>
       <SideLink to="/bitacora" onClick={onClick} icon={ICONS.bitacora}>Bitácora</SideLink>
       <SideLink to="/configuracion" onClick={onClick} icon={ICONS.config}>Configuración</SideLink>
+      <SideLink to="/privacidad" onClick={onClick} icon={ICONS.privacidad}>Privacidad de datos</SideLink>
     </>
   );
 }
@@ -141,8 +139,8 @@ export function PublicoSidebar({ onClick }) {
     <>
       <SideLink to="/" onClick={onClick} icon={ICONS.inicio} end className="lg:hidden">Inicio</SideLink>
       <SideLink to="/inmuebles" onClick={onClick} icon={ICONS.inmuebles} className="lg:hidden">Inmuebles</SideLink>
-      <SideLink to="/precios" onClick={onClick} icon={ICONS.reportes}>Planes</SideLink>
       <SideLink to="/configuracion" onClick={onClick} icon={ICONS.config}>Configuración</SideLink>
+      <SideLink to="/privacidad" onClick={onClick} icon={ICONS.privacidad}>Privacidad de datos</SideLink>
     </>
   );
 }

@@ -167,7 +167,7 @@ export default function InmueblesPage() {
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          {(user && (user.rol === "corredor" || user.rol === "admin")) && (
+          {(user?.rol === "corredor" && user) && (
             <Link
               to="/inmuebles/crear"
               className="btn-primary shrink-0"
@@ -218,7 +218,7 @@ export default function InmueblesPage() {
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
-        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-[#141417]">
           <div className="text-sm font-semibold text-slate-700 dark:text-slate-300">Filtros</div>
 
           <div className="mt-4 space-y-4">
@@ -231,7 +231,7 @@ export default function InmueblesPage() {
                   onChange={(e) => setQ(e.target.value)}
                   placeholder="Título o descripción…"
                   aria-label="Buscar inmuebles por título o descripción"
-                  className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-9 text-sm text-slate-700 shadow-sm placeholder:text-slate-400 focus:border-[#470A68] focus:outline-none focus:ring-2 focus:ring-[#470A68]/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
+                  className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-9 text-sm text-slate-700 shadow-sm placeholder:text-slate-400 focus:border-[#470A68] focus:outline-none focus:ring-2 focus:ring-[#470A68]/20 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-100 [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
                 />
                 <svg
                   className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
@@ -244,7 +244,7 @@ export default function InmueblesPage() {
                     type="button"
                     onClick={() => setQ("")}
                     aria-label="Limpiar búsqueda"
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-[#1f1f24] dark:hover:text-slate-200"
                   >
                     <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -257,7 +257,7 @@ export default function InmueblesPage() {
             <div>
               <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Estado</label>
               <select
-                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-100"
                 value={estadoId}
                 onChange={(e) => setEstadoId(e.target.value)}
               >
@@ -271,7 +271,7 @@ export default function InmueblesPage() {
             <div>
               <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Ciudad</label>
               <select
-                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 disabled:opacity-50"
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-100 disabled:opacity-50"
                 value={ciudadId}
                 onChange={(e) => setCiudadId(e.target.value)}
                 disabled={!estadoId}
@@ -286,7 +286,7 @@ export default function InmueblesPage() {
             <div>
               <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Categoría</label>
               <select
-                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-100"
                 value={tipoInmuebleId}
                 onChange={(e) => setTipoInmuebleId(e.target.value)}
               >
@@ -300,7 +300,7 @@ export default function InmueblesPage() {
             <div>
               <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Estatus</label>
               <select
-                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-100"
                 value={estatus}
                 onChange={(e) => setEstatus(e.target.value)}
               >
@@ -313,7 +313,7 @@ export default function InmueblesPage() {
             <div>
               <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Tipo</label>
               <select
-                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-100"
                 value={estadoInmueble}
                 onChange={(e) => setEstadoInmueble(e.target.value)}
               >
@@ -327,7 +327,7 @@ export default function InmueblesPage() {
             <div>
               <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Moneda</label>
               <select
-                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-100"
                 value={moneda}
                 onChange={(e) => setMoneda(e.target.value)}
               >
@@ -342,7 +342,7 @@ export default function InmueblesPage() {
               <div>
                 <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Precio mínimo</label>
                 <input
-                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-100"
                   placeholder="0"
                   value={min}
                   onChange={(e) => setMin(e.target.value)}
@@ -351,7 +351,7 @@ export default function InmueblesPage() {
               <div>
                 <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Precio máximo</label>
                 <input
-                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-100"
                   placeholder="999,999"
                   value={max}
                   onChange={(e) => setMax(e.target.value)}
@@ -359,7 +359,7 @@ export default function InmueblesPage() {
               </div>
             </div>
 
-            <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+            <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-xs text-slate-500 dark:border-slate-700 dark:bg-[#141417] dark:text-slate-400">
               La búsqueda por texto se aplica sola. Usa el botón <span className="font-semibold text-slate-700 dark:text-slate-300">Aplicar filtros</span> para actualizar el resto.
             </div>
           </div>
@@ -380,7 +380,7 @@ export default function InmueblesPage() {
               <div className="flex items-center gap-2">
                 <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Ordenar</label>
                 <select
-                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-100"
                   value={sort}
                   onChange={(e) => setSort(e.target.value)}
                 >
@@ -397,14 +397,14 @@ export default function InmueblesPage() {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {loading ? (
               Array.from({ length: 6 }).map((_, idx) => (
-                <div key={idx} className="h-60 animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-700" />
+                <div key={idx} className="h-60 animate-pulse rounded-2xl bg-slate-100 dark:bg-[#1f1f24]" />
               ))
             ) : rows.length ? (
               rows.map((p) => (
                 <PropertyCard key={p.id ?? p._id ?? p.titulo} property={p} />
               ))
             ) : (
-              <div className="col-span-full rounded-2xl border border-dashed border-slate-200 bg-white p-10 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+              <div className="col-span-full rounded-2xl border border-dashed border-slate-200 bg-white p-10 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-[#141417] dark:text-slate-400">
                 No se encontraron inmuebles. Intenta cambiar los filtros o limpia la búsqueda.
               </div>
             )}
@@ -419,7 +419,7 @@ export default function InmueblesPage() {
                 <button
                   onClick={() => load(page - 1)}
                   disabled={page <= 1 || loading}
-                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-300 dark:hover:bg-[#1f1f24]"
                 >
                   Anterior
                 </button>
@@ -436,7 +436,7 @@ export default function InmueblesPage() {
                       className={`min-w-[2.25rem] rounded-xl px-3 py-2 text-sm font-medium transition disabled:cursor-not-allowed ${
                         item.n === page
                           ? "bg-[#470A68] text-white shadow-sm dark:bg-[#5a0e82]"
-                          : "border border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                          : "border border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-50 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-300 dark:hover:bg-[#1f1f24]"
                       }`}
                     >
                       {item.n}
@@ -446,7 +446,7 @@ export default function InmueblesPage() {
                 <button
                   onClick={() => load(page + 1)}
                   disabled={page >= totalPages || loading}
-                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-300 dark:hover:bg-[#1f1f24]"
                 >
                   Siguiente
                 </button>

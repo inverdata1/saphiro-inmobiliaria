@@ -294,7 +294,7 @@ export default function PasarelaPagoMensualidad({
   const inputCls = (campo) =>
     `w-full rounded-xl border ${
       formErrors[campo] ? "border-red-500 ring-2 ring-red-500/20" : "border-slate-300 dark:border-slate-700"
-    } bg-slate-50 dark:bg-slate-800/90 px-4 py-2.5 text-slate-800 dark:text-slate-100 font-medium text-xs sm:text-sm focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 transition-all outline-none`;
+    } bg-slate-50 dark:bg-[#18181c]/90 px-4 py-2.5 text-slate-800 dark:text-slate-100 font-medium text-xs sm:text-sm focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 transition-all outline-none`;
 
   const errorText = (campo) =>
     formErrors[campo] ? (
@@ -311,7 +311,7 @@ export default function PasarelaPagoMensualidad({
   // ─────────────────────────────────────────────────────────────
   if (reciboEmitido) {
     return (
-      <div className="bg-white dark:bg-[#121215] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 max-w-xl mx-auto shadow-2xl relative overflow-hidden animate-fade-in text-slate-900 dark:text-white">
+      <div className="bg-white dark:bg-[#141417] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 max-w-xl mx-auto shadow-2xl relative overflow-hidden animate-fade-in text-slate-900 dark:text-white">
         {/* Banda superior de color decorativa */}
         <div className="absolute top-0 inset-x-0 h-2.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-[#470A68]" />
 
@@ -322,7 +322,7 @@ export default function PasarelaPagoMensualidad({
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40 uppercase tracking-wider mb-2">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40 uppercase tracking-wider mb-2">
             Pago Procesado Exitosamente
           </span>
           <h2 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
@@ -361,7 +361,7 @@ export default function PasarelaPagoMensualidad({
           </div>
 
           {/* Detalles de la Transacción */}
-          <div className="space-y-2 text-xs bg-slate-50/60 dark:bg-[#16161a] p-4 rounded-2xl border border-slate-200/60 dark:border-slate-800/70">
+          <div className="space-y-2 text-xs bg-slate-50/60 dark:bg-[#18181c] p-4 rounded-2xl border border-slate-200/60 dark:border-slate-800/70">
             <div className="flex justify-between py-1 border-b border-slate-200/40 dark:border-slate-800/40">
               <span className="text-slate-500 dark:text-slate-400">N° Factura:</span>
               <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{reciboEmitido.factura}</span>
@@ -395,7 +395,7 @@ export default function PasarelaPagoMensualidad({
                 <svg className="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
-                <span>Validado por Bienes Acuario</span>
+                <span>Validado por Saphiro Inmobiliaria</span>
               </div>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
                 Sello Digital #VERIF-{reciboEmitido.cuotaId}992
@@ -416,7 +416,7 @@ export default function PasarelaPagoMensualidad({
           <button
             type="button"
             onClick={copiarEnlaceRecibo}
-            className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
+            className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#18181c] transition active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -455,7 +455,7 @@ export default function PasarelaPagoMensualidad({
   // ─────────────────────────────────────────────────────────────
   return (
     <div
-      className={`bg-white dark:bg-[#121215] border border-slate-200 dark:border-slate-800 rounded-3xl ${
+      className={`bg-white dark:bg-[#141417] border border-slate-200 dark:border-slate-800 rounded-3xl ${
         esModal ? "p-4 sm:p-6 shadow-2xl" : "p-5 sm:p-7 shadow-xl"
       } text-slate-900 dark:text-white transition-all relative`}
     >
@@ -464,7 +464,7 @@ export default function PasarelaPagoMensualidad({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" />
               <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
                 Pasarela de Pago de Mensualidad
               </h2>
@@ -478,7 +478,7 @@ export default function PasarelaPagoMensualidad({
             <button
               type="button"
               onClick={onCerrar}
-              className="self-end sm:self-auto p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
+              className="self-end sm:self-auto p-2 rounded-xl bg-slate-100 dark:bg-[#141417] text-slate-500 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
               title="Cerrar pasarela"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -503,7 +503,7 @@ export default function PasarelaPagoMensualidad({
                   className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     cuotaActiva.id === c.id
                       ? "bg-[#470A68] text-white shadow-sm"
-                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                      : "bg-slate-100 dark:bg-[#141417] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#1f1f24]"
                   }`}
                 >
                   Cuota {c.numero} ({c.mes})
@@ -520,7 +520,7 @@ export default function PasarelaPagoMensualidad({
           {/* Info Cuota */}
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-purple-100 dark:bg-purple-950 text-[#470A68] dark:text-purple-300">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300">
                 Cuota #{cuotaActiva.numero}
               </span>
               <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
@@ -560,7 +560,7 @@ export default function PasarelaPagoMensualidad({
         <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2.5">
           Elige tu medio de pago:
         </label>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 p-1.5 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700/60">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 p-1.5 bg-slate-100 dark:bg-[#18181c]/80 rounded-2xl border border-slate-200 dark:border-slate-700/60">
           {/* Tarjeta */}
           <button
             type="button"
@@ -571,7 +571,7 @@ export default function PasarelaPagoMensualidad({
             className={`flex flex-col items-center justify-center gap-1 py-2.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               metodoPago === "tarjeta"
                 ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-950/20"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700/50"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-[#1f1f24]/50"
             }`}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -591,7 +591,7 @@ export default function PasarelaPagoMensualidad({
             className={`flex flex-col items-center justify-center gap-1 py-2.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               metodoPago === "pagomovil"
                 ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-950/20"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700/50"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-[#1f1f24]/50"
             }`}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -611,7 +611,7 @@ export default function PasarelaPagoMensualidad({
             className={`flex flex-col items-center justify-center gap-1 py-2.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               metodoPago === "zelle"
                 ? "bg-gradient-to-r from-purple-600 to-violet-600 text-white shadow-md shadow-purple-950/20"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700/50"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-[#1f1f24]/50"
             }`}
           >
             <span className="font-black text-sm tracking-tighter">zelle</span>
@@ -628,7 +628,7 @@ export default function PasarelaPagoMensualidad({
             className={`flex flex-col items-center justify-center gap-1 py-2.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               metodoPago === "binance"
                 ? "bg-gradient-to-r from-amber-500 to-yellow-600 text-slate-950 shadow-md shadow-amber-950/20 font-black"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700/50"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-[#1f1f24]/50"
             }`}
           >
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -647,7 +647,7 @@ export default function PasarelaPagoMensualidad({
             className={`flex flex-col items-center justify-center gap-1 py-2.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               metodoPago === "paypal"
                 ? "bg-gradient-to-r from-sky-500 to-blue-700 text-white shadow-md shadow-blue-950/20"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700/50"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-[#1f1f24]/50"
             }`}
           >
             <span className="font-black italic text-xs tracking-wider">PayPal</span>
@@ -662,13 +662,13 @@ export default function PasarelaPagoMensualidad({
         {metodoPago === "tarjeta" && (
           <div className="space-y-4 animate-fade-in">
             {/* Selector Crédito / Débito */}
-            <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
+            <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-[#141417] rounded-xl">
               <button
                 type="button"
                 onClick={() => setTipoTarjeta("credito")}
                 className={`py-2 px-3 rounded-lg font-bold text-xs transition-all cursor-pointer ${
                   tipoTarjeta === "credito"
-                    ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+                    ? "bg-white dark:bg-[#1f1f24] text-slate-900 dark:text-white shadow-sm"
                     : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
                 }`}
               >
@@ -679,7 +679,7 @@ export default function PasarelaPagoMensualidad({
                 onClick={() => setTipoTarjeta("debito")}
                 className={`py-2 px-3 rounded-lg font-bold text-xs transition-all cursor-pointer ${
                   tipoTarjeta === "debito"
-                    ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+                    ? "bg-white dark:bg-[#1f1f24] text-slate-900 dark:text-white shadow-sm"
                     : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
                 }`}
               >
@@ -984,7 +984,7 @@ export default function PasarelaPagoMensualidad({
                 />
               </div>
               <div className="space-y-1 text-xs text-amber-900 dark:text-amber-200 text-center sm:text-left">
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-100 uppercase">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100 uppercase">
                   Binance Pay 0% Fees
                 </span>
                 <strong className="block font-black text-sm">Escanea con tu Binance App</strong>

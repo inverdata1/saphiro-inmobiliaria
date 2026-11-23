@@ -206,7 +206,7 @@ export default function ForgotPasswordPage() {
                   autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900"
+                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-100 dark:focus:ring-blue-900"
                   placeholder="ejemplo@correo.com"
                 />
               </div>
@@ -244,7 +244,7 @@ export default function ForgotPasswordPage() {
                       onMouseEnter={() => handleCodeMouseEnter(i)}
                       onMouseUp={handleCodeMouseUp}
                       onDragStart={(e) => e.preventDefault()}
-                      className={`h-12 w-12 rounded-xl border bg-white text-center text-lg font-bold shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900 ${
+                      className={`h-12 w-12 rounded-xl border bg-white text-center text-lg font-bold shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:bg-[#141417] dark:text-slate-100 dark:focus:ring-blue-900 ${
                         selectedRange && i >= selectedRange.start && i <= selectedRange.end
                           ? "border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-900/40"
                           : "border-slate-200 dark:border-slate-600"
@@ -307,7 +307,7 @@ export default function ForgotPasswordPage() {
                     required
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 pr-10 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 pr-10 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-100 dark:focus:ring-blue-900"
                     placeholder="••••••••"
                   />
                   <button
@@ -340,7 +340,7 @@ export default function ForgotPasswordPage() {
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 pr-10 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 pr-10 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-[#141417] dark:text-slate-100 dark:focus:ring-blue-900"
                     placeholder="••••••••"
                   />
                   <button

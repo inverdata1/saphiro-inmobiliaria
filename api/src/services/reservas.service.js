@@ -1,33 +1,5 @@
 const pool = require("../db/pool");
 const AppError = require("../utils/AppError");
-const notificacionesService = require("./notificaciones.service");
-const { montoACobrar } = require("../utils/cobroReserva");
-
-let autorizadaLista = false;
-
-async function ensureAutorizada() {
-  if (autorizadaLista) return;
-  await pool.query(
-    `ALTER TABLE reservas_vacacionales
-       ADD COLUMN IF NOT EXISTS autorizada boolean NOT NULL DEFAULT false`
-  );
-  await pool.query(
-    `UPDATE reservas_vacacionales rv
-        SET autorizada = true
-       FROM transacciones t
-      WHERE t.id = rv.transaccion_id
-        AND t.estatus_pago = 'pagado'
-        AND rv.autorizada = false`
-  );
-  await pool.query(`ALTER TABLE reservas_vacacionales ADD COLUMN IF NOT EXISTS monto_cobrado numeric(12,2)`);
-  await pool.query(`ALTER TABLE reservas_vacacionales ADD COLUMN IF NOT EXISTS cobro_modo varchar(10)`);
-  await pool.query(`ALTER TABLE reservas_vacacionales ADD COLUMN IF NOT EXISTS noches_cobradas integer`);
-  await pool.query(`ALTER TABLE reservas_vacacionales ADD COLUMN IF NOT EXISTS porcentaje_reserva numeric(5,2) NOT NULL DEFAULT 50`);
-  await pool.query(`ALTER TABLE alquiler_vacacional ADD COLUMN IF NOT EXISTS porcentaje_reserva numeric(5,2) NOT NULL DEFAULT 50`);
-  autorizadaLista = true;
-}
-
-exports.ensureAutorizada = ensureAutorizada;
 
 function parsePagination({ limit, offset, page } = {}) {
   const lim = Math.min(Math.max(Number(limit) || 100, 1), 200);
@@ -59,17 +31,10 @@ const RESERVA_SELECT = `
     rv.fecha_salida,
     rv.num_huespedes,
     rv.precio_total,
-    rv.monto_cobrado,
-    rv.cobro_modo,
-    rv.noches_cobradas,
     rv.fecha_reserva,
-    rv.apartado_hasta,
-    rv.motivo_cancelacion,
-    COALESCE(rv.autorizada, false) AS autorizada,
     (rv.fecha_salida - rv.fecha_entrada) AS total_noches,
 
     av.precio_por_noche,
-    COALESCE(rv.porcentaje_reserva, av.porcentaje_reserva, 50) AS porcentaje_reserva,
     av.capacidad_personas,
     av.noches_minimas,
     av.hora_checkin,
@@ -78,8 +43,6 @@ const RESERVA_SELECT = `
     i.id AS inmueble_id,
     i.uuid AS inmueble_uuid,
     i.titulo AS inmueble_titulo,
-    i.edificio_nombre,
-    i.numero_apto,
     i.precio AS inmueble_precio,
     i.moneda AS inmueble_moneda,
     i.direccion_exacta AS inmueble_direccion,
@@ -109,7 +72,6 @@ const RESERVA_SELECT = `
 
     CASE
       WHEN t.estatus_pago = 'cancelado' THEN 'cancelada'
-      WHEN COALESCE(rv.autorizada, false) = false AND t.estatus_pago = 'pendiente' THEN 'por_autorizar'
       WHEN CURRENT_DATE < rv.fecha_entrada THEN 'proxima'
       WHEN CURRENT_DATE >= rv.fecha_entrada AND CURRENT_DATE <= rv.fecha_salida THEN 'en_curso'
       ELSE 'finalizada'
@@ -149,25 +111,6 @@ const RESERVA_FROM = `
 `;
 
 exports.listReservas = async (user, filters = {}) => {
-  await ensureAutorizada();
-  await pool.query(
-    `UPDATE transacciones t
-        SET estatus_pago = 'cancelado'
-       FROM reservas_vacacionales rv
-      WHERE rv.transaccion_id = t.id
-        AND t.estatus_pago = 'pendiente'
-        AND COALESCE(rv.autorizada, false) = false
-        AND rv.apartado_hasta IS NOT NULL
-        AND rv.apartado_hasta < NOW()`
-  );
-  await pool.query(
-    `UPDATE reservas_vacacionales
-        SET motivo_cancelacion = COALESCE(motivo_cancelacion, 'Venció el apartado de 24 horas')
-      WHERE apartado_hasta IS NOT NULL
-        AND apartado_hasta < NOW()
-        AND motivo_cancelacion IS NULL
-        AND COALESCE(autorizada, false) = false`
-  );
   const { estado, search, desde, hasta, tipo, inmueble_id } = filters;
   const { lim, off } = parsePagination(filters);
 
@@ -215,8 +158,6 @@ exports.listReservas = async (user, filters = {}) => {
   if (estado && estado !== "todas") {
     if (estado === "cancelada") {
       whereClauses.push("t.estatus_pago = 'cancelado'");
-    } else if (estado === "por_autorizar") {
-      whereClauses.push("COALESCE(rv.autorizada, false) = false AND t.estatus_pago = 'pendiente'");
     } else if (estado === "proxima") {
       whereClauses.push("(t.estatus_pago IS NULL OR t.estatus_pago <> 'cancelado') AND CURRENT_DATE < rv.fecha_entrada");
     } else if (estado === "en_curso") {
@@ -284,7 +225,6 @@ exports.listReservas = async (user, filters = {}) => {
 };
 
 exports.getReservaById = async (id, user) => {
-  await ensureAutorizada();
   if (!id || !/^\d+$/.test(String(id))) {
     throw new AppError("Reserva no encontrada", 404);
   }
@@ -312,103 +252,7 @@ exports.getReservaById = async (id, user) => {
     }
   }
 
-  const cal = await pool.query(
-    `SELECT estrellas_corredor, comentario_inmueble, comentario_corredor
-       FROM calificaciones_reserva WHERE reserva_id = $1`,
-    [reserva.reserva_id]
-  );
-  reserva.calificacion = cal.rows[0] || null;
   return reserva;
-};
-
-exports.autorizarReserva = async (id, user) => {
-  await ensureAutorizada();
-  const reserva = await exports.getReservaById(id, user);
-  const esCorredor = Number(user?.id) === Number(reserva.corredor_usuario_id);
-  if (!user || (user.rol !== "admin" && !esCorredor)) {
-    throw new AppError("Solo la inmobiliaria de ese inmueble puede autorizar la reserva", 403);
-  }
-  if (reserva.estatus_pago === "cancelado") {
-    throw new AppError("La reserva está cancelada", 400);
-  }
-  if (reserva.estatus_pago === "pagado") {
-    throw new AppError("La reserva ya está pagada", 400);
-  }
-  await pool.query(`UPDATE reservas_vacacionales SET autorizada = true, apartado_hasta = NULL WHERE id = $1`, [Number(id)]);
-  if (reserva.cliente_id) {
-    await notificacionesService.create({
-      usuario_id: reserva.cliente_id,
-      titulo: "Reserva autorizada",
-      descripcion: `La inmobiliaria autorizó tu reserva en ${reserva.inmueble_titulo}. Ya puedes pagar.`,
-      tipo_notificacion: "Transaccion",
-      enlace: `/pagar-reserva/${id}`,
-    });
-  }
-  return exports.getReservaById(id, user);
-};
-
-exports.pagarReserva = async (id, user, body = {}) => {
-  await ensureAutorizada();
-  const reserva = await exports.getReservaById(id, user);
-  if (user && user.rol !== "admin" && Number(user.id) !== Number(reserva.cliente_id)) {
-    throw new AppError("No autorizado para pagar esta reserva", 403);
-  }
-  if (!reserva.autorizada) {
-    throw new AppError("La inmobiliaria todavía no autoriza esta reserva", 403);
-  }
-  if (reserva.estatus_pago === "cancelado") {
-    throw new AppError("La reserva está cancelada", 400);
-  }
-  if (reserva.estatus_pago === "pagado") {
-    return reserva;
-  }
-  let cobro;
-  try {
-    cobro = montoACobrar({
-      total: reserva.precio_total,
-      precioNoche: reserva.precio_por_noche,
-      nochesEstadia: Number(reserva.total_noches),
-      modo: body.modo,
-      noches: body.noches,
-      porcentaje: reserva.porcentaje_reserva,
-    });
-  } catch (err) {
-    if (err.code === "NOCHES") throw new AppError(err.message, 400);
-    throw err;
-  }
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN");
-    const pago = await client.query(
-      `UPDATE transacciones SET estatus_pago = 'pagado' WHERE id = $1 AND estatus_pago = 'pendiente'`,
-      [reserva.transaccion_id]
-    );
-    if (pago.rowCount !== 1) {
-      await client.query("ROLLBACK");
-      return exports.getReservaById(id, user);
-    }
-    await client.query(
-      `UPDATE reservas_vacacionales
-          SET monto_cobrado = $2, cobro_modo = $3, noches_cobradas = $4
-        WHERE id = $1`,
-      [reserva.reserva_id, cobro.monto, cobro.modo, cobro.noches]
-    );
-    await client.query("COMMIT");
-  } catch (err) {
-    await client.query("ROLLBACK");
-    throw err;
-  } finally {
-    client.release();
-  }
-  const detalleCobro = cobro.modo === "noches"
-    ? `${cobro.noches} noche${cobro.noches > 1 ? "s" : ""}`
-    : `el ${cobro.porcentaje ?? 50}% del total`;
-  await notificacionesService.createToAllAdmins({
-    titulo: "Pago de reserva",
-    descripcion: `${reserva.cliente_nombre} pagó la inicial (${detalleCobro}) de la reserva en ${reserva.inmueble_titulo}.`,
-    tipo_notificacion: "Transaccion",
-  });
-  return exports.getReservaById(id, user);
 };
 
 exports.listReservasDeCliente = async (clienteId, filters = {}) => {
@@ -417,79 +261,4 @@ exports.listReservasDeCliente = async (clienteId, filters = {}) => {
 
 exports.listReservasDeCorredor = async (usuarioId, filters = {}) => {
   return exports.listReservas({ id: usuarioId, rol: "corredor" }, filters);
-};
-
-exports.cancelarReserva = async (id, user, body = {}) => {
-  const motivo = String(body.motivo || "").trim();
-  if (motivo.length < 3) throw new AppError("Indica por qué se cancela", 400);
-  const reserva = await exports.getReservaById(id, user);
-  const esCliente = Number(user?.id) === Number(reserva.cliente_id);
-  const esCorredor = Number(user?.id) === Number(reserva.corredor_usuario_id);
-  if (!user || (user.rol !== "admin" && !esCliente && !esCorredor)) {
-    throw new AppError("No puedes cancelar esta reserva", 403);
-  }
-  if (reserva.estatus_pago === "cancelado") return reserva;
-  await pool.query(`UPDATE transacciones SET estatus_pago = 'cancelado' WHERE id = $1`, [reserva.transaccion_id]);
-  await pool.query(
-    `UPDATE reservas_vacacionales SET motivo_cancelacion = $2, apartado_hasta = NULL WHERE id = $1`,
-    [reserva.reserva_id, motivo.slice(0, 300)]
-  );
-  await notificacionesService.createToAllAdmins({
-    titulo: "Reserva cancelada",
-    descripcion: `Se canceló la reserva ${reserva.reserva_id}. Motivo: ${motivo.slice(0, 180)}`,
-    tipo_notificacion: "Transaccion",
-    enlace: `/reservaciones?reserva=${reserva.reserva_id}`,
-  });
-  return exports.getReservaById(id, user);
-};
-
-exports.prolongarReserva = async (id, user) => {
-  const reserva = await exports.getReservaById(id, user);
-  const esCorredor = Number(user?.id) === Number(reserva.corredor_usuario_id);
-  if (!user || (user.rol !== "admin" && !esCorredor)) {
-    throw new AppError("Solo la inmobiliaria puede prolongar el apartado", 403);
-  }
-  await pool.query(
-    `UPDATE reservas_vacacionales SET apartado_hasta = NOW() + INTERVAL '24 hours' WHERE id = $1`,
-    [reserva.reserva_id]
-  );
-  return exports.getReservaById(id, user);
-};
-
-exports.calificarReserva = async (id, user, body = {}) => {
-  const reserva = await exports.getReservaById(id, user);
-  if (Number(user?.id) !== Number(reserva.cliente_id)) {
-    throw new AppError("Solo el huésped puede calificar", 403);
-  }
-  if (reserva.estado_estancia !== "finalizada") {
-    throw new AppError("La estadía todavía no termina", 400);
-  }
-  const estrellas = Number(body.estrellas);
-  if (!Number.isInteger(estrellas) || estrellas < 1 || estrellas > 5) {
-    throw new AppError("Las estrellas van de 1 a 5", 400);
-  }
-  const comentarioInmueble = String(body.comentario_inmueble || "").trim().slice(0, 1000);
-  const comentarioCorredor = String(body.comentario_corredor || "").trim().slice(0, 1000);
-  await pool.query(
-    `INSERT INTO calificaciones_reserva (reserva_id, cliente_id, comentario_inmueble, estrellas_corredor, comentario_corredor)
-     VALUES ($1, $2, $3, $4, $5)
-     ON CONFLICT (reserva_id) DO NOTHING`,
-    [reserva.reserva_id, user.id, comentarioInmueble, estrellas, comentarioCorredor]
-  );
-  if (reserva.inmueble_id && comentarioInmueble) {
-    await pool.query(
-      `INSERT INTO resenas (inmueble_id, usuario_id, estrellas, comentario, fecha_publicacion)
-       VALUES ($1, $2, $3, $4, NOW())`,
-      [reserva.inmueble_id, user.id, estrellas, comentarioInmueble]
-    );
-  }
-  if (estrellas <= 2) {
-    await notificacionesService.createToAllAdmins({
-      titulo: "Calificación negativa",
-      descripcion: `${reserva.cliente_nombre} calificó con ${estrellas} estrellas. ${comentarioCorredor || comentarioInmueble || "Sin comentario."}`.slice(0, 240),
-      tipo_notificacion: "Transaccion",
-      enlace: `/reservaciones?reserva=${reserva.reserva_id}`,
-    });
-  }
-  return exports.getReservaById(id, user);
 };

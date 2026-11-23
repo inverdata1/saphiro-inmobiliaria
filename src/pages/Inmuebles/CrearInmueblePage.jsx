@@ -9,7 +9,6 @@ export default function CrearInmueblePage() {
       <nav className="mb-4 flex items-center gap-1.5 px-6 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
         <button
           type="button"
-          data-salir=""
           onClick={() => navigate(-1)}
           className="inline-flex items-center gap-1 font-medium whitespace-nowrap transition-colors hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
         >
