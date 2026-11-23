@@ -30,6 +30,24 @@ exports.listReservasDeCorredor = async (req, res, next) => {
   }
 };
 
+exports.autorizarReserva = async (req, res, next) => {
+  try {
+    const data = await reservasService.autorizarReserva(req.params.id, req.user);
+    res.status(200).json({ ok: true, data });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.pagarReserva = async (req, res, next) => {
+  try {
+    const data = await reservasService.pagarReserva(req.params.id, req.user, req.body || {});
+    res.status(200).json({ ok: true, data });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.getReservaById = async (req, res, next) => {
   try {
     const data = await reservasService.getReservaById(req.params.id, req.user);

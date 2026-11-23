@@ -8,12 +8,6 @@ import { useT } from "../lib/i18n";
 const HERO_IMG =
   "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=1920&q=80";
 
-const MOCK_LATEST = [
-  { id: 1, titulo: "Ocean Breeze Villa", tipo_inmueble: "Villa", estado_inmueble: "alquiler_fijo", estatus: "disponible", precio: 4500, habitaciones: 3, banos: 2, area_m2: 220, sector: "Ocean Drive", ciudad: "Maracaibo", imagen_url: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80" },
-  { id: 2, titulo: "Jakson House", tipo_inmueble: "Casa", estado_inmueble: "alquiler_fijo", estatus: "disponible", precio: 3200, habitaciones: 3, banos: 2, area_m2: 180, sector: "Baker Street", ciudad: "Maracaibo", imagen_url: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80" },
-  { id: 3, titulo: "Lakeside Cottage", tipo_inmueble: "Casa", estado_inmueble: "alquiler_fijo", estatus: "disponible", precio: 5700, habitaciones: 3, banos: 2, area_m2: 240, sector: "Pinecrest Lane", ciudad: "Maracaibo", imagen_url: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=800&q=80" },
-];
-
 const PRICE_PRESETS = [
   { value: "", key: "price" },
   { value: "0-1500", key: "priceTo" },
@@ -85,9 +79,9 @@ export default function InicioPage() {
       try {
         const res = await apiGet("/inmuebles", { limit: 6, estatus: "disponible" });
         const data = res?.data ?? res ?? [];
-        setLatest(Array.isArray(data) && data.length ? data : MOCK_LATEST);
+        setLatest(Array.isArray(data) ? data : []);
       } catch {
-        setLatest(MOCK_LATEST);
+        setLatest([]);
       } finally {
         setLatestLoading(false);
       }

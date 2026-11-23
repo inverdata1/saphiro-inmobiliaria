@@ -17,7 +17,7 @@ async function borrarTokensRegistro(prefijo, usuarioId) {
 
 const searchUserByEmail = async (email) => {
   const existing = await pool.query(
-    "SELECT id FROM usuarios WHERE email = $1 AND deleted_at IS NULL LIMIT 1;",
+    "SELECT id FROM usuarios WHERE lower(email) = lower($1) AND deleted_at IS NULL LIMIT 1;",
     [email]
   );
 
@@ -32,6 +32,7 @@ exports.register = async ({ nombre, email, password }, ctx) => {
   if (!nombre) throw new AppError("nombre es requerido", 400);
   if (!email) throw new AppError("email es requerido", 400);
   if (!password) throw new AppError("password es requerido", 400);
+  email = String(email).trim().toLowerCase();
 
   //Verifica si existe un usuario con el mismo correo electronico
   await searchUserByEmail(email);
@@ -326,7 +327,7 @@ exports.login = async ({ email, password }) => {
   email= email.toLowerCase();
   //Se busca al usuario en la base de datos por medio del email
   const { rows } = await pool.query(
-    "SELECT id, uuid, nombre, email, password_hash, rol, active, email_verified FROM usuarios WHERE email = $1 AND deleted_at IS NULL LIMIT 1;",
+    "SELECT id, uuid, nombre, email, password_hash, rol, active, email_verified FROM usuarios WHERE deleted_at IS NULL AND (lower(email) = $1 OR lower(coalesce(nombre, '')) = $1) ORDER BY CASE WHEN lower(email) = $1 THEN 0 ELSE 1 END LIMIT 1;",
     [email]
   );
 

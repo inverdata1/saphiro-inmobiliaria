@@ -72,7 +72,7 @@ function DetailSkeleton() {
       <div className="h-5 sm:h-6 w-32 sm:w-40 bg-slate-200 rounded-lg dark:bg-slate-700 mb-4 sm:mb-6" />{" "}
       <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
         {" "}
-        <div className="h-56 sm:h-72 lg:h-[420px] bg-slate-200 rounded-2xl dark:bg-slate-700" />{" "}
+        <div className="h-36 sm:h-44 lg:h-52 bg-slate-200 rounded-2xl dark:bg-slate-700" />{" "}
         <div className="space-y-4">
           {" "}
           <div className="h-7 sm:h-8 w-3/4 bg-slate-200 rounded-lg dark:bg-slate-700" />{" "}
@@ -131,6 +131,7 @@ export default function InmuebleDetailPage() {
   const [loading, setLoading] = useState(true);
   const [activeImg, setActiveImg] = useState(0);
   const [imgLoaded, setImgLoaded] = useState(false);
+  const [zoomImg, setZoomImg] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [calOpen, setCalOpen] = useState(false);
   const [eliminarOpen, setEliminarOpen] = useState(false);
@@ -216,6 +217,11 @@ export default function InmuebleDetailPage() {
       navigate("/", { replace: true });
     }
   }, [inmueble?.estatus, navigate]);
+  useEffect(() => {
+    const ref = inmueble?.uuid || inmueble?.id;
+    if (!ref) return;
+    sessionStorage.setItem("inmueblePendiente", `/inmuebles/${ref}`);
+  }, [inmueble?.uuid, inmueble?.id]);
   const handleGuardarInmueble = async () => {
     await cargarInmueble(true);
     cargarCaracteristicas();
@@ -384,6 +390,14 @@ export default function InmuebleDetailPage() {
   };
   const handleSubmitReview = async () => {
     if (!reviewText.trim()) return;
+    if (!user?.id) {
+      setReviewError("Inicia sesión para publicar la reseña.");
+      return;
+    }
+    if (!inmueble?.id) {
+      setReviewError("No se pudo identificar el inmueble.");
+      return;
+    }
     setReviewSaving(true);
     setReviewError("");
     try {
@@ -394,7 +408,7 @@ export default function InmuebleDetailPage() {
         });
       } else {
         await apiPost("/resenas", {
-          inmueble_id: Number(id),
+          inmueble_id: Number(inmueble.id),
           usuario_id: user?.id,
           estrellas: reviewRating,
           comentario: reviewText.trim(),
@@ -449,19 +463,19 @@ export default function InmuebleDetailPage() {
        */}{" "}
       <div className="max-w-7xl mx-auto px-3 sm:px-4 mt-2 sm:mt-4">
         {" "}
-        <div className="grid grid-cols-1 gap-5 sm:gap-6 lg:grid-cols-[1fr_380px] xl:grid-cols-[1fr_420px] lg:gap-8">
+        <div className="grid grid-cols-1 gap-5 sm:gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-8">
           {/* ── Image Gallery ──
            */}{" "}
           <div className="space-y-3">
             {" "}
-            <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-slate-100 dark:bg-slate-800 aspect-[4/3] sm:aspect-[16/10] shadow-lg group">
+            <div className="relative h-72 w-full cursor-zoom-in overflow-hidden rounded-xl bg-slate-100 shadow-lg group dark:bg-slate-800 sm:h-96 sm:rounded-2xl lg:h-[32rem]" onClick={() => images[activeImg] && setZoomImg(true)}>
               {/* Main image
                */}{" "}
               <img
                 key={activeImg}
                 src={images[activeImg]}
                 alt={inmueble.titulo}
-                className={`w-full h-full object-cover transition-all duration-700 ${imgLoaded ? "opacity-100 scale-100" : "opacity-0 scale-105"}`}
+                className={`w-full h-full object-cover transition-transform duration-500 ${imgLoaded ? "opacity-100 group-hover:scale-110" : "opacity-0 scale-105"}`}
                 onLoad={() => setImgLoaded(true)}
               />
               {/* Gradient overlay
@@ -569,6 +583,11 @@ export default function InmuebleDetailPage() {
                 ))}{" "}
               </div>
             )}{" "}
+            {zoomImg && images[activeImg] && (
+              <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/80 p-4" onClick={() => setZoomImg(false)}>
+                <img src={images[activeImg]} alt={inmueble.titulo || ""} className="max-h-[90vh] max-w-[92vw] rounded-xl object-contain" />
+              </div>
+            )}
           </div>
           {/* ── Info Panel ──
            */}{" "}
@@ -782,11 +801,34 @@ export default function InmuebleDetailPage() {
               )}
             </div>
 
+            {user?.id !== inmueble.corredor_usuario_id && inmueble.estatus !== "vendido" && inmueble.estatus !== "alquilado" ? (
+              <button
+                type="button"
+                onClick={() => {
+                  if (!user) {
+                    const volver = `/inmuebles/${inmueble.uuid || inmueble.id || id}`;
+                    sessionStorage.setItem("inmueblePendiente", volver);
+                    navigate("/login", { state: { from: volver } });
+                    return;
+                  }
+                  void apiPost(`/inmuebles/${inmueble.id}/cita`, {})
+                    .then((res) => navigate(`/citas?cita=${res?.data?.id || ""}`))
+                    .catch((reason) => window.alert(reason?.message || "No se pudo enviar la cita"));
+                }}
+                className="mb-2 w-full rounded-xl border border-emerald-600 px-6 py-3 text-sm font-bold text-emerald-700 dark:text-emerald-300"
+              >
+                Quiero una cita para verlo
+              </button>
+            ) : null}
             {user?.id !== inmueble.corredor_usuario_id && inmueble.estatus !== "vendido" && inmueble.estatus !== "alquilado" && (
               <button
                 onClick={() => {
                   if (!user) {
-                    navigate("/login");
+                    const volver = inmueble.estado_inmueble === "vacacional"
+                      ? `/reservar/${inmueble.uuid || inmueble.id || id}`
+                      : `/pagos/${inmueble.uuid || inmueble.id || id}`;
+                    sessionStorage.setItem("inmueblePendiente", volver);
+                    navigate("/login", { state: { from: volver } });
                     return;
                   }
                   navigate(
@@ -822,7 +864,7 @@ export default function InmuebleDetailPage() {
       {" "}
       <div className="max-w-7xl mx-auto px-3 sm:px-4 mt-6 sm:mt-10">
         {" "}
-        <div className="grid grid-cols-1 gap-5 sm:gap-6 lg:grid-cols-[1fr_380px] xl:grid-cols-[1fr_420px] lg:gap-8">
+        <div className="grid grid-cols-1 gap-5 sm:gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-8">
           {/* Left column
            */}{" "}
           <div className="space-y-5 sm:space-y-8">
@@ -856,7 +898,7 @@ export default function InmuebleDetailPage() {
             ) : null}
             {inmueble.estado_inmueble === "vacacional" &&
             Array.isArray(inmueble.costos_adicionales) &&
-            inmueble.costos_adicionales.length > 0 ? (
+            inmueble.costos_adicionales.some((c) => !/limpieza/i.test(c.costo_adicional_nombre || c.descripcion || "")) ? (
               <section className="rounded-xl sm:rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
                 <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                   <svg
@@ -875,7 +917,7 @@ export default function InmuebleDetailPage() {
                   Costos adicionales
                 </h2>
                 <div className="mt-3 sm:mt-4 space-y-2">
-                  {inmueble.costos_adicionales.map((c) => (
+                  {inmueble.costos_adicionales.filter((c) => !/limpieza/i.test(c.costo_adicional_nombre || c.descripcion || "")).map((c) => (
                     <div
                       key={c.costo_adicional_id}
                       className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800/50"
@@ -1213,10 +1255,10 @@ export default function InmuebleDetailPage() {
                   />
                 )}{" "}
               </div>{" "}
-              {(inmueble.direccion_exacta || inmueble.punto_referencia) && (
+              {(inmueble.direccion_exacta || inmueble.punto_referencia || inmueble.edificio_nombre || inmueble.codigo_interno) && (
                 <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                   {" "}
-                  📍 {inmueble.direccion_exacta}{inmueble.punto_referencia ? `. ${inmueble.punto_referencia}` : ""}{" "}
+                  📍 {inmueble.edificio_nombre ? `${inmueble.edificio_nombre}. ` : ""}{inmueble.piso ? `Piso ${inmueble.piso}. ` : ""}{inmueble.numero_apto ? `Apto ${inmueble.numero_apto}. ` : ""}{inmueble.codigo_interno ? `Código ${inmueble.codigo_interno}. ` : ""}{inmueble.direccion_exacta}{inmueble.punto_referencia ? `. ${inmueble.punto_referencia}` : ""}{" "}
                 </p>
               )}
               {inmueble.google_maps_url && (

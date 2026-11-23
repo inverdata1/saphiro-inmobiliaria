@@ -25,7 +25,7 @@ export default function UsuariosAdminPage() {
     setFetching(true);
     try {
       const offset = ((p || page) - 1) * limit;
-      const params = new URLSearchParams({ isAdmin: "true", allUsuarios: "true", limit: String(limit), offset: String(offset) });
+      const params = new URLSearchParams({ allUsuarios: "true", limit: String(limit), offset: String(offset) });
       if (q) params.set("q", q);
       const res = await apiGet(`/usuarios?${params}`);
       setRows(res.data || []);
@@ -136,6 +136,7 @@ export default function UsuariosAdminPage() {
           columns={[
             { key: "id", header: "ID" },
             { key: "nombre", header: "Nombre", render: (r) => r.nombre || "-" },
+            { key: "rol", header: "Rol", render: (r) => (r.rol === "cliente" ? "Cliente" : r.rol === "corredor" ? "Corredor" : r.rol === "admin" ? "Administrador" : r.rol || "-") },
             { key: "email", header: "Email" },
             {
               key: "fecha_registro",

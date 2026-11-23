@@ -88,6 +88,7 @@ export function ClienteSidebar({ onClick }) {
       <SideLink to="/inmuebles" onClick={onClick} icon={ICONS.inmuebles} className="lg:hidden">Inmuebles</SideLink>
       <SideLink to="/rentas-contratadas" onClick={onClick} icon={ICONS.rentasContratadas}>Contratos de alquiler</SideLink>
       <SideLink to="/reservaciones" onClick={onClick} icon={ICONS.reservasVacacionales}>Reservas vacacionales</SideLink>
+      <SideLink to="/citas" onClick={onClick} icon={ICONS.reservasVacacionales}>Citas</SideLink>
       <SideLink to="/guardados" onClick={onClick} icon={ICONS.guardados}>Guardados</SideLink>
       <SideLink to="/mis-recibos" onClick={onClick} icon={ICONS.recibos}>Mis recibos</SideLink>
       <SideLink to="/configuracion" onClick={onClick} icon={ICONS.config}>Configuración</SideLink>
@@ -105,6 +106,7 @@ export function CorredorSidebar({ onClick }) {
       <SideLink to="/precios" onClick={onClick} icon={ICONS.reportes}>Planes</SideLink>
       <SideLink to="/rentas-contratadas" onClick={onClick} icon={ICONS.inmueblesAlquilados}>Contratos de alquiler</SideLink>
       <SideLink to="/reservaciones" onClick={onClick} icon={ICONS.reservasVacacionales}>Reservas vacacionales</SideLink>
+      <SideLink to="/citas" onClick={onClick} icon={ICONS.reservasVacacionales}>Citas</SideLink>
       <SideLink to="/guardados" onClick={onClick} icon={ICONS.guardados}>Guardados</SideLink>
       <SideLink to="/recibos" onClick={onClick} icon={ICONS.recibos}>Mis recibos</SideLink>
       <SideLink to="/mis-transferencias" onClick={onClick} icon={ICONS.transferencias}>Transferencias recibidas</SideLink>
@@ -120,9 +122,11 @@ export function AdminSidebar({ onClick }) {
       <SideLink to="/" onClick={onClick} icon={ICONS.inicio} end className="lg:hidden">Inicio</SideLink>
       <SideLink to="/inmuebles" onClick={onClick} icon={ICONS.inmuebles} className="lg:hidden">Inmuebles</SideLink>
       <SideLink to="/inmuebles/crear" onClick={onClick} icon={ICONS.inmuebles}>Cargar inmueble</SideLink>
+      <SideLink to="/consulta-alquileres" onClick={onClick} icon={ICONS.inmueblesAlquilados}>Alquileres</SideLink>
       <SideLink to="/transacciones" onClick={onClick} icon={ICONS.transacciones}>Transacciones</SideLink>
       <SideLink to="/planes" onClick={onClick} icon={ICONS.comisiones}>Planes</SideLink>
       <SideLink to="/reservaciones" onClick={onClick} icon={ICONS.reservasVacacionales}>Reservas vacacionales</SideLink>
+      <SideLink to="/citas" onClick={onClick} icon={ICONS.reservasVacacionales}>Citas</SideLink>
       <SideLink to="/corredores" onClick={onClick} icon={ICONS.corredores}>Corredores</SideLink>
       <SideLink to="/administradores" onClick={onClick} icon={ICONS.administradores}>Administradores</SideLink>
       <SideLink to="/comisiones" onClick={onClick} icon={ICONS.comisiones}>Comisiones</SideLink>

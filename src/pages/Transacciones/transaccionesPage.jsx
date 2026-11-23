@@ -419,7 +419,24 @@ export default function TransaccionesPage() {
             },
             { key: "tipo_operacion", header: "Tipo" },
             { key: "monto_total", header: "Monto", render: (r) => money(r.monto_total, r.moneda) },
-            { key: "inmueble_titulo", header: "Inmueble" },
+            {
+              key: "inmueble_titulo",
+              header: "Inmueble",
+              render: (r) => {
+                const cliente = r.cliente_nombre || "Cliente";
+                const lugar = (r.edificio_nombre || "").trim() || String(r.inmueble_titulo || "").slice(0, 48);
+                const apto = r.numero_apto ? `Apto ${r.numero_apto}` : "";
+                const fecha = (iso) => {
+                  const [y, m, d] = String(iso || "").slice(0, 10).split("-");
+                  return y && m && d ? `${d}/${m}/${y}` : "";
+                };
+                const fechas = r.fecha_entrada && r.fecha_salida
+                  ? `${fecha(r.fecha_entrada)} al ${fecha(r.fecha_salida)}`
+                  : "";
+                const texto = [cliente, lugar, apto, fechas, money(r.monto_total, r.moneda)].filter(Boolean).join(" · ");
+                return <span className="block max-w-xs text-xs leading-snug" title={texto}>{texto}</span>;
+              },
+            },
             { key: "corredor_id", header: "ID Corredor", render: (r) => r.corredor_id || "-" },
             { key: "corredor_nombre", header: "Corredor", render: (r) => r.corredor_nombre || "-" },
             { key: "cliente_nombre", header: "Cliente" },

@@ -287,6 +287,11 @@ export default function NotificacionesPage() {
                             <span className="text-[11px] text-slate-400 dark:text-slate-500">
                               {formatFecha(n.fecha_hora)} a las {formatHora(n.fecha_hora)}
                             </span>
+                            {n.enlace && (
+                              <Link to={n.enlace} onClick={(e) => e.stopPropagation()} className="text-[11px] font-semibold text-purple-700 dark:text-purple-300">
+                                Ver esta reserva
+                              </Link>
+                            )}
                             <button
                               onClick={(e) => { e.stopPropagation(); eliminarNotificacion(n.id); }}
                               className="text-[11px] font-medium text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 cursor-pointer"

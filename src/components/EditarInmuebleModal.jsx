@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { apiGet, apiUpload } from "../api";
+import { useAuth } from "../context/useAuth";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -86,6 +87,10 @@ function MapaPin({ latitud, longitud, onChange }) {
 }
 
 export default function EditarInmuebleModal({ open, onClose, inmueble, caracteristicasIniciales = [], usuarioId, onSaved }) {
+  const { user } = useAuth();
+  const esAdmin = user?.rol === "admin";
+  const [corredores, setCorredores] = useState([]);
+  const [corredorUsuarioId, setCorredorUsuarioId] = useState("");
   const [tipos, setTipos] = useState([]);
   const [estados, setEstados] = useState([]);
   const [ciudades, setCiudades] = useState([]);
@@ -139,6 +144,13 @@ export default function EditarInmuebleModal({ open, onClose, inmueble, caracteri
   }, [previews]);
 
   useEffect(() => {
+    if (!esAdmin) return;
+    apiGet("/corredores?limit=200")
+      .then((r) => setCorredores(Array.isArray(r?.data) ? r.data : []))
+      .catch(() => setCorredores([]));
+  }, [esAdmin]);
+
+  useEffect(() => {
     (async () => {
       try {
         const [t, e, c, ca, m] = await Promise.all([
@@ -165,6 +177,7 @@ export default function EditarInmuebleModal({ open, onClose, inmueble, caracteri
       estados.find((s) => s.nombre === inmueble.estado)?.id ?? "";
     const vac = inmueble.alquiler_vacacional || {};
 
+    setCorredorUsuarioId(inmueble.corredor_usuario_id ? String(inmueble.corredor_usuario_id) : "");
     setForm({
       titulo: inmueble.titulo || "",
       descripcion: inmueble.descripcion || "",
@@ -381,13 +394,15 @@ export default function EditarInmuebleModal({ open, onClose, inmueble, caracteri
         descripcion: form.descripcion || null,
         tipo_inmueble_id: form.tipo_inmueble_id ? Number(form.tipo_inmueble_id) : null,
         estado_inmueble: form.estado_inmueble,
-        precio: form.precio ? Number(form.precio) : null,
+        precio: form.estado_inmueble === "vacacional" && !form.montoInicial ? 0 : form.precio ? Number(form.precio) : null,
         moneda: form.moneda,
         area_m2: form.area_m2 ? Number(form.area_m2) : null,
         ciudad_id: form.ciudad_id ? Number(form.ciudad_id) : null,
         direccion_exacta: form.direccion_exacta || null,
         punto_referencia: form.punto_referencia || null,
-        usuario_id: usuarioId ? Number(usuarioId) : null,
+        usuario_id: esAdmin
+          ? (corredorUsuarioId ? Number(corredorUsuarioId) : null)
+          : (usuarioId ? Number(usuarioId) : null),
         latitud: form.latitud ? Number(form.latitud) : null,
         longitud: form.longitud ? Number(form.longitud) : null,
         caracteristicas: caracteristicasPayload,
@@ -458,6 +473,23 @@ export default function EditarInmuebleModal({ open, onClose, inmueble, caracteri
           {guardarError && (
             <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-300">
               {guardarError}
+            </div>
+          )}
+          {esAdmin && (
+            <div>
+              <label className={labelCls}>Corredor</label>
+              <select
+                className={inputCls}
+                value={corredorUsuarioId}
+                onChange={(e) => setCorredorUsuarioId(e.target.value)}
+              >
+                <option value="">Mantener el corredor actual</option>
+                {corredores.map((c) => (
+                  <option key={c.corredor_id || c.id} value={c.id}>
+                    {c.corredor_nombre || c.nombre || c.corredor_email || c.email}
+                  </option>
+                ))}
+              </select>
             </div>
           )}
           <div>

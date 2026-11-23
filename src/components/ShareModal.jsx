@@ -60,6 +60,11 @@ export default function ShareModal({
             {copied ? "¡Copiado!" : "Copiar"}
           </button>
         </div>
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          <a className="rounded-xl bg-emerald-600 px-2 py-2 text-center text-xs font-bold text-white" href={`https://wa.me/?text=${encodeURIComponent(`${title || "Propiedad"} ${url}`)}`} target="_blank" rel="noreferrer">WhatsApp</a>
+          <a className="rounded-xl bg-blue-600 px-2 py-2 text-center text-xs font-bold text-white" href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`} target="_blank" rel="noreferrer">Facebook</a>
+          <a className="rounded-xl bg-slate-900 px-2 py-2 text-center text-xs font-bold text-white" href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title || "Propiedad")}`} target="_blank" rel="noreferrer">X</a>
+        </div>
       </div>
     </div>
   );

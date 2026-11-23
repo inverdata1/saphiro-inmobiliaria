@@ -2,6 +2,7 @@ const AppError = require("../utils/AppError");
 const pool = require("../db/pool");
 
 const GOOGLE_GEOCODE_URL = "https://maps.googleapis.com/maps/api/geocode/json";
+const NOMINATIM_URL = "https://nominatim.openstreetmap.org";
 const REQUEST_TIMEOUT_MS = 8000;
 
 const cache = new Map();
@@ -28,6 +29,76 @@ function cacheGet(key) {
 function cacheSet(key, value) {
   if (cache.size > 2000) cache.clear();
   cache.set(key, { t: Date.now(), v: value });
+}
+
+async function nominatimJson(url) {
+  let res;
+  try {
+    res = await fetch(url, {
+      headers: {
+        "User-Agent": "SaphiroInmobiliaria/1.0 (inmobiliaria.inverdata.com.ve)",
+        "Accept-Language": "es",
+      },
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+  } catch (err) {
+    if (err.name === "TimeoutError" || err.name === "AbortError") {
+      throw new AppError("Tiempo agotado consultando el servicio de geocodificación", 504);
+    }
+    throw new AppError("No se pudo contactar el servicio de geocodificación", 502);
+  }
+  if (!res.ok) throw new AppError("No se pudo contactar el servicio de geocodificación", 502);
+  try {
+    return await res.json();
+  } catch {
+    throw new AppError("Respuesta inválida del servicio de geocodificación", 502);
+  }
+}
+
+async function nominatimForward(address, limit) {
+  const url = new URL(`${NOMINATIM_URL}/search`);
+  url.searchParams.set("q", address);
+  url.searchParams.set("format", "jsonv2");
+  url.searchParams.set("addressdetails", "1");
+  url.searchParams.set("countrycodes", "ve");
+  url.searchParams.set("limit", String(limit));
+  const rows = await nominatimJson(url);
+  return (Array.isArray(rows) ? rows : [])
+    .map((row) => ({
+      formatted_address: row.display_name,
+      place_id: String(row.place_id || ""),
+      latitud: Number(row.lat),
+      longitud: Number(row.lon),
+    }))
+    .filter((row) => Number.isFinite(row.latitud) && Number.isFinite(row.longitud));
+}
+
+async function nominatimReverse(lat, lng) {
+  const url = new URL(`${NOMINATIM_URL}/reverse`);
+  url.searchParams.set("lat", String(lat));
+  url.searchParams.set("lon", String(lng));
+  url.searchParams.set("format", "jsonv2");
+  url.searchParams.set("addressdetails", "1");
+  const row = await nominatimJson(url);
+  if (!row || row.error) return null;
+  const country = row.address?.country || "";
+  if (country && !/venezuela/i.test(country)) {
+    const err = new AppError("Solo se permiten ubicaciones dentro de Venezuela", 404);
+    err.code = "ZERO_RESULTS";
+    throw err;
+  }
+  const address = row.address || {};
+  const via = address.road || address.pedestrian || address.neighbourhood || "";
+  const ciudad = address.city || address.town || address.village || address.municipality || address.county;
+  const estado = address.state;
+  const { estado_id, ciudad_id } = await buscarIdsGeo(estado, ciudad);
+  return {
+    direccion: via || String(row.display_name || "").split(",")[0],
+    estado_id,
+    ciudad_id,
+    latitud: Number(row.lat),
+    longitud: Number(row.lon),
+  };
 }
 
 function throwForStatus(status, errorMessage) {
@@ -232,9 +303,13 @@ async function buscarIdsGeo(estadoNombre, ciudadNombre) {
   let ciudad_id = null;
 
   if (estadoNombre) {
+    const limpio = String(estadoNombre).replace(/^(estado|edo\.?)\s+/i, "").trim();
     const { rows } = await pool.query(
-      `SELECT id FROM estados WHERE LOWER(TRIM(nombre)) = LOWER($1) LIMIT 1;`,
-      [estadoNombre]
+      `SELECT id FROM estados
+        WHERE LOWER(TRIM(nombre)) = LOWER($1)
+           OR LOWER(TRIM(nombre)) = LOWER($2)
+        LIMIT 1;`,
+      [estadoNombre, limpio]
     );
     if (rows.length) estado_id = rows[0].id;
   }
@@ -269,6 +344,12 @@ exports.forwardGeocode = async ({ direccion, ciudad, estado, pais = "Venezuela",
   const cached = cacheGet(cacheKey);
   if (cached) return cached;
 
+  if (!process.env.GOOGLE_MAPS_API_KEY) {
+    const results = await nominatimForward(address, limit);
+    cacheSet(cacheKey, results);
+    return results;
+  }
+
   const url = buildUrl({
     address,
     key: process.env.GOOGLE_MAPS_API_KEY,
@@ -277,7 +358,14 @@ exports.forwardGeocode = async ({ direccion, ciudad, estado, pais = "Venezuela",
     language: "es",
   });
 
-  const { mapped, data } = await geocodeJson(url);
+  let mapped;
+  let data;
+  try {
+    ({ mapped, data } = await geocodeJson(url));
+  } catch (err) {
+    if (err.statusCode === 503) return [];
+    throw err;
+  }
   if (mapped === null) return [];
 
   const results = (data.results || []).slice(0, limit).map(({ geometry, formatted_address, place_id }) => ({
@@ -303,6 +391,17 @@ exports.reverseGeocode = async ({ lat, lng }) => {
   const cacheKey = `geo_rev:${Number(lat).toFixed(6)},${Number(lng).toFixed(6)}`;
   const cached = cacheGet(cacheKey);
   if (cached) return cached;
+
+  if (!process.env.GOOGLE_MAPS_API_KEY) {
+    const out = await nominatimReverse(Number(lat), Number(lng));
+    if (!out || !out.direccion) {
+      const err = new AppError("No se encontró dirección para esas coordenadas", 404);
+      err.code = "ZERO_RESULTS";
+      throw err;
+    }
+    cacheSet(cacheKey, out);
+    return out;
+  }
 
   const paramsBase = {
     latlng: `${Number(lat).toFixed(6)},${Number(lng).toFixed(6)}`,

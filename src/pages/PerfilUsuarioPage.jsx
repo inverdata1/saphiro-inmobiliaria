@@ -5,6 +5,7 @@ import { useAuth } from "../context/useAuth";
 import PropertyCard from "../components/PropertyCard";
 import ShareModal from "../components/ShareModal";
 import SocialIcon from "../utils/socialIcons.jsx";
+import ContactoCorredorEditor from "../components/social/ContactoCorredorEditor";
 
 export default function PerfilUsuarioPage() {
   const { id } = useParams();
@@ -127,6 +128,9 @@ export default function PerfilUsuarioPage() {
     !!corredorInfo ||
     (Array.isArray(telefonosData) && telefonosData.length > 0) ||
     (Array.isArray(redesSociales) && redesSociales.length > 0);
+
+  const puedeEditarContacto =
+    currentUser?.rol === "admin" && esCorredor && Boolean(usuario?.uuid || usuario?.id);
 
   const esMiPropioPerfil = useMemo(() => {
     if (!currentUser || !usuario) return false;
@@ -280,8 +284,13 @@ export default function PerfilUsuarioPage() {
                     </div>
 
                     <p className="text-sm font-semibold text-purple-900 dark:text-purple-400">
-                      {esCorredor ? "Corredor Inmobiliario Autorizado" : usuario?.rol === "admin" ? "Administrador del Sistema" : "Cliente de Saphiro Inmobiliaria"}
+                      {esCorredor ? "Corredor Inmobiliario Autorizado" : usuario?.rol === "admin" ? "Administrador del Sistema" : "Cliente de Bienes Acuario"}
                     </p>
+                    {esCorredor && (
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Venta {corredorInfo?.comision_venta ?? "-"}% · Vacacional {corredorInfo?.comision_vacacional ?? "-"}% · Alquiler fijo {corredorInfo?.comision_alquiler_fijo ?? "-"}%
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
@@ -327,8 +336,9 @@ export default function PerfilUsuarioPage() {
                     </div>
                   </div>
 
-                  {/* Tarjeta Teléfono (solo corredores) */}
-                  {esCorredor && (
+                  {puedeEditarContacto ? (
+                    <ContactoCorredorEditor usuarioId={usuario.uuid || usuario.id} />
+                  ) : esCorredor && (
                     <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-slate-50 dark:bg-[#18181c] border border-slate-100 dark:border-slate-800/60">
                       <div className="p-2.5 rounded-xl bg-purple-100 dark:bg-purple-950/60 text-[#470A68] dark:text-purple-300">
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -358,7 +368,7 @@ export default function PerfilUsuarioPage() {
             </div>
 
             {/* Redes Sociales del Corredor */}
-            {loading && esCorredor ? (
+            {puedeEditarContacto ? null : loading && esCorredor ? (
               <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800/80">
                 <div className="h-3 w-28 bg-slate-200 dark:bg-slate-700/60 rounded animate-pulse mb-3" />
                 <div className="flex flex-wrap gap-2.5">

@@ -1,10 +1,12 @@
 const pool = require("../db/pool");
 const AppError = require("../utils/AppError");
-const { D, round2, toSql, toNumber, sum } = require("../utils/money");
+const { D, round2, toSql, toNumber } = require("../utils/money");
+const { montoDelCosto } = require("../utils/costoEstadia");
 const InmueblesService = require("./inmuebles.service");
 const UsuariosService = require("./usuarios.service");
 const auditoriaService = require("./auditoria.service");
 const notificacionesService = require("./notificaciones.service");
+const emailService = require("./email.service");
 
 function luhnAlgorithm(numeroTarjeta) {
   const digitos = String(numeroTarjeta || "").replace(/\D/g, "");
@@ -103,6 +105,10 @@ exports.listTransacciones = async (filters) => {
     SELECT
       t.*,
       i.titulo AS inmueble_titulo,
+      i.edificio_nombre,
+      i.numero_apto,
+      rv.fecha_entrada,
+      rv.fecha_salida,
       co.usuario_id AS corredor_id,
       u.nombre AS cliente_nombre,
       uc.nombre AS corredor_nombre,
@@ -112,6 +118,13 @@ exports.listTransacciones = async (filters) => {
     FROM transacciones t
     LEFT JOIN inmuebles i ON i.id = t.inmueble_id
     LEFT JOIN usuarios u ON u.id = t.cliente_id
+    LEFT JOIN LATERAL (
+      SELECT fecha_entrada, fecha_salida
+      FROM reservas_vacacionales
+      WHERE transaccion_id = t.id
+      ORDER BY id DESC
+      LIMIT 1
+    ) rv ON true
     LEFT JOIN comisiones c ON c.transaccion_id = t.id
     LEFT JOIN corredores co ON co.id = i.corredor_id
     LEFT JOIN usuarios uc ON uc.id = co.usuario_id
@@ -591,10 +604,20 @@ exports.procesarPago = async (data, ctx) => {
       }, client);
     }
 
+    const avisoVenta = tipoOperacion === "venta"
+      ? `${cliente.nombre} vio ${inmueble.titulo} y quiere contactarte para una cita.`
+      : `Transaccion exitosa para inmueble ${inmueble.titulo} al precio de ${toSql(monto)} ${monedaUpper} por el cliente ${cliente.nombre}`;
+    if (tipoOperacion === "venta" && inmueble.corredor_usuario_id) {
+      await notificacionesService.create({
+        usuario_id: inmueble.corredor_usuario_id,
+        titulo: "Cita para ver un inmueble",
+        descripcion: avisoVenta,
+        tipo_notificacion: "Transaccion",
+      });
+    }
     await notificacionesService.createToAllAdmins({
-      titulo: "Transaccion exitosa",
-      descripcion: `Transaccion exitosa para inmueble ${inmueble.titulo} al precio de ${toSql(monto)} ${monedaUpper} 
-       por el cliente ${cliente.nombre}`,
+      titulo: tipoOperacion === "venta" ? "Cita para ver un inmueble" : "Transaccion exitosa",
+      descripcion: avisoVenta,
       tipo_notificacion: "Transaccion",
     });
 
@@ -822,7 +845,6 @@ exports.crearReserva = async (data, ctx) => {
     fecha_salida,
     moneda,
     num_huespedes = 1,
-    estatus_pago = "pendiente",
     mascotas,
     costos_adicionales,
   } = data;
@@ -843,9 +865,9 @@ exports.crearReserva = async (data, ctx) => {
     throw new AppError("moneda inválida (use: USD|EUR|BS)", 400);
   }
 
-  if (!["pendiente", "pagado"].includes(estatus_pago)) {
-    throw new AppError("estatus_pago inválido (use: pendiente|pagado)", 400);
-  }
+  // La solicitud siempre nace pendiente. El pago queda bloqueado hasta que
+  // un administrador autorice la reserva.
+  const estatus_pago = "pendiente";
 
   const entrada = new Date(fecha_entrada + "T00:00:00");
   const salida = new Date(fecha_salida + "T00:00:00");
@@ -953,6 +975,19 @@ exports.crearReserva = async (data, ctx) => {
   // (clientes viejos que no lo envían) se cobran todos, igual que antes; si llega, solo
   // los indicados. Se valida acá y no solo en el frontend porque un request directo se
   // saltaría el checkbox y podría mandar ids que el inmueble no tiene.
+  const puedeAjustar = ctx?.rol === "admin" || (
+    ctx?.rol === "corredor" && Number(inmueble.corredor_usuario_id) === Number(ctx?.usuario_id)
+  );
+  let porcentajeReserva = Number(inmueble.alquiler_vacacional?.porcentaje_reserva ?? 50);
+  if (!Number.isFinite(porcentajeReserva)) porcentajeReserva = 50;
+  if (puedeAjustar && data.porcentaje_reserva !== undefined && data.porcentaje_reserva !== null && data.porcentaje_reserva !== "") {
+    const pedido = Number(data.porcentaje_reserva);
+    if (!Number.isFinite(pedido) || pedido < 0 || pedido > 100) {
+      throw new AppError("porcentaje_reserva debe estar entre 0 y 100", 400);
+    }
+    porcentajeReserva = pedido;
+  }
+
   const costosDisponibles = Array.isArray(inmueble.costos_adicionales)
     ? inmueble.costos_adicionales
     : [];
@@ -987,22 +1022,38 @@ exports.crearReserva = async (data, ctx) => {
           400
         );
       }
+      let monto = Number(encontrado.monto || 0);
+      if (puedeAjustar && c?.monto !== undefined && c?.monto !== null && c?.monto !== "") {
+        const pedido = Number(c.monto);
+        if (!Number.isFinite(pedido) || pedido < 0) {
+          throw new AppError("El monto del costo adicional no es válido", 400);
+        }
+        monto = pedido;
+      }
       costosReserva.push({
         costo_adicional_id: id,
         nombre: encontrado.costo_adicional_nombre,
-        monto: Number(encontrado.monto || 0),
+        monto,
       });
     }
   }
 
   // El total se calcula SIEMPRE en el servidor (el cliente no lo envía)
   const precioNoche = D(inmueble.alquiler_vacacional?.precio_por_noche);
-  const montoInicial = D(inmueble.precio);
-  // Solo los costos marcados: los que no se contratan no se cobran.
-  const costoTotal = sum(costosReserva, (c) => c.monto);
-  const montoTotal = round2(montoInicial.plus(D(noches).times(precioNoche.plus(costoTotal))));
+  // En vacacional no se suma inmueble.precio. Ese campo es el precio de la ficha
+  // y en este inmueble vale 50, distinto de la tarifa por noche. El total es
+  // noches × precio por noche más los costos contratados. El 50% y el depósito
+  // se informan aparte y no son un cargo adicional.
+  const extras = costosReserva.reduce(
+    (acc, c) => acc.plus(D(montoDelCosto(c.nombre, c.monto, noches))),
+    D(0)
+  );
+  const montoTotal = round2(D(noches).times(precioNoche).plus(extras));
 
   const monedaUpper = moneda.toUpperCase();
+
+  const reservasService = require("./reservas.service");
+  await reservasService.ensureAutorizada();
 
   const client = await pool.connect();
   let resultado;
@@ -1021,10 +1072,10 @@ exports.crearReserva = async (data, ctx) => {
     const transaccion = txRows[0];
 
     const { rows: resRows } = await client.query(
-      `INSERT INTO reservas_vacacionales (alquiler_vacacional_id, cliente_id, transaccion_id, fecha_entrada, fecha_salida, num_huespedes, precio_total, fecha_reserva)
-       VALUES ($1, $2, $3, $4::date, $5::date, $6, $7, NOW())
+      `INSERT INTO reservas_vacacionales (alquiler_vacacional_id, cliente_id, transaccion_id, fecha_entrada, fecha_salida, num_huespedes, precio_total, fecha_reserva, porcentaje_reserva)
+       VALUES ($1, $2, $3, $4::date, $5::date, $6, $7, NOW(), $8)
        RETURNING *`,
-      [avId, cliente_id, transaccion.id, fecha_entrada, fecha_salida, huespedes, toSql(montoTotal)]
+      [avId, cliente_id, transaccion.id, fecha_entrada, fecha_salida, huespedes, toSql(montoTotal), porcentajeReserva]
     );
     const reserva = resRows[0];
 
@@ -1055,14 +1106,13 @@ exports.crearReserva = async (data, ctx) => {
     // porque Postgres ERRORA (no trunca) si el nombre del catálogo se pasa del límite; las
     // líneas de base son cortas por construcción, pero el recorte va igual.
     const detallesReserva = [
-      { concepto: "Monto inicial", monto: montoInicial },
       {
-        concepto: `${noches} noche${noches > 1 ? "s" : ""} × ${precioNoche}`,
+        concepto: `${noches} noches × ${toSql(precioNoche)} ${monedaUpper}`.slice(0, 50),
         monto: D(noches).times(precioNoche),
       },
       ...costosReserva.map((c) => ({
         concepto: String(c.nombre || `Costo ${c.costo_adicional_id}`),
-        monto: D(noches).times(D(c.monto)),
+        monto: D(montoDelCosto(c.nombre, c.monto, noches)),
       })),
     ]
       // Las líneas de monto 0 no aportan nada al desglose, solo ruido: si el inmueble no
@@ -1103,12 +1153,39 @@ exports.crearReserva = async (data, ctx) => {
       }, client);
     }
 
+    const apto = inmueble.numero_apto ? `${String(inmueble.numero_apto).trim()}. ` : "";
+    const avisoReserva = `${apto}${cliente.nombre}, del ${fecha_entrada} al ${fecha_salida}, por ${toSql(montoTotal)} ${monedaUpper}.`;
+    const enlaceReserva = `/reservaciones?reserva=${reserva.id}`;
     await notificacionesService.createToAllAdmins({
-      titulo: "Nueva reserva",
-      descripcion: `Reserva creada para inmueble ${inmueble.titulo} al precio de ${toSql(montoTotal)} ${monedaUpper},
-       por el cliente ${cliente.nombre} desde la fecha ${fecha_entrada} hasta la fecha ${fecha_salida}`,
+      titulo: "Solicitud de reserva",
+      descripcion: avisoReserva,
       tipo_notificacion: "Transaccion",
+      enlace: enlaceReserva,
     });
+    if (inmueble.corredor_usuario_id) {
+      await notificacionesService.create({
+        usuario_id: inmueble.corredor_usuario_id,
+        titulo: "Solicitud de reserva",
+        descripcion: avisoReserva,
+        tipo_notificacion: "Transaccion",
+        enlace: enlaceReserva,
+      });
+    }
+    try {
+      const { rows: admins } = await pool.query(
+        `SELECT email FROM usuarios
+          WHERE rol = 'admin' AND active = TRUE AND deleted_at IS NULL
+            AND email LIKE '%@%'`
+      );
+      const url = `https://inmobiliaria.inverdata.com.ve${enlaceReserva}`;
+      await Promise.all(admins.map((admin) => emailService.sendEmail({
+        to: admin.email,
+        subject: "Nueva solicitud de reserva",
+        html: `<p>Hay una reserva nueva para revisar.</p><p>${avisoReserva}</p><p><a href="${url}">Entrar a la reserva</a></p>`,
+      }).catch(() => {})));
+    } catch {
+      // el correo no puede tumbar la reserva
+    }
 
     resultado = {
       reserva,

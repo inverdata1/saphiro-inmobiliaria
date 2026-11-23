@@ -44,8 +44,8 @@ export default function Navbar() {
     <>
       <header className="sticky top-0 z-40 bg-white text-slate-900 shadow-sm border-b border-slate-100">
         {/* Fila superior: logo + acciones */}
-        <div className="px-3 sm:px-5 py-3 sm:py-4 flex items-center justify-between gap-2 sm:gap-4 max-w-7xl mx-auto">
-          <div className="flex items-center min-w-0">
+        <div className="flex items-center justify-between gap-2 px-2 py-1 sm:px-3">
+          <div className="flex min-w-0 items-center">
             {/* Hamburger (oculto en desktop para invitados: en lg+ ya están Inicio e Inmuebles) */}
             <button
               type="button"
@@ -61,18 +61,12 @@ export default function Navbar() {
             </button>
 
             {/* Logo */}
-            <NavLink
-              to="/"
-              className={`flex shrink-0 items-center gap-2.5 ${user ? "ml-3 sm:ml-6 lg:ml-8" : "ml-3 sm:ml-6"}`}
-            >
+            <NavLink to="/" className="order-first flex shrink-0 items-center">
               <img
-                src="/inverdata-logo.png"
-                alt=""
-                className="h-9 w-9 rounded-xl bg-slate-100 object-contain p-0.5"
+                src="/bienes-acuario-logo.jpg"
+                alt="Bienes Acuario"
+                className="h-11 w-auto rounded-md bg-white object-contain object-left sm:h-12"
               />
-              <span className="hidden sm:block text-base font-extrabold tracking-tight text-slate-900">
-                Saphiro Inmobiliaria
-              </span>
             </NavLink>
           </div>
 
@@ -105,16 +99,20 @@ export default function Navbar() {
                 <Link
                   to="/perfil"
                   title="Ver mi perfil"
-                  className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-700 border border-slate-200 text-xs font-extrabold overflow-hidden hover:ring-2 hover:ring-slate-300 hover:scale-105 transition-all cursor-pointer"
+                  className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 py-1 pl-1 pr-2 sm:pr-3 hover:ring-2 hover:ring-slate-300 transition-all cursor-pointer"
                 >
+                  <span className="flex min-w-0 flex-col items-end leading-tight">
+                    <span className="max-w-36 truncate text-xs font-bold text-slate-800">{user.nombre || user.name || "Usuario"}</span>
+                    <span className="text-[10px] font-semibold text-slate-500">{user.rol === "cliente" ? "Cliente" : user.rol === "corredor" ? "Corredor" : user.rol === "admin" ? "Administrador" : user.rol}</span>
+                  </span>
                   {user.foto_perfil || user.avatar ? (
                     <img
                       src={user.foto_perfil || user.avatar}
                       alt={user.nombre || "Perfil"}
-                      className="h-full w-full object-cover"
+                      className="h-8 w-8 rounded-full object-cover"
                     />
                   ) : (
-                    initials
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-xs font-extrabold text-slate-700">{initials}</span>
                   )}
                 </Link>
                 <button
@@ -137,14 +135,14 @@ export default function Navbar() {
 
 
         <div className="hidden lg:block border-t border-slate-100">
-          <div className="max-w-7xl mx-auto px-3 sm:px-5 py-2 pl-3 sm:pl-5 lg:pl-80 flex flex-wrap items-center gap-1">
-            {/* Opciones de navegación (desktop) */}
-            <div className="flex flex-wrap items-center gap-1">
+          <div className="overflow-x-auto px-2 py-0.5 sm:px-3">
+            <div className="flex w-max min-w-full flex-nowrap items-center gap-1">
               {(user?.rol === "admin"
                 ? [
                     ["/", "Inicio"],
                     ["/inmuebles", "Inmuebles"],
                     ["/inmuebles/crear", "Cargar inmueble"],
+                    ["/consulta-alquileres", "Alquileres"],
                     ["/transacciones", "Transacciones"],
                     ["/planes", "Planes"],
                     ["/reservaciones", "Reservas"],
@@ -198,9 +196,9 @@ export default function Navbar() {
             className="flex items-center"
           >
             <img
-              src="/inverdata-logo.png"
-              alt="Inverdata"
-              className="h-14 sm:h-20 lg:h-24 w-auto object-contain rounded-xl border border-slate-200 p-1 sm:p-1.5 bg-white"
+              src="/bienes-acuario-logo.jpg"
+              alt="Bienes Acuario"
+              className="h-24 w-auto rounded-xl border border-slate-200 bg-white object-contain p-1 sm:h-28"
             />
           </NavLink>
           <button

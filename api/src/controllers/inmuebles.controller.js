@@ -75,8 +75,22 @@ exports.updateInmueble = async (req, res, next) => {
   try {
     const id = await resolveUuidToId(req.params.id, "inmuebles", "Inmueble");
     const body = typeof req.body.data === "string" ? JSON.parse(req.body.data) : req.body;
-    const corredor = await corredoresService.getCorredorByUserId(body.usuario_id);
-    body.corredor_id = corredor.id;
+    const admin = req.user?.rol === "admin";
+    const conservarCorredor = async () => {
+      const actual = await inmueblesService.getInmuebleById(Number(id));
+      body.corredor_id = actual?.corredor_id || null;
+    };
+    if (body.usuario_id) {
+      try {
+        const corredor = await corredoresService.getCorredorByUserId(body.usuario_id);
+        body.corredor_id = corredor.id;
+      } catch (lookupErr) {
+        if (!(admin && lookupErr.statusCode === 404)) throw lookupErr;
+        await conservarCorredor();
+      }
+    } else if (admin) {
+      await conservarCorredor();
+    }
     const data = await inmueblesService.updateInmueble(Number(id), body, req.files || [], buildCtx(req));
     res.json({ ok: true, data });
   } catch (err) {
@@ -102,6 +116,11 @@ exports.listDisponiblesPorCiudad = async (req, res) => {
 
 exports.listDisponiblesPorEstado = async (req, res) => {
   const data = await inmueblesService.listDisponiblesPorEstado(Number(req.query.estado_id));
+  res.json({ ok: true, data });
+};
+
+exports.consultaAlquileres = async (req, res) => {
+  const data = await inmueblesService.consultaAlquileres(req.query || {});
   res.json({ ok: true, data });
 };
 

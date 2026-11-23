@@ -13,7 +13,9 @@ export default function CorredoresPage() {
   const [err, setErr] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [email, setEmail] = useState("");
-  const [porcentaje, setPorcentaje] = useState("");
+  const [comisionVenta, setComisionVenta] = useState("");
+  const [comisionVacacional, setComisionVacacional] = useState("");
+  const [comisionAlquilerFijo, setComisionAlquilerFijo] = useState("");
   const [showView, setShowView] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [resettingId, setResettingId] = useState(null);
@@ -38,7 +40,9 @@ export default function CorredoresPage() {
         email: item.corredor_email,
         telefonos: item.telefonos || [],
         licencia: item.licencia_nro || "-",
-        comisionBase: item.comision_base,
+        comisionVenta: item.comision_venta,
+        comisionVacacional: item.comision_vacacional,
+        comisionAlquilerFijo: item.comision_alquiler_fijo,
         activo: item.active,
       }));
       setRows(mapped);
@@ -55,13 +59,20 @@ export default function CorredoresPage() {
   }, []);
 
   async function handleCreate() {
-    if (!email || !porcentaje) return;
+    if (!email || comisionVenta === "" || comisionVacacional === "" || comisionAlquilerFijo === "") return;
     setLoading(true);
     setErr("");
     try {
-      await apiPost("/auth/register/corredor", { email, porcentaje: Number(porcentaje) });
+      await apiPost("/auth/register/corredor", {
+        email,
+        comision_venta: Number(comisionVenta),
+        comision_vacacional: Number(comisionVacacional),
+        comision_alquiler_fijo: Number(comisionAlquilerFijo),
+      });
       setEmail("");
-      setPorcentaje("");
+      setComisionVenta("");
+      setComisionVacacional("");
+      setComisionAlquilerFijo("");
       setShowModal(false);
       setPage(1);
       await load(search, 1);
@@ -102,7 +113,11 @@ export default function CorredoresPage() {
 
   function openEdit(r) {
     setEditTarget(r);
-    setEditForm({ comisionBase: r.comisionBase ?? "" });
+    setEditForm({
+      comisionVenta: r.comisionVenta ?? "",
+      comisionVacacional: r.comisionVacacional ?? "",
+      comisionAlquilerFijo: r.comisionAlquilerFijo ?? "",
+    });
   }
 
   async function handleUpdate() {
@@ -111,7 +126,9 @@ export default function CorredoresPage() {
     setErr("");
     try {
       await apiPut(`/corredores/${editTarget.id}`, {
-        comision_base: editForm.comisionBase !== "" ? Number(editForm.comisionBase) : null,
+        comision_venta: editForm.comisionVenta !== "" ? Number(editForm.comisionVenta) : null,
+        comision_vacacional: editForm.comisionVacacional !== "" ? Number(editForm.comisionVacacional) : null,
+        comision_alquiler_fijo: editForm.comisionAlquilerFijo !== "" ? Number(editForm.comisionAlquilerFijo) : null,
       });
       setEditTarget(null);
       await load(search, page);
@@ -185,11 +202,11 @@ export default function CorredoresPage() {
               key: "nombre",
               header: "Nombre",
               render: (r) =>
-                r.nombre !== "-" && r.telefonos?.length ? (
+                r.usuario_uuid ? (
                   <Link
                     to={`/perfil/${r.usuario_uuid}`}
                     className="font-bold text-slate-800 dark:text-slate-100 hover:text-purple-750 dark:hover:text-purple-400 transition hover:underline"
-                    title="Ver perfil completo e inmuebles del corredor"
+                    title="Editar teléfono, redes e inmuebles"
                   >
                     {r.nombre}
                   </Link>
@@ -199,7 +216,11 @@ export default function CorredoresPage() {
             },
             { key: "email", header: "Email" },
             { key: "telefono", header: "Teléfono", render: (r) => r.telefonos?.length ? r.telefonos.map((t, i) => <div key={i}>{t}</div>) : "-" },
-            { key: "comisionBase", header: "Comisión base", render: (r) => r.comisionBase != null ? `${r.comisionBase}%` : "-" },
+            {
+              key: "comisiones",
+              header: "Comisiones",
+              render: (r) => `Venta ${r.comisionVenta ?? "-"}% · Vacacional ${r.comisionVacacional ?? "-"}% · Fijo ${r.comisionAlquilerFijo ?? "-"}%`,
+            },
             {
               key: "activo",
               header: "Estado",
@@ -220,7 +241,7 @@ export default function CorredoresPage() {
               header: "Acciones",
               render: (r) => (
                 <div className="flex items-center justify-center gap-1">
-                  {r.nombre !== "-" && r.telefonos?.length && (
+                  {r.usuario_uuid && (
                     <Link
                       to={`/perfil/${r.usuario_uuid}`}
                       className="rounded-lg bg-purple-50 p-2 text-[#470A68] hover:bg-purple-100 dark:bg-purple-950/40 dark:text-purple-300 cursor-pointer"
@@ -323,7 +344,7 @@ export default function CorredoresPage() {
         </div>
       </div>
 
-      <Modal open={showModal} onClose={() => { setShowModal(false); setEmail(""); setPorcentaje(""); }} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg dark:bg-slate-800 dark:border dark:border-slate-700">
+      <Modal open={showModal} onClose={() => { setShowModal(false); setEmail(""); setComisionVenta(""); setComisionVacacional(""); setComisionAlquilerFijo(""); }} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg dark:bg-slate-800 dark:border dark:border-slate-700">
         <div className="flex items-start justify-between">
           <div>
             <div className="text-lg font-extrabold dark:text-slate-100">Crear corredor</div>
@@ -332,7 +353,7 @@ export default function CorredoresPage() {
           <button
             type="button"
             className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 cursor-pointer"
-            onClick={() => { if (!loading) { setShowModal(false); setEmail(""); setPorcentaje(""); } }}
+            onClick={() => { if (!loading) { setShowModal(false); setEmail(""); setComisionVenta(""); setComisionVacacional(""); setComisionAlquilerFijo(""); } }}
             aria-label="Cerrar"
           >
             ✕
@@ -351,32 +372,30 @@ export default function CorredoresPage() {
             />
           </div>
           <div>
-            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Porcentaje de comisión</label>
-            <input
-              type="number"
-              required
-              min="0"
-              max="100"
-              step="0.01"
-              value={porcentaje}
-              onChange={(e) => setPorcentaje(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900"
-              placeholder="3.5"
-            />
+            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Comisión venta (%)</label>
+            <input type="number" required min="0" max="100" step="0.01" value={comisionVenta} onChange={(e) => setComisionVenta(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900" placeholder="3.5" />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Comisión alquiler vacacional (%)</label>
+            <input type="number" required min="0" max="100" step="0.01" value={comisionVacacional} onChange={(e) => setComisionVacacional(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900" placeholder="10" />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Comisión alquiler fijo (%)</label>
+            <input type="number" required min="0" max="100" step="0.01" value={comisionAlquilerFijo} onChange={(e) => setComisionAlquilerFijo(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900" placeholder="8" />
           </div>
           <div className="flex justify-end gap-2">
             <button
               type="button"
               className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={loading}
-              onClick={() => { if (!loading) { setShowModal(false); setEmail(""); setPorcentaje(""); } }}
+              onClick={() => { if (!loading) { setShowModal(false); setEmail(""); setComisionVenta(""); setComisionVacacional(""); setComisionAlquilerFijo(""); } }}
             >
               Cancelar
             </button>
             <button
               type="button"
               className="btn-primary disabled:opacity-60 inline-flex items-center justify-center gap-2"
-              disabled={!email || !porcentaje || loading}
+              disabled={!email || comisionVenta === "" || comisionVacacional === "" || comisionAlquilerFijo === "" || loading}
               onClick={handleCreate}
             >
               {loading && (
@@ -413,7 +432,9 @@ export default function CorredoresPage() {
             ["Email", showView?.email],
             ["Teléfono(s)", showView?.telefonos?.length ? showView.telefonos.map((t, i) => <div key={i}>{t}</div>) : "-"],
             ["Licencia", showView?.licencia],
-            ["Comisión base", showView?.comisionBase != null ? `${showView.comisionBase}%` : "-"],
+            ["Comisión venta", showView?.comisionVenta != null ? `${showView.comisionVenta}%` : "-"],
+            ["Comisión vacacional", showView?.comisionVacacional != null ? `${showView.comisionVacacional}%` : "-"],
+            ["Comisión alquiler fijo", showView?.comisionAlquilerFijo != null ? `${showView.comisionAlquilerFijo}%` : "-"],
             ["Estado", showView?.activo ? "Activo" : "Inactivo"],
           ].map(([label, value]) => (
             <div key={label} className="flex justify-between border-b border-slate-100 pb-2 dark:border-slate-700">
@@ -479,16 +500,16 @@ export default function CorredoresPage() {
         </div>
         <div className="mt-5 space-y-4">
           <div>
-            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Comisión base (%)</label>
-            <input
-              type="number"
-              min="0"
-              max="100"
-              step="0.01"
-              value={editForm.comisionBase}
-              onChange={(e) => setEditForm({ ...editForm, comisionBase: e.target.value })}
-              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900"
-            />
+            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Comisión venta (%)</label>
+            <input type="number" min="0" max="100" step="0.01" value={editForm.comisionVenta} onChange={(e) => setEditForm({ ...editForm, comisionVenta: e.target.value })} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900" />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Comisión alquiler vacacional (%)</label>
+            <input type="number" min="0" max="100" step="0.01" value={editForm.comisionVacacional} onChange={(e) => setEditForm({ ...editForm, comisionVacacional: e.target.value })} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900" />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Comisión alquiler fijo (%)</label>
+            <input type="number" min="0" max="100" step="0.01" value={editForm.comisionAlquilerFijo} onChange={(e) => setEditForm({ ...editForm, comisionAlquilerFijo: e.target.value })} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900" />
           </div>
           <div className="flex justify-end gap-2">
             <button

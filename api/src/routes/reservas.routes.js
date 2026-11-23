@@ -17,7 +17,20 @@ router.get("/", asyncHandler(c.listReservas));
 router.get("/cliente/:id", asyncHandler(c.listReservasDeCliente));
 router.get("/corredor/:id", asyncHandler(c.listReservasDeCorredor));
 
-// Detalle individual de reserva
+router.post("/:id/autorizar", asyncHandler(c.autorizarReserva));
+router.post("/:id/pagar", asyncHandler(c.pagarReserva));
+router.post("/:id/cancelar", asyncHandler(async (req, res) => {
+  const reservas = require("../services/reservas.service");
+  res.json({ ok: true, data: await reservas.cancelarReserva(req.params.id, req.user, req.body || {}) });
+}));
+router.post("/:id/prolongar", asyncHandler(async (req, res) => {
+  const reservas = require("../services/reservas.service");
+  res.json({ ok: true, data: await reservas.prolongarReserva(req.params.id, req.user) });
+}));
+router.post("/:id/calificar", asyncHandler(async (req, res) => {
+  const reservas = require("../services/reservas.service");
+  res.json({ ok: true, data: await reservas.calificarReserva(req.params.id, req.user, req.body || {}) });
+}));
 router.get("/:id", asyncHandler(c.getReservaById));
 
 module.exports = router;

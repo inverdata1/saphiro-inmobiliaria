@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/useAuth";
 import { useT } from "../../lib/i18n";
 
@@ -7,6 +7,7 @@ export default function LoginPage() {
   const { login } = useAuth();
   const tr = useT();
   const navigate = useNavigate();
+  const location = useLocation();
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -22,7 +23,10 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login(form.email, form.password);
-      navigate("/");
+      const pedido = location.state?.from || sessionStorage.getItem("inmueblePendiente") || "";
+      sessionStorage.removeItem("inmueblePendiente");
+      const destino = typeof pedido === "string" && pedido.startsWith("/") && !pedido.startsWith("//") ? pedido : "/";
+      navigate(destino);
     } catch (e) {
       setErr(e.message);
     } finally {
@@ -57,14 +61,14 @@ export default function LoginPage() {
               {tr("email")}
             </label>
             <input
-              type="email"
+              type="text"
               name="email"
               required
               autoComplete="email"
               value={form.email}
               onChange={handleChange}
               className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-blue-900"
-              placeholder="ejemplo@correo.com"
+              placeholder="Usuario o correo"
             />
           </div>
 

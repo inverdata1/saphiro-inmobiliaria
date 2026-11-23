@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import { apiGet, apiPatch } from "../api";
 
@@ -60,7 +60,9 @@ function timeAgo(fecha) {
 
 export default function NotificationDropdown() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const usuarioId = user?.id;
+  const [alerta, setAlerta] = useState(null);
 
   const [open, setOpen] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -81,8 +83,75 @@ export default function NotificationDropdown() {
     }
   }
 
+  function pitar() {
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      const audio = new Ctx();
+      const osc = audio.createOscillator();
+      const gain = audio.createGain();
+      osc.frequency.value = 880;
+      osc.connect(gain);
+      gain.connect(audio.destination);
+      gain.gain.setValueAtTime(0.08, audio.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.16);
+      osc.start();
+      osc.stop(audio.currentTime + 0.16);
+      const osc2 = audio.createOscillator();
+      osc2.frequency.value = 1175;
+      osc2.connect(gain);
+      gain.gain.setValueAtTime(0.08, audio.currentTime + 0.2);
+      gain.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.4);
+      osc2.start(audio.currentTime + 0.2);
+      osc2.stop(audio.currentTime + 0.4);
+    } catch {
+      // silent
+    }
+  }
+
+  function avisarTelefono(titulo, cuerpo) {
+    pitar();
+    if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+    try {
+      new Notification(titulo, { body: cuerpo });
+    } catch {
+      // silent
+    }
+  }
+
   useEffect(() => {
-    load();
+    if (!usuarioId) return;
+    if (typeof Notification !== "undefined" && Notification.permission === "default") {
+      Notification.requestPermission().catch(() => {});
+    }
+    let activo = true;
+    const primera = { current: true };
+    const conocidos = new Set();
+    async function tick() {
+      try {
+        const r = await apiGet(`/notificaciones/${usuarioId}`);
+        const lista = Array.isArray(r?.data) ? r.data : [];
+        if (!primera.current) {
+          const nuevas = lista.filter((n) => !n.leida && !conocidos.has(n.id));
+          if (nuevas.length) {
+            avisarTelefono(nuevas[0].titulo, nuevas[0].descripcion);
+            setAlerta(nuevas[0]);
+          }
+        }
+        primera.current = false;
+        conocidos.clear();
+        lista.forEach((n) => conocidos.add(n.id));
+        if (activo) setNotificaciones(lista);
+      } catch {
+        // silent
+      }
+    }
+    tick();
+    const timer = setInterval(tick, 20000);
+    return () => {
+      activo = false;
+      clearInterval(timer);
+    };
   }, [usuarioId]);
 
   useEffect(() => {
@@ -139,7 +208,29 @@ export default function NotificationDropdown() {
     apiPatch(`/notificaciones/${n.id}/read`).catch(() => {});
   }
 
+  function abrir(n) {
+    marcarLeida(n);
+    setAlerta(null);
+    setOpen(false);
+    if (typeof n.enlace === "string" && n.enlace.startsWith("/") && !n.enlace.startsWith("//")) {
+      navigate(n.enlace);
+      return;
+    }
+    if (/reserva/i.test(String(n.titulo || ""))) navigate("/reservaciones");
+  }
+
   return (
+    <>
+    {alerta && (
+      <div className="fixed bottom-4 right-4 z-[80] w-80 rounded-2xl border border-amber-300 bg-white p-4 shadow-2xl dark:border-amber-700 dark:bg-slate-900">
+        <p className="text-sm font-bold text-slate-900 dark:text-white">{alerta.titulo || "Aviso"}</p>
+        <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">{alerta.descripcion}</p>
+        <p className="mt-1 text-xs font-medium text-amber-700 dark:text-amber-300">Entra a revisarla.</p>
+        <button type="button" className="mt-3 rounded-lg bg-purple-800 px-3 py-1.5 text-xs font-semibold text-white" onClick={() => abrir(alerta)}>
+          Ver
+        </button>
+      </div>
+    )}
     <div className="relative" ref={ref}>
       <button
         onClick={handleToggle}
@@ -187,7 +278,7 @@ export default function NotificationDropdown() {
                 return (
                   <div
                     key={n.id}
-                    onClick={() => marcarLeida(n)}
+                    onClick={() => abrir(n)}
                     className={`flex gap-3 px-4 py-3 transition hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer ${
                       !n.leida ? "bg-purple-50/50 dark:bg-purple-900/10" : ""
                     }`}
@@ -225,5 +316,6 @@ export default function NotificationDropdown() {
         </div>
       )}
     </div>
+    </>
   );
 }

@@ -11,6 +11,7 @@ const transaccionesRoutes = require("./routes/transacciones.routes");
 const comisionesRoutes = require("./routes/comisiones.routes");
 const contratosRoutes = require("./routes/contratos.routes");
 const reservasRoutes = require("./routes/reservas.routes");
+const citasRoutes = require("./routes/citas.routes");
 const reportesRoutes = require("./routes/reportes.routes");
 const dashBoardRoutes = require("./routes/dashBoard.routes");
 const auditoriaRoutes = require("./routes/auditoria.routes");
@@ -38,6 +39,7 @@ const crmRoutes = require("./routes/crm.routes");
 const errorHandler = require("./middleware/errorHandler");
 const csrf = require("./middleware/csrf");
 const { initTasasJob } = require("./jobs/tasasCambio.job");
+const { initSalidasJob } = require("./jobs/salidas.job");
 
 const app = express();
 
@@ -81,6 +83,7 @@ app.use("/transacciones", transaccionesRoutes);
 app.use("/comisiones", comisionesRoutes);
 app.use("/contratos", contratosRoutes);
 app.use("/reservas", reservasRoutes);
+app.use("/citas", citasRoutes);
 app.use("/reportes", reportesRoutes);
 app.use("/dashboard", dashBoardRoutes);
 app.use("/auditoria", auditoriaRoutes);
@@ -112,6 +115,7 @@ const port = process.env.PORT || 3001;
 const server = app.listen(port, () => {
   console.log(`API listening on http://localhost:${port}`);
   initTasasJob();
+  initSalidasJob();
 });
 
 server.requestTimeout = 60000;

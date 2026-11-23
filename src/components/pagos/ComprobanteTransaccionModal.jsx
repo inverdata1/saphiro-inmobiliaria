@@ -9,7 +9,7 @@ import { buildDesglose } from "../../utils/desglose";
 const VARIANTES = {
   recibo: {
     titulo: "Comprobante Digital de Pago",
-    emisor: "RIF: J-50192841-0 • Inmobiliaria Digital",
+    emisor: "RIF: J-50782227-3",
     folioLabel: "Recibo N°",
     inmuebleLabel: "Emisor / Inmueble",
     clienteLabel: "Cliente / Pagador",
@@ -197,7 +197,7 @@ export default function ComprobanteTransaccionModal({
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-6 border-b border-dashed border-slate-300 dark:border-slate-700">
             <div>
               <h3 className="text-xl font-black text-[#470A68] dark:text-purple-400 tracking-tight">
-                INVERDATA C.A.
+                BIENES ACUARIO 2025 C.A.
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">{cfg.emisor}</p>
               <p className="text-xs text-slate-500 dark:text-slate-400">Caracas, Venezuela</p>
@@ -362,7 +362,7 @@ export default function ComprobanteTransaccionModal({
               />
               <div className="text-[10px] text-slate-400 leading-tight">
                 <p className="font-bold text-slate-700 dark:text-slate-300">{cfg.qrMarca}</p>
-                <p>Firma digital Inverdata</p>
+                <p>Bienes Acuario 2025 C.A.</p>
                 {esLiquidacion && (
                   <p className="font-mono mt-0.5 text-slate-500 dark:text-slate-400 break-all">
                     {data.id}
